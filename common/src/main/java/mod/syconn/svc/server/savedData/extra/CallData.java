@@ -54,9 +54,9 @@ public class CallData {
             this.receiverID = receiverID;
         }
 
-        public Callee(UUID playerUUID, boolean owner) {
+        public Callee(UUID playerUUID) {
             this.playerUUID = playerUUID;
-            this.owner = owner;
+            this.owner = false;
             this.type = ReceiverType.NULL;
             this.receiverID = null;
         }

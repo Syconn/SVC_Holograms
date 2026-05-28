@@ -5,10 +5,9 @@ import mod.syconn.svc.client.screen.components.buttons.CallButton;
 import mod.syconn.svc.client.screen.components.buttons.ToggleButton;
 import mod.syconn.svc.network.Network;
 import mod.syconn.svc.network.packets.server.RequestHologramPacket;
-import mod.syconn.svc.server.savedData.HologramNetwork;
+import mod.syconn.svc.server.savedData.extra.CallData;
 import mod.syconn.svc.utils.generic.ColorUtil;
 import mod.syconn.svc.utils.generic.GraphicsUtil;
-import mod.syconn.svc.utils.generic.ListUtil;
 import mod.syconn.svc.utils.interfaces.IWidgetComponent;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -23,10 +22,7 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 
 public class CallMenuWidget implements IWidgetComponent {
@@ -85,9 +81,9 @@ public class CallMenuWidget implements IWidgetComponent {
     }
 
     private void callHandheldPressed(Button button, int i) {
-//        var holo = HologramData.HologramTag.getOrCreate(this.stack);
-        var player = this.shownCreateCallPlayers.get(this.scroll + i);
-        this.screen.createCall(ListUtil.append(this.screen.getCaller(), List.of(new HologramNetwork.Caller(player.info.getProfile().getId(), null, null))));
+//        var holo = HologramData.HologramTag.getOrCreate(this.stack); TODO Incomplete
+//        var player = this.shownCreateCallPlayers.get(this.scroll + i);
+//        this.screen.createCall(ListUtil.append(this.screen.getCaller(), List.of(new HologramNetwork.Caller(player.info.getProfile().getId(), null, null))));
     }
 
     private void callPressed(CallButton button, int i) {
@@ -144,23 +140,20 @@ public class CallMenuWidget implements IWidgetComponent {
         }
     }
 
-    public void handleNetworkPacket(HologramNetwork network) {
+    public void handleNetworkPacket(List<CallData.Call> playerCalls) {
         if (this.minecraft.player != null) {
             this.listedJoinCallPlayers.clear();
-
             var connection = this.minecraft.player.connection;
-            var calls = network.getCalls(this.minecraft.player.getUUID());
-            calls.forEach(call -> this.listedJoinCallPlayers.add(MenuData.ofJoin(connection.getPlayerInfo(call.owner().uuid()),
-                    playerNames(ListUtil.add(call.owner(), call.participants().values().stream().toList()), connection::getPlayerInfo))));
+            playerCalls.forEach(call -> this.listedJoinCallPlayers.add(MenuData.ofJoin(connection.getPlayerInfo(call.owner), playerNames(call.callers, connection::getPlayerInfo))));
         }
 
         this.search(this.lastSearch);
     }
 
-    private List<Component> playerNames(List<HologramNetwork.Caller> callers, Function<UUID, PlayerInfo> mapper) {
-        return callers.stream().map(caller -> {
-            if (mapper.apply(caller.uuid()) == null) return Component.literal("Offline Player");
-            return  (Component) Component.literal(mapper.apply(caller.uuid()).getProfile().getName());
+    private List<Component> playerNames(Map<UUID, CallData.Callee> callees, Function<UUID, PlayerInfo> mapper) {
+        return callees.values().stream().map(callee -> {
+            if (mapper.apply(callee.playerUUID) == null) return Component.literal("Offline Player");
+            return (Component) Component.literal(mapper.apply(callee.playerUUID).getProfile().getName());
         }).toList();
     }
 
@@ -242,9 +235,8 @@ public class CallMenuWidget implements IWidgetComponent {
     @Override
     public void updateNarration(NarrationElementOutput narrationElementOutput) {}
 
-    public List<HologramNetwork.Caller> getCallers() {
-        return this.shownCreateCallPlayers.stream().filter(p -> !isPlayerMe(p.info) && p.added)
-                .map(p -> new HologramNetwork.Caller(p.info.getProfile().getId(), null, null)).toList();
+    public List<CallData.Callee> getCallMembers() {
+        return this.shownCreateCallPlayers.stream().filter(p -> !isPlayerMe(p.info) && p.added).map(p -> new CallData.Callee(p.info.getProfile().getId())).toList();
     }
 
     record MenuData(PlayerInfo info, List<Component> players, boolean added, boolean locked) {
