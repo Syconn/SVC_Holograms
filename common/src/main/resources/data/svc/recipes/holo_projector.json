@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "g": {
+      "item": "minecraft:glass"
+    },
+    "n": {
+      "item": "minecraft:netherite_ingot"
+    },
+    "r": {
+      "item": "minecraft:redstone"
+    },
+    "b": {
+      "item": "minecraft:beacon"
+    }
+  },
+  "pattern": [
+    "rgr",
+    "rbr",
+    "rnr"
+  ],
+  "result": {
+    "item": "svc:holo_projector"
+  },
+  "show_notification": true
+}

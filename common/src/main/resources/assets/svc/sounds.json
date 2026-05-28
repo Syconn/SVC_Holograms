@@ -1,0 +1,8 @@
+{
+  "block.hologram.activate": { "subtitle": "subtitle.svc.activate", "sounds": [ "svc:block/hologram/activate" ] },
+  "block.hologram.deactivate": { "subtitle": "subtitle.svc.deactivate", "sounds": [ "svc:block/hologram/deactivate" ] },
+  "block.hologram.static": { "subtitle": "subtitle.svc.static", "sounds": [ "svc:block/hologram/static" ] },
+  "block.hologram.button1": { "subtitle": "subtitle.svc.button1", "sounds": [ "svc:block/hologram/button1" ] },
+  "block.hologram.button2": { "subtitle": "subtitle.svc.button2", "sounds": [ "svc:block/hologram/button2" ] },
+  "block.hologram.button3": { "subtitle": "subtitle.svc.button3", "sounds": [ "svc:block/hologram/button3" ] }
+}
