@@ -4,8 +4,6 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import mod.syconn.svc.network.packets.client.UpdateProjectorCache;
 import mod.syconn.svc.server.savedData.HologramNetwork;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.core.BlockPos;
@@ -24,17 +22,14 @@ public class HoloProjectorDebugRenderer {
     public static boolean requestedRefresh = false;
     private static VertexBuffer vertexBuffer;
 
-    @Environment(EnvType.SERVER)
     public static UpdateProjectorCache playerJoinedServer(ServerPlayer player) {
         return new UpdateProjectorCache(HologramNetwork.get(player.serverLevel()).getDebugData());
     }
 
-    @Environment(EnvType.SERVER)
     public static UpdateProjectorCache playerLeftServer() {
         return new UpdateProjectorCache(new HashMap<>());
     }
 
-    @Environment(EnvType.SERVER)
     public static UpdateProjectorCache playerChangedDimension(ServerPlayer player) {
         return new UpdateProjectorCache(HologramNetwork.get(player.serverLevel()).getDebugData());
     }
