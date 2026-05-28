@@ -14,7 +14,7 @@ public class SVCServer {
     }
 
     public static void playerLeaveServer(ServerPlayer player) {
-        HologramNetwork.get(player.server.overworld()).playerLeave(player);
+        HologramNetwork.get(player.server.overworld()).playerLeftServer(player.getUUID());
     }
 
     public static void serverTick(MinecraftServer server){

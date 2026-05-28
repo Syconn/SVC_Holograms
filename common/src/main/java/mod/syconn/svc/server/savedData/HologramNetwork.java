@@ -15,48 +15,43 @@ import static mod.syconn.svc.server.savedData.extra.CallData.CallManager;
 public class HologramNetwork extends SavedData {
 
     private static final String tagID = "hologram_network";
-
     private final CallManager manager = new CallManager();
 
-    public HologramNetwork() { }
+    public HologramNetwork() {}
 
-    public void createCall(List<CallData.Callee> members) {
-
+    public void createCall(List<CallData.Callee> members, boolean secure) {
+        this.manager.createCall(members, secure);
+        this.setDirty();
     }
 
-    public void connect(UUID callId, Caller caller) {
-
+    public void connect(UUID callId, CallData.Callee callee) {
+        this.manager.connectToCall(callId, callee);
+        this.setDirty();
     }
 
-    public void leaveCall(UUID callId, Caller caller) {
-
+    public void leaveCall(UUID callId, CallData.Callee callee) {
+        this.manager.leaveCall(callId, callee);
+        this.setDirty();
     }
 
     public void registerReceiver(UUID blockID, WorldPos pos) {
-        manager.registerReceiver(blockID, pos);
+        this.manager.registerReceiver(blockID, pos);
+        this.setDirty();
     }
 
     public void unregisterReceiver(UUID blockID) {
-        manager.unregisterReceiver(blockID);
+        this.manager.unregisterReceiver(blockID);
+        this.setDirty();
     }
 
-    public void serverTick(ServerLevel level) {
-//        cleanCalls(level);
-//        createCallData(level);
+    public void playerLeftServer(UUID playerID) {
+        this.manager.playerLeftServer(playerID);
+        this.setDirty();
     }
 
-//    private void cleanCalls(ServerLevel level) {
-//        var onlinePlayers = level.players().stream().map(Entity::getUUID).toList();
-//        var calls = Map.copyOf(this.CALLS);
-//        calls.forEach(((uuid, call) -> {
-//            if (!onlinePlayers.contains(call.owner.uuid)) this.leaveCall(uuid, call.owner);
-//            else {
-//                call.participants.forEach(((uuid1, caller) -> {
-//                    if (!onlinePlayers.contains(caller.uuid)) this.leaveCall(uuid, caller);
-//                }));
-//            }
-//        }));
-//    }
+    public void serverTick(ServerLevel level) { // TODO may not be needed anymore
+
+    }
 
     @Override
     public @NotNull CompoundTag save(CompoundTag compoundTag) {

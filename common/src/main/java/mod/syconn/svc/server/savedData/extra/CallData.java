@@ -11,10 +11,7 @@ import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class CallData {
 
@@ -110,22 +107,77 @@ public class CallData {
         private final Map<UUID, Call> CALLS = new HashMap<>();
         private final Map<UUID, BlockReceiver> BLOCK_RECEIVERS = new HashMap<>();
 
-        public @Nullable UUID createCall(List<Callee> members, boolean secure) { // Returns CallId
-            if (members.size() <= 1) return null;
+        public void createCall(List<Callee> members, boolean secure) { // Returns CallId
+            if (members.size() <= 1) return;
 
             var owner = members.stream().filter(v -> v.owner).findFirst().orElse(null);
-            if (owner == null) {
-                System.out.println("Call Creation: Missing owner"); // TODO REMOVE LATER
+            if (owner == null) { // TODO REMOVE LATER
+                System.out.println("Call Creation: Missing owner");
                 owner = members.get(0);
                 owner.owner = true;
             }
 
             Map<UUID, Callee> map = new HashMap<>();
-            for (Callee c : members) map.put(c.playerUUID, c);
+            for (Callee c : members) {
+                map.put(c.playerUUID, c);
+                if (!c.owner) notifyPlayers(c.playerUUID);
+            }
+
             var callId = UUID.randomUUID();
             var call = new Call(callId, owner.playerUUID, secure, map);
             this.CALLS.put(callId, call);
-            return callId;
+            if (owner.type == ReceiverType.BLOCK) {
+                this.BLOCK_RECEIVERS.computeIfPresent(owner.receiverID, (id, rec) -> {
+                    rec.callID = callId;
+                    return rec;
+                });
+            }
+        }
+
+        public void connectToCall(UUID callID, Callee callee) {
+            var call = this.CALLS.get(callID);
+            if (call == null || callee.type == ReceiverType.NULL) return;
+            if (call.secure && !call.callers.containsKey(callID)) return;
+
+            call.callers.put(callee.playerUUID, callee);
+            if (callee.type == ReceiverType.BLOCK) {
+                this.BLOCK_RECEIVERS.computeIfPresent(callee.receiverID, (id, rec) -> {
+                    rec.callID = callID;
+                    return rec;
+                });
+            }
+        }
+
+        public void leaveCall(UUID callId, CallData.Callee callee) {
+            var call = this.CALLS.get(callId);
+
+            if (call == null) return;
+            var removed = call.callers.remove(callee.playerUUID);
+
+            if (removed == null) return;
+            if (removed.type == ReceiverType.BLOCK && removed.receiverID != null) {
+                var receiver = this.BLOCK_RECEIVERS.get(removed.receiverID);
+                if (receiver != null && receiver.callID != null && receiver.callID.equals(callId)) receiver.callID = null;
+            }
+
+            if (call.callers.isEmpty()) this.CALLS.remove(callId);
+        }
+
+        public void playerLeftServer(UUID playerId) {
+            var iterator = CALLS.entrySet().iterator();
+
+            while (iterator.hasNext()) {
+                var entry = iterator.next();
+                var call = entry.getValue();
+                var removed = call.callers.remove(playerId);
+
+                if (removed == null) continue;
+                if (removed.type == ReceiverType.BLOCK && removed.receiverID != null) {
+                    var receiver = BLOCK_RECEIVERS.get(removed.receiverID);
+                    if (receiver != null && receiver.callID != null && receiver.callID.equals(call.callID)) receiver.callID = null;
+                }
+                if (call.callers.isEmpty()) iterator.remove();
+            }
         }
 
         public void registerReceiver(UUID blockID, WorldPos pos) {
@@ -142,10 +194,6 @@ public class CallData {
 
             var call = this.CALLS.get(receiver.callID);
             call.callers.entrySet().removeIf(entry -> receiver.blockID.equals(entry.getValue().receiverID));
-        }
-        
-        public Call loadCall(UUID callID) {
-            return this.CALLS.get(callID);
         }
 
         public void notifyPlayers(UUID callID) {
