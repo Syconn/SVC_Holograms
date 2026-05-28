@@ -196,7 +196,11 @@ public class CallData {
             call.callers.entrySet().removeIf(entry -> receiver.blockID.equals(entry.getValue().receiverID));
         }
 
-        public void notifyPlayers(UUID callID) {
+        public List<CallData.Call> getCallsForPlayer(UUID playerID) {
+            return this.CALLS.values().stream().filter(call -> !call.secure || call.callers.containsKey(playerID)).toList();
+        }
+
+        private void notifyPlayers(UUID callID) {
             var call = CALLS.get(callID);
 
             for (var callee : call.callers.values()) {

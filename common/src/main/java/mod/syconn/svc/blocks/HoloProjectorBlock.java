@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class HoloProjectorBlock extends FaceAttachedHorizontalDirectionalBlock implements IEntityBlock {
 
-    private boolean playAudio = true;
+//    private boolean playAudio = true; TODO Find Audio Solution
 
     public HoloProjectorBlock() {
         super(Properties.of().noCollission().strength(0.5F));
@@ -84,7 +84,7 @@ public class HoloProjectorBlock extends FaceAttachedHorizontalDirectionalBlock i
     @Override
     public @NotNull InteractionResult use(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit) {
         if (pLevel.isClientSide) {
-            EnvExecutor.runInEnv(Env.CLIENT, () -> () -> GameInstance.getClient().setScreen(ClientHooks.createHologramScreen(new WorldPos(pLevel.dimension(), pPos), null)));
+            EnvExecutor.runInEnv(Env.CLIENT, () -> () -> GameInstance.getClient().setScreen(ClientHooks.createHologramScreen(pPos, null)));
             return InteractionResult.SUCCESS;
         }
         return InteractionResult.PASS;

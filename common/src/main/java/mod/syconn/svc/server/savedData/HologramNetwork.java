@@ -49,6 +49,10 @@ public class HologramNetwork extends SavedData {
         this.setDirty();
     }
 
+    public List<CallData.Call> getCallsForPlayer(UUID playerID) {
+        return this.manager.getCallsForPlayer(playerID);
+    }
+
     public void serverTick(ServerLevel level) { // TODO may not be needed anymore
 
     }
