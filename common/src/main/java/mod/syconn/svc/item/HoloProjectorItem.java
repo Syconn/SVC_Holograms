@@ -45,20 +45,20 @@ public class HoloProjectorItem extends BlockItem implements IItemExtensions {
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
         var id = HologramData.HologramTag.getOrCreate(stack);
-        if (level instanceof ServerLevel serverLevel) {
-            var network = HologramNetwork.get(serverLevel.getServer().overworld());
-            var callId = network.getCallId(id.itemId);
-            if (callId != null && network.getCall(callId) != null && network.getBlockData(callId) != null) {
-                var call = network.getCall(callId);
-                var uuids = network.getBlockData(callId).values().stream().flatMap(Collection::stream).toList();
-                if (!uuids.isEmpty()) {
-                    var uuid = !call.owner().uuid().equals(entity.getUUID()) && uuids.contains(call.owner().uuid()) ? call.owner().uuid() : uuids.get(0);
-                    if (serverLevel.getPlayerByUUID(uuid) == null && id.uuid != null) HologramData.HologramTag.update(stack, null);
-                    else if (!uuid.equals(id.uuid)) HologramData.HologramTag.update(stack, uuid);
-                    return;
-                }
-            }
-            if (id.uuid != null) HologramData.HologramTag.update(stack, null);
-        }
+//        if (level instanceof ServerLevel serverLevel) { TODO Deal with item handling
+//            var network = HologramNetwork.get(serverLevel);
+//            var callId = network.getCallId(id.itemId);
+//            if (callId != null && network.getCall(callId) != null && network.getBlockData(callId) != null) {
+//                var call = network.getCall(callId);
+//                var uuids = network.getBlockData(callId).values().stream().flatMap(Collection::stream).toList();
+//                if (!uuids.isEmpty()) {
+//                    var uuid = !call.owner().uuid().equals(entity.getUUID()) && uuids.contains(call.owner().uuid()) ? call.owner().uuid() : uuids.get(0);
+//                    if (serverLevel.getPlayerByUUID(uuid) == null && id.uuid != null) HologramData.HologramTag.update(stack, null);
+//                    else if (!uuid.equals(id.uuid)) HologramData.HologramTag.update(stack, uuid);
+//                    return;
+//                }
+//            }
+//            if (id.uuid != null) HologramData.HologramTag.update(stack, null);
+//        }
     }
 }

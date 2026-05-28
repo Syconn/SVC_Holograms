@@ -26,8 +26,9 @@ public class HoloProjectorSoundInstance extends AbstractTickableSoundInstance {
 
     @Override
     public void tick() {
+        if (GameInstance.getClient().level == null) return;
         var blockEntity = GameInstance.getClient().level.getBlockEntity(new BlockPos((int) this.x, (int) this.y, (int) this.z));
-        if (!(blockEntity instanceof HoloProjectorBlockEntity) || ((HoloProjectorBlockEntity) blockEntity).getCallId() == null) {
+        if (!(blockEntity instanceof HoloProjectorBlockEntity) || ((HoloProjectorBlockEntity) blockEntity).receiverUUID == null) {
             this.stop();
         }
     }

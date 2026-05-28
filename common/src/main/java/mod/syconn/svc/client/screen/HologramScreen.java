@@ -179,7 +179,7 @@ public class HologramScreen extends Screen {
     public @Nullable CallData.Callee getCaller() {
 //        var uuid = this.stack == null ? null : HologramData.HologramTag.getOrCreate(this.stack).itemId; TODO SOME SORT OF HANDHELD BS
         if (this.minecraft == null || this.minecraft.player == null || this.holo == null) return null;
-        return new CallData.Callee(this.minecraft.player.getUUID(), true, CallData.ReceiverType.BLOCK, holo.getReceiverUUID());
+        return new CallData.Callee(this.minecraft.player.getUUID(), true, CallData.ReceiverType.BLOCK, holo.receiverUUID);
     }
 
     @Environment(EnvType.CLIENT)

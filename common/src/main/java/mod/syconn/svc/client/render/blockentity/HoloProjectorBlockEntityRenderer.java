@@ -22,15 +22,15 @@ public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<Hol
 
     @Override
     public void render(HoloProjectorBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        for (var renderable : blockEntity.getRenderables().entrySet()) {
-            poseStack.pushPose();
-
-            var hologramData = getHologramData(renderable.getKey(), renderable.getValue());
-            poseStack.translate(hologramData.getInterpolatedPosition().x, hologramData.getInterpolatedPosition().y, hologramData.getInterpolatedPosition().z);
-            hologramData.getRenderer().render(poseStack, buffer, partialTick, LightTexture.FULL_BLOCK);
-
-            poseStack.popPose();
-        }
+//        for (var renderable : blockEntity.getRenderables().entrySet()) {
+//            poseStack.pushPose();
+//
+//            var hologramData = getHologramData(renderable.getKey(), renderable.getValue());
+//            poseStack.translate(hologramData.getInterpolatedPosition().x, hologramData.getInterpolatedPosition().y, hologramData.getInterpolatedPosition().z);
+//            hologramData.getRenderer().render(poseStack, buffer, partialTick, LightTexture.FULL_BLOCK);
+//
+//            poseStack.popPose();
+//        }
 
 //        for (var removed : blockEntity.getDeletions().entrySet()) { // TODO CONCUREENT
 //            poseStack.pushPose();
@@ -63,6 +63,6 @@ public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<Hol
 
     @Override
     public boolean shouldRenderOffScreen(HoloProjectorBlockEntity blockEntity) {
-        return !blockEntity.getRenderables().isEmpty() && shouldRender(blockEntity, GameInstance.getClient().getCameraEntity().getEyePosition());
+        return false; // !blockEntity.getRenderables().isEmpty() && shouldRender(blockEntity, GameInstance.getClient().getCameraEntity().getEyePosition());
     }
 }

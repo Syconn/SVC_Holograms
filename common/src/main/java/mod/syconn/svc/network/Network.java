@@ -4,6 +4,7 @@ import dev.architectury.networking.NetworkChannel;
 import dev.architectury.utils.GameInstance;
 import mod.syconn.svc.network.packets.client.MessagePlayerPacket;
 import mod.syconn.svc.network.packets.client.RequestedHologramPacket;
+import mod.syconn.svc.network.packets.client.UpdateProjectorCache;
 import mod.syconn.svc.network.packets.server.HoloCallPacket;
 import mod.syconn.svc.network.packets.server.RequestHologramPacket;
 import mod.syconn.svc.utils.Constants;
@@ -26,6 +27,7 @@ public class Network {
         CHANNEL.register(RequestedHologramPacket.class, RequestedHologramPacket::encode, RequestedHologramPacket::new, RequestedHologramPacket::apply);
         CHANNEL.register(RequestHologramPacket.class, RequestHologramPacket::encode, RequestHologramPacket::new, RequestHologramPacket::apply);
         CHANNEL.register(MessagePlayerPacket.class, MessagePlayerPacket::encode, MessagePlayerPacket::new, MessagePlayerPacket::apply);
+        CHANNEL.register(UpdateProjectorCache.class, UpdateProjectorCache::encode, UpdateProjectorCache::new, UpdateProjectorCache::apply);
     }
 
     public static <T> void sendToNearby(ServerPlayer player, ResourceKey<Level> dimension, Vec3 pos, int radius, T message) {

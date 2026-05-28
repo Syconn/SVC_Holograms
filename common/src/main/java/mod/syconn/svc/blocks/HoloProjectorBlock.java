@@ -32,6 +32,8 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.UUID;
+
 public class HoloProjectorBlock extends FaceAttachedHorizontalDirectionalBlock implements IEntityBlock {
 
 //    private boolean playAudio = true; TODO Find Audio Solution
@@ -65,13 +67,16 @@ public class HoloProjectorBlock extends FaceAttachedHorizontalDirectionalBlock i
 
     @Override
     public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
-        if (level instanceof ServerLevel sl && level.getBlockEntity(pos) instanceof HoloProjectorBlockEntity be) HologramNetwork.get(sl).registerReceiver(be.getReceiverUUID(), new WorldPos(level.dimension(), pos));
+        if (level instanceof ServerLevel sl && level.getBlockEntity(pos) instanceof HoloProjectorBlockEntity be) {
+            if (be.receiverUUID == null) be.receiverUUID = UUID.randomUUID();
+            HologramNetwork.get(sl).registerReceiver(be.receiverUUID, new WorldPos(level.dimension(), pos));
+        }
         super.onPlace(state, level, pos, oldState, movedByPiston);
     }
 
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (level instanceof ServerLevel sl && level.getBlockEntity(pos) instanceof HoloProjectorBlockEntity be) HologramNetwork.get(sl).unregisterReceiver(be.getReceiverUUID());
+        if (level instanceof ServerLevel sl && level.getBlockEntity(pos) instanceof HoloProjectorBlockEntity be) HologramNetwork.get(sl).unregisterReceiver(be.receiverUUID);
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
 

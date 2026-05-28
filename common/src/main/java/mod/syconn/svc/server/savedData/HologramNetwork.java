@@ -1,13 +1,16 @@
 package mod.syconn.svc.server.savedData;
 
+import dev.architectury.utils.GameInstance;
 import mod.syconn.svc.server.savedData.extra.CallData;
 import mod.syconn.svc.utils.block.WorldPos;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static mod.syconn.svc.server.savedData.extra.CallData.CallManager;
@@ -16,6 +19,7 @@ public class HologramNetwork extends SavedData {
 
     private static final String tagID = "hologram_network";
     private final CallManager manager = new CallManager();
+//    private final ServerLevel level = null;
 
     public HologramNetwork() {}
 
@@ -49,8 +53,24 @@ public class HologramNetwork extends SavedData {
         this.setDirty();
     }
 
+    public CallData.BlockReceiver getCallForBlock(UUID receiverID) {
+        return this.manager.getCallForBlock(receiverID);
+    }
+
     public List<CallData.Call> getCallsForPlayer(UUID playerID) {
         return this.manager.getCallsForPlayer(playerID);
+    }
+
+    public Map<UUID, BlockPos> getDebugData() {
+        return this.manager.getDebugData();
+    }
+
+    @Override
+    public void setDirty() {
+        System.out.println(GameInstance.getServer() + " From HOLONET SetDirty");
+
+//        if (render() && level instanceof ServerLevel sl) sl.getPlayers(LivingEntity::isAlive).forEach(serverPlayer -> Network.CHANNEL.sendToPlayer(serverPlayer, new MessageUpdateClientPipeCache(getDataMap())));
+        super.setDirty();
     }
 
     public void serverTick(ServerLevel level) { // TODO may not be needed anymore
@@ -78,6 +98,6 @@ public class HologramNetwork extends SavedData {
     }
 
     public static HologramNetwork get(ServerLevel server) {
-        return server.getDataStorage().computeIfAbsent(HologramNetwork::load, HologramNetwork::create, tagID);
+        return server.getServer().overworld().getDataStorage().computeIfAbsent(HologramNetwork::load, HologramNetwork::create, tagID);
     }
 }

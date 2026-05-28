@@ -6,12 +6,14 @@ import mod.syconn.svc.network.packets.client.MessagePlayerPacket;
 import mod.syconn.svc.utils.block.WorldPos;
 import mod.syconn.svc.utils.generic.NBTUtil;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class CallData {
 
@@ -196,8 +198,16 @@ public class CallData {
             call.callers.entrySet().removeIf(entry -> receiver.blockID.equals(entry.getValue().receiverID));
         }
 
+        public CallData.BlockReceiver getCallForBlock(UUID receiverID) {
+            return this.BLOCK_RECEIVERS.get(receiverID);
+        }
+
         public List<CallData.Call> getCallsForPlayer(UUID playerID) {
             return this.CALLS.values().stream().filter(call -> !call.secure || call.callers.containsKey(playerID)).toList();
+        }
+
+        public Map<UUID, BlockPos> getDebugData() {
+            return BLOCK_RECEIVERS.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().pos.pos()));
         }
 
         private void notifyPlayers(UUID callID) {
