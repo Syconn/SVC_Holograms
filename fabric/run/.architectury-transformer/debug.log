@@ -201,3 +201,139 @@
 [Architectury Transformer DEBUG] Closed File Systems for C:\Users\Aidan\IdeaProjects\SVC Holograms\common\build\devlibs\svc-common-1.0-SNAPSHOT-dev.jar
 [Architectury Transformer DEBUG] Classpath entry [C:\Users\Aidan\IdeaProjects\SVC Holograms\fabric\build\classes\java\main] contains packages: mod.syconn.svc.fabric, mod.syconn.svc.fabric.client
 [Architectury Transformer DEBUG] Classpath entry [C:\Users\Aidan\IdeaProjects\SVC Holograms\fabric\build\resources\main] contains packages: 
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/mixin/client/MinecraftAccessor.class to mod/syconn/svc/mixin/client/MinecraftAccessor.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/mixin/client/MinecraftAccessor with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/mixin/client/MinecraftAccessor in 1.164 ms
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/SVC.class to mod/syconn/svc/SVC.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/SVC with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/SVC in 993.8 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/core/ModBlocks.class to mod/syconn/svc/core/ModBlocks.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/core/ModBlocks with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/core/ModBlocks in 492.1 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/blocks/HoloProjectorBlock.class to mod/syconn/svc/blocks/HoloProjectorBlock.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/blocks/HoloProjectorBlock with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/blocks/HoloProjectorBlock in 1.273 ms
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/utils/interfaces/IEntityBlock.class to mod/syconn/svc/utils/interfaces/IEntityBlock.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/utils/interfaces/IEntityBlock with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/utils/interfaces/IEntityBlock in 238.8 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/blockentity/HoloProjectorBlockEntity.class to mod/syconn/svc/blockentity/HoloProjectorBlockEntity.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/blockentity/HoloProjectorBlockEntity with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/blockentity/HoloProjectorBlockEntity in 312.5 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/blockentity/SyncedBlockEntity.class to mod/syconn/svc/blockentity/SyncedBlockEntity.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/blockentity/SyncedBlockEntity with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/blockentity/SyncedBlockEntity in 289.3 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/core/ModItems.class to mod/syconn/svc/core/ModItems.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/core/ModItems with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/core/ModItems in 563.6 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/item/HoloProjectorItem.class to mod/syconn/svc/item/HoloProjectorItem.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/item/HoloProjectorItem with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/item/HoloProjectorItem in 511.2 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/utils/interfaces/IItemExtensions.class to mod/syconn/svc/utils/interfaces/IItemExtensions.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/utils/interfaces/IItemExtensions with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/utils/interfaces/IItemExtensions in 255.0 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/core/ModSounds.class to mod/syconn/svc/core/ModSounds.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/core/ModSounds with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/core/ModSounds in 559.7 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/utils/Constants.class to mod/syconn/svc/utils/Constants.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/utils/Constants with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/utils/Constants in 319.0 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/core/ModBlockEntities.class to mod/syconn/svc/core/ModBlockEntities.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/core/ModBlockEntities with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/core/ModBlockEntities in 466.4 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/network/Network.class to mod/syconn/svc/network/Network.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/network/Network with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/network/Network in 604.8 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/network/packets/server/HoloCallPacket.class to mod/syconn/svc/network/packets/server/HoloCallPacket.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/network/packets/server/HoloCallPacket with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/network/packets/server/HoloCallPacket in 543.9 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/network/packets/server/HoloCallPacket$Type.class to mod/syconn/svc/network/packets/server/HoloCallPacket$Type.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/network/packets/server/HoloCallPacket$Type with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/network/packets/server/HoloCallPacket$Type in 397.4 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/network/packets/client/RequestedHologramPacket.class to mod/syconn/svc/network/packets/client/RequestedHologramPacket.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/network/packets/client/RequestedHologramPacket with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/network/packets/client/RequestedHologramPacket in 509.4 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/network/packets/server/RequestHologramPacket.class to mod/syconn/svc/network/packets/server/RequestHologramPacket.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/network/packets/server/RequestHologramPacket with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/network/packets/server/RequestHologramPacket in 387.6 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/network/packets/client/MessagePlayerPacket.class to mod/syconn/svc/network/packets/client/MessagePlayerPacket.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/network/packets/client/MessagePlayerPacket with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/network/packets/client/MessagePlayerPacket in 343.7 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/network/packets/client/UpdateProjectorCache.class to mod/syconn/svc/network/packets/client/UpdateProjectorCache.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/network/packets/client/UpdateProjectorCache with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/network/packets/client/UpdateProjectorCache in 384.1 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/client/SVCClient.class to mod/syconn/svc/client/SVCClient.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/client/SVCClient with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/client/SVCClient in 305.6 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/utils/interfaces/IModifiedItemRenderer.class to mod/syconn/svc/utils/interfaces/IModifiedItemRenderer.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/utils/interfaces/IModifiedItemRenderer with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/utils/interfaces/IModifiedItemRenderer in 302.9 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/utils/interfaces/IModifiedPoseRenderer.class to mod/syconn/svc/utils/interfaces/IModifiedPoseRenderer.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/utils/interfaces/IModifiedPoseRenderer with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/utils/interfaces/IModifiedPoseRenderer in 158.3 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/client/render/item/HoloProjectorItemRenderer.class to mod/syconn/svc/client/render/item/HoloProjectorItemRenderer.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/client/render/item/HoloProjectorItemRenderer with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/client/render/item/HoloProjectorItemRenderer in 572.3 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/server/SVCServer.class to mod/syconn/svc/server/SVCServer.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/server/SVCServer with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/server/SVCServer in 325.1 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/client/render/blockentity/HoloProjectorBlockEntityRenderer.class to mod/syconn/svc/client/render/blockentity/HoloProjectorBlockEntityRenderer.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/client/render/blockentity/HoloProjectorBlockEntityRenderer with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/client/render/blockentity/HoloProjectorBlockEntityRenderer in 562.1 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/mixin/client/ItemRendererInvoker.class to mod/syconn/svc/mixin/client/ItemRendererInvoker.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/mixin/client/ItemRendererInvoker with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/mixin/client/ItemRendererInvoker in 483.5 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/utils/generic/NBTUtil.class to mod/syconn/svc/utils/generic/NBTUtil.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/utils/generic/NBTUtil with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/utils/generic/NBTUtil in 1.371 ms
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/server/savedData/HologramNetwork.class to mod/syconn/svc/server/savedData/HologramNetwork.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/server/savedData/HologramNetwork with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/server/savedData/HologramNetwork in 658.1 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/server/savedData/extra/CallData$CallManager.class to mod/syconn/svc/server/savedData/extra/CallData$CallManager.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/server/savedData/extra/CallData$CallManager with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/server/savedData/extra/CallData$CallManager in 841.8 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/server/savedData/extra/CallData.class to mod/syconn/svc/server/savedData/extra/CallData.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/server/savedData/extra/CallData with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/server/savedData/extra/CallData in 153.6 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/server/savedData/extra/CallData$Call.class to mod/syconn/svc/server/savedData/extra/CallData$Call.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/server/savedData/extra/CallData$Call with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/server/savedData/extra/CallData$Call in 250.4 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/server/savedData/extra/CallData$BlockReceiver.class to mod/syconn/svc/server/savedData/extra/CallData$BlockReceiver.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/server/savedData/extra/CallData$BlockReceiver with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/server/savedData/extra/CallData$BlockReceiver in 308.1 μs
+[Architectury Transformer DEBUG] Transforming from mod/syconn/svc/client/render/debug/HoloProjectorDebugRenderer.class to mod/syconn/svc/client/render/debug/HoloProjectorDebugRenderer.class with 5 transformer(s) on dev.architectury.transformer.handler.TinyRemapperPreparedTransformerHandler
+[Architectury Transformer DEBUG] Found class transformer
+[Architectury Transformer DEBUG] Writing mod/syconn/svc/client/render/debug/HoloProjectorDebugRenderer with maxs=true frames=true
+[Architectury Transformer DEBUG] Transformed mod/syconn/svc/client/render/debug/HoloProjectorDebugRenderer in 1.146 ms
