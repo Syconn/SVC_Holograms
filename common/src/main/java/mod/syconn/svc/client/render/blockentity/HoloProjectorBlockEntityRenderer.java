@@ -32,21 +32,21 @@ public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<Hol
             poseStack.popPose();
         }
 
-        for (var removed : blockEntity.getDeletions().entrySet()) { // TODO CONCUREENT
-            poseStack.pushPose();
-
-            var data = RENDERERS.get(removed.getKey());
-            if (data != null) {
-                poseStack.translate(data.getInterpolatedPosition().x, data.getInterpolatedPosition().y, data.getInterpolatedPosition().z);
-                data.getRenderer().render(poseStack, buffer, partialTick, LightTexture.FULL_BLOCK);
-                data.endCall(() -> {
-                    blockEntity.removeDeletion(removed.getKey());
-                    this.RENDERERS.remove(removed.getKey());
-                });
-            }
-
-            poseStack.popPose();
-        }
+//        for (var removed : blockEntity.getDeletions().entrySet()) { // TODO CONCUREENT
+//            poseStack.pushPose();
+//
+//            var data = RENDERERS.get(removed.getKey());
+//            if (data != null) {
+//                poseStack.translate(data.getInterpolatedPosition().x, data.getInterpolatedPosition().y, data.getInterpolatedPosition().z);
+//                data.getRenderer().render(poseStack, buffer, partialTick, LightTexture.FULL_BLOCK);
+//                data.endCall(() -> {
+//                    blockEntity.removeDeletion(removed.getKey());
+//                    this.RENDERERS.remove(removed.getKey());
+//                });
+//            }
+//
+//            poseStack.popPose();
+//        }
     }
 
     private HologramData getHologramData(UUID entity, Vec3 pos) {

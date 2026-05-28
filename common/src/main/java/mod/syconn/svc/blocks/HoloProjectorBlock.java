@@ -64,8 +64,14 @@ public class HoloProjectorBlock extends FaceAttachedHorizontalDirectionalBlock i
     }
 
     @Override
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+        if (level instanceof ServerLevel sl && level.getBlockEntity(pos) instanceof HoloProjectorBlockEntity be) HologramNetwork.get(sl).registerReceiver(be.getReceiverUUID(), new WorldPos(level.dimension(), pos));
+        super.onPlace(state, level, pos, oldState, movedByPiston);
+    }
+
+    @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (level instanceof ServerLevel serverLevel) level.getBlockEntity(pos, ModBlockEntities.HOLO_PROJECTOR.get()).ifPresent(b -> HologramNetwork.get(serverLevel).blockRemoved(b.getCallId(), new WorldPos(level.dimension(), pos)));
+        if (level instanceof ServerLevel sl && level.getBlockEntity(pos) instanceof HoloProjectorBlockEntity be) HologramNetwork.get(sl).unregisterReceiver(be.getReceiverUUID());
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
@@ -91,14 +97,14 @@ public class HoloProjectorBlock extends FaceAttachedHorizontalDirectionalBlock i
 
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
-        EnvExecutor.runInEnv(Env.CLIENT, () -> () -> {
-            if (level.getBlockEntity(pos) instanceof HoloProjectorBlockEntity blockEntity) {
-                if (blockEntity.getCallId() == null) this.playAudio = true;
-                else if (this.playAudio) {
-                    ClientHooks.playerHoloSound(pos);
-                    this.playAudio = false;
-                }
-            }
-        });
+//        EnvExecutor.runInEnv(Env.CLIENT, () -> () -> {
+//            if (level.getBlockEntity(pos) instanceof HoloProjectorBlockEntity blockEntity) {
+//                if (blockEntity.getCallId() == null) this.playAudio = true;
+//                else if (this.playAudio) {
+//                    ClientHooks.playerHoloSound(pos);
+//                    this.playAudio = false;
+//                }
+//            }
+//        });
     }
 }
