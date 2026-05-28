@@ -9,5 +9,6 @@
 /fabric/build/classes/java/main/
 /forge/.gradle/
 /forge/build/
-/fabric/run
+/fabric/run/
+/forge/run/
 /.idea/inspectionProfiles/Project_Default.xml
