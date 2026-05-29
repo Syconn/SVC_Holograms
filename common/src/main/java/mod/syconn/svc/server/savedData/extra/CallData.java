@@ -39,7 +39,7 @@ public class CallData {
         }
 
         public static BlockReceiver from(CompoundTag tag) {
-            return new BlockReceiver(tag.getUUID("blockID"), WorldPos.from(tag.getCompound("pos")), NBTUtil.getNullable(tag.getCompound("callID"), NBTUtil::getUUID));
+            return new BlockReceiver(NBTUtil.getUUID(tag.getCompound("blockID")), WorldPos.from(tag.getCompound("pos")), NBTUtil.getNullable(tag.getCompound("callID"), NBTUtil::getUUID));
         }
     }
 
@@ -73,7 +73,7 @@ public class CallData {
         }
 
         public static Callee from(CompoundTag tag) {
-            return new Callee(tag.getUUID("playerUUID"), tag.getBoolean("owner"), NBTUtil.getEnum(ReceiverType.class, tag.getCompound("type")), NBTUtil.getNullable(tag.getCompound("receiverID"), NBTUtil::getUUID));
+            return new Callee(NBTUtil.getUUID(tag.getCompound("playerUUID")), tag.getBoolean("owner"), NBTUtil.getEnum(ReceiverType.class, tag.getCompound("type")), NBTUtil.getNullable(tag.getCompound("receiverID"), NBTUtil::getUUID));
         }
     }
 
@@ -100,7 +100,7 @@ public class CallData {
         }
 
         public static Call from(CompoundTag tag) {
-            return new Call(tag.getUUID("callID"), tag.getUUID("owner"), tag.getBoolean("secure"), NBTUtil.getMap(tag.getCompound("callers"), NBTUtil::getUUID, Callee::from));
+            return new Call(NBTUtil.getUUID(tag.getCompound("callID")), NBTUtil.getUUID(tag.getCompound("owner")), tag.getBoolean("secure"), NBTUtil.getMap(tag.getCompound("callers"), NBTUtil::getUUID, Callee::from));
         }
     }
 
@@ -188,7 +188,7 @@ public class CallData {
 
         public void unregisterReceiver(UUID blockID) {
             var rec = this.BLOCK_RECEIVERS.remove(blockID);
-            removeCallReceiver(rec);
+            if (rec != null) removeCallReceiver(rec);
         }
 
         public void removeCallReceiver(BlockReceiver receiver) {

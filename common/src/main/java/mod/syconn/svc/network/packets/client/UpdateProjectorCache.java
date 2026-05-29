@@ -29,9 +29,6 @@ public class UpdateProjectorCache {
     }
 
     public void apply(Supplier<NetworkManager.PacketContext> context) {
-        context.get().queue(() -> {
-            HoloProjectorDebugRenderer.requestedRefresh = true;
-            HoloProjectorDebugRenderer.PROJECTORS = data;
-        });
+        context.get().queue(() -> HoloProjectorDebugRenderer.PROJECTORS = data);
     }
 }

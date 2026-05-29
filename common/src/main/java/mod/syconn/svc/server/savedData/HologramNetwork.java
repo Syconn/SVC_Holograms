@@ -1,11 +1,14 @@
 package mod.syconn.svc.server.savedData;
 
 import dev.architectury.utils.GameInstance;
+import mod.syconn.svc.network.Network;
+import mod.syconn.svc.network.packets.client.UpdateProjectorCache;
 import mod.syconn.svc.server.savedData.extra.CallData;
 import mod.syconn.svc.utils.block.WorldPos;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.saveddata.SavedData;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +22,6 @@ public class HologramNetwork extends SavedData {
 
     private static final String tagID = "hologram_network";
     private final CallManager manager = new CallManager();
-//    private final ServerLevel level = null;
 
     public HologramNetwork() {}
 
@@ -67,9 +69,8 @@ public class HologramNetwork extends SavedData {
 
     @Override
     public void setDirty() {
-        System.out.println(GameInstance.getServer() + " From HOLONET SetDirty");
-
-//        if (render() && level instanceof ServerLevel sl) sl.getPlayers(LivingEntity::isAlive).forEach(serverPlayer -> Network.CHANNEL.sendToPlayer(serverPlayer, new MessageUpdateClientPipeCache(getDataMap())));
+        var server = GameInstance.getServer();
+        if (server != null) server.overworld().getPlayers(LivingEntity::isAlive).forEach(serverPlayer -> Network.CHANNEL.sendToPlayer(serverPlayer, new UpdateProjectorCache(this.getDebugData())));
         super.setDirty();
     }
 

@@ -1,26 +1,26 @@
 package mod.syconn.svc.client.render.debug;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import mod.syconn.svc.network.packets.client.UpdateProjectorCache;
 import mod.syconn.svc.server.savedData.HologramNetwork;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.FastColor;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
-import org.lwjgl.opengl.GL11;
+
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 public class HoloProjectorDebugRenderer {
 
     public static Map<UUID, BlockPos> PROJECTORS = new HashMap<>();
-    public static boolean requestedRefresh = false;
-    private static VertexBuffer vertexBuffer;
 
     public static UpdateProjectorCache playerJoinedServer(ServerPlayer player) {
         return new UpdateProjectorCache(HologramNetwork.get(player.serverLevel()).getDebugData());
@@ -34,94 +34,36 @@ public class HoloProjectorDebugRenderer {
         return new UpdateProjectorCache(HologramNetwork.get(player.serverLevel()).getDebugData());
     }
 
-    public static void renderBlockOutline(PoseStack poseStack, Matrix4f projectionMatrix) {
-        if (vertexBuffer == null || requestedRefresh) {
-            requestedRefresh = false;
-            vertexBuffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
+    public static void renderBlockOutline(PoseStack poseStack, MultiBufferSource buffer, double camX, double camY, double camZ) {
+        Matrix4f mat = poseStack.last().pose();
 
-            Tesselator tesselator = Tesselator.getInstance();
-            BufferBuilder buffer = tesselator.getBuilder();
-            buffer.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION_COLOR);
+        for (var entry : PROJECTORS.entrySet()) {
+            VertexConsumer vc = buffer.getBuffer(RenderType.debugLineStrip(1.0f));
+            Vec3 pos = new Vec3(entry.getValue().getX() - camX, entry.getValue().getY() - camY, entry.getValue().getZ() - camZ);
+            float x = (float) pos.x(), y = (float) pos.y(), z = (float) pos.z(), s = 1f;
+            long mostSigBits = entry.getKey().getMostSignificantBits();
+            int r = (int) ((mostSigBits >> 32) & 0xFF), g = (int) ((mostSigBits >> 16) & 0xFF), b = (int) (mostSigBits & 0xFF), a = 255;
 
-            var opacity = 1F;
-            PROJECTORS.forEach((uuid, pos) -> {
-                int color = uuidToRGBA(uuid);
-                final float size = 1.0f;
-                final int x = pos.getX(), y = pos.getY(), z = pos.getZ();
+            vc.vertex(mat, x, y + s, z).color(r,g,b,a).endVertex();
+            vc.vertex(mat, x + s, y + s, z).color(r,g,b,a).endVertex();
+            vc.vertex(mat, x + s, y + s, z + s).color(r,g,b,a).endVertex();
+            vc.vertex(mat, x, y + s, z + s).color(r,g,b,a).endVertex();
+            vc.vertex(mat, x, y + s, z).color(r,g,b,a).endVertex();
 
-                final float red = (color >> 16 & 0xff) / 255f;
-                final float green = (color >> 8 & 0xff) / 255f;
-                final float blue = (color & 0xff) / 255f;
+            vc.vertex(mat, x, y, z).color(r,g,b,a).endVertex();
+            vc.vertex(mat, x + s, y, z).color(r,g,b,a).endVertex();
+            vc.vertex(mat, x + s, y, z + s).color(r,g,b,a).endVertex();
+            vc.vertex(mat, x, y, z + s).color(r,g,b,a).endVertex();
+            vc.vertex(mat, x, y, z).color(r,g,b,a).endVertex();
 
-                buffer.vertex(x, y + size, z).color(red, green, blue, opacity);
-                buffer.vertex(x + size, y + size, z).color(red, green, blue, opacity);
-                buffer.vertex(x + size, y + size, z).color(red, green, blue, opacity);
-                buffer.vertex(x + size, y + size, z + size).color(red, green, blue, opacity);
-                buffer.vertex(x + size, y + size, z + size).color(red, green, blue, opacity);
-                buffer.vertex(x, y + size, z + size).color(red, green, blue, opacity);
-                buffer.vertex(x, y + size, z + size).color(red, green, blue, opacity);
-                buffer.vertex(x, y + size, z).color(red, green, blue, opacity);
-
-                // BOTTOM
-                buffer.vertex(x + size, y, z).color(red, green, blue, opacity);
-                buffer.vertex(x + size, y, z + size).color(red, green, blue, opacity);
-                buffer.vertex(x + size, y, z + size).color(red, green, blue, opacity);
-                buffer.vertex(x, y, z + size).color(red, green, blue, opacity);
-                buffer.vertex(x, y, z + size).color(red, green, blue, opacity);
-                buffer.vertex(x, y, z).color(red, green, blue, opacity);
-                buffer.vertex(x, y, z).color(red, green, blue, opacity);
-                buffer.vertex(x + size, y, z).color(red, green, blue, opacity);
-
-                // Edge 1
-                buffer.vertex(x + size, y, z + size).color(red, green, blue, opacity);
-                buffer.vertex(x + size, y + size, z + size).color(red, green, blue, opacity);
-
-                // Edge 2
-                buffer.vertex(x + size, y, z).color(red, green, blue, opacity);
-                buffer.vertex(x + size, y + size, z).color(red, green, blue, opacity);
-
-                // Edge 3
-                buffer.vertex(x, y, z + size).color(red, green, blue, opacity);
-                buffer.vertex(x, y + size, z + size).color(red, green, blue, opacity);
-
-                // Edge 4
-                buffer.vertex(x, y, z).color(red, green, blue, opacity);
-                buffer.vertex(x, y + size, z).color(red, green, blue, opacity);
-            });
-
-            BufferBuilder.RenderedBuffer build = buffer.end();
-            vertexBuffer.bind();
-            vertexBuffer.upload(build);
-            VertexBuffer.unbind();
+            vc.vertex(mat, x, y, z).color(r,g,b,a).endVertex();
+            vc.vertex(mat, x, y + s, z).color(r,g,b,a).endVertex();
+            vc.vertex(mat, x + s, y, z).color(r,g,b,a).endVertex();
+            vc.vertex(mat, x + s, y + s, z).color(r,g,b,a).endVertex();
+            vc.vertex(mat, x + s, y, z + s).color(r,g,b,a).endVertex();
+            vc.vertex(mat, x + s, y + s, z + s).color(r,g,b,a).endVertex();
+            vc.vertex(mat, x, y, z + s).color(r,g,b,a).endVertex();
+            vc.vertex(mat, x, y + s, z + s).color(r,g,b,a).endVertex();
         }
-
-        if (vertexBuffer != null) {
-            Vec3 playerPos = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
-
-            RenderSystem.depthMask(false);
-            RenderSystem.enableBlend();
-            RenderSystem.defaultBlendFunc();
-
-
-            poseStack.pushPose();
-            RenderSystem.setShader(GameRenderer::getPositionColorShader);
-            RenderSystem.applyModelViewMatrix();
-            RenderSystem.depthFunc(GL11.GL_ALWAYS);
-            poseStack.translate(-playerPos.x(), -playerPos.y(), -playerPos.z());
-            vertexBuffer.bind();
-            vertexBuffer.drawWithShader(poseStack.last().pose(), projectionMatrix, RenderSystem.getShader());
-            VertexBuffer.unbind();
-            RenderSystem.depthFunc(GL11.GL_LEQUAL);
-            poseStack.popPose();
-            RenderSystem.applyModelViewMatrix();
-        }
-    }
-
-    public static int uuidToRGBA(UUID uuid) {
-        long mostSigBits = uuid.getMostSignificantBits();
-        int r = (int) ((mostSigBits >> 32) & 0xFF);
-        int g = (int) ((mostSigBits >> 16) & 0xFF);
-        int b = (int) (mostSigBits & 0xFF);
-        return FastColor.ARGB32.color(256, r, g, b);
     }
 }

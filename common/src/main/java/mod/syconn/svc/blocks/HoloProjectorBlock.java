@@ -89,7 +89,7 @@ public class HoloProjectorBlock extends FaceAttachedHorizontalDirectionalBlock i
     @Override
     public @NotNull InteractionResult use(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit) {
         if (pLevel.isClientSide) {
-            EnvExecutor.runInEnv(Env.CLIENT, () -> () -> GameInstance.getClient().setScreen(ClientHooks.createHologramScreen(pPos, null)));
+//            EnvExecutor.runInEnv(Env.CLIENT, () -> () -> GameInstance.getClient().setScreen(ClientHooks.createHologramScreen(pPos, null))); TODO CRASHING RN
             return InteractionResult.SUCCESS;
         }
         return InteractionResult.PASS;
