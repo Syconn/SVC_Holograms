@@ -7,7 +7,6 @@ import mod.syconn.svc.network.packets.client.MessagePlayerPacket;
 import mod.syconn.svc.utils.block.WorldPos;
 import mod.syconn.svc.utils.generic.NBTUtil;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
@@ -111,7 +110,7 @@ public class CallData {
         private final Map<UUID, Call> CALLS = new HashMap<>();
         private final Map<UUID, BlockReceiver> BLOCK_RECEIVERS = new HashMap<>();
 
-        public void createCall(List<Callee> members, boolean secure) { // Returns CallId
+        public void createCall(List<Callee> members, boolean secure) {
             if (members.size() <= 1) return;
 
             var owner = members.stream().filter(v -> v.owner).findFirst().orElse(null);
@@ -141,7 +140,7 @@ public class CallData {
         public void connectToCall(UUID callID, Callee callee) {
             var call = this.CALLS.get(callID);
             if (call == null || callee.type == ReceiverType.NULL) return;
-            if (call.secure && !call.callers.containsKey(callID)) return;
+            if (call.secure && !call.callers.containsKey(callee.playerUUID)) return;
 
             call.callers.put(callee.playerUUID, callee);
             if (callee.type == ReceiverType.BLOCK) {
@@ -150,8 +149,6 @@ public class CallData {
                     return rec;
                 });
             }
-
-            System.out.println("TESTING");
         }
 
         public void leaveCall(UUID callId, CallData.Callee callee) {
