@@ -24,7 +24,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
-
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -35,6 +34,7 @@ public class HologramScreen extends Screen {
     private final @Nullable BlockPos holoPos;
     private final @Nullable ItemStack stack;
     private final boolean secure = true; // TODO This should be a toggle on the screen
+    private boolean singleplayer;
     private Page page = Page.CREATE_CALL;
     private String lastSearch = "";
     private CallMenuWidget callData;
@@ -61,9 +61,9 @@ public class HologramScreen extends Screen {
 
     @Override
     protected void init() { // TODO SOUND PLAYS BEFORE PROJECTOR ENDS ALSO LOWKEY ANOYINGLY LOUD
-        // System.out.println(Minecraft.getInstance().isSingleplayer()); TODO USEFUL LATER
+        this.singleplayer = Minecraft.getInstance().isSingleplayer();
         var leftPos = (this.width - 236) / 2;
-        var buttonSize = 220 / 3;
+        var buttonSize = 231 / 3 - 9;
         var newMargin = this.marginX() + 3;
         var string = this.searchBox != null ? this.searchBox.getValue() : "";
 
@@ -71,8 +71,9 @@ public class HologramScreen extends Screen {
         this.callData = new CallMenuWidget(this, leftPos + 10, 92, this.page, this::addRenderableWidget);
         if (this.stack == null) this.callButton = this.addRenderableWidget(new CallButton(newMargin + 209, 74, 0.80f, CallButton.Type.START, "Start Call", this::createCall));
 
-        this.addRenderableWidget(new ExpandedButton(leftPos + 10, 44, buttonSize, 20, Component.literal("Create Call"), button -> this.showPage(Page.CREATE_CALL)));
-        this.addRenderableWidget(new ExpandedButton(leftPos + 157, 44, buttonSize, 20, Component.literal("Join Call"), button -> this.showPage(Page.JOIN_CALL)));
+        this.addRenderableWidget(new ExpandedButton(leftPos + 10, 51, buttonSize, 20, Component.literal("Create Call"), button -> this.showPage(Page.CREATE_CALL)));
+        this.addRenderableWidget(new ExpandedButton(leftPos + 86, 51, buttonSize, 20, Component.literal("Display"), button -> this.showPage(Page.DISPLAY)));
+        this.addRenderableWidget(new ExpandedButton(leftPos + 162, 51, buttonSize, 20, Component.literal("Join Call"), button -> this.showPage(Page.JOIN_CALL)));
         this.addRenderableWidget(new RefreshButton(newMargin + 11, 90, this.callData::refresh));
 
         this.pageTitle = Component.literal("Create Call");
@@ -85,6 +86,8 @@ public class HologramScreen extends Screen {
         this.searchBox.setResponder(this::checkSearchStringUpdate);
         this.addWidget(this.searchBox);
         this.showPage(this.page);
+
+        if (this.singleplayer) showPage(Page.DISPLAY);
     }
 
     private void showPage(Page page) {
@@ -94,6 +97,10 @@ public class HologramScreen extends Screen {
             case CREATE_CALL:
                 if (this.stack == null) this.callButton.visible = true;
                 this.pageTitle = Component.literal("Start Call");
+                break;
+            case DISPLAY:
+                if (this.stack == null) this.callButton.visible = false;
+                this.pageTitle = Component.literal("Display Mode");
                 break;
             case JOIN_CALL:
                 if (this.stack == null) this.callButton.visible = false;
@@ -108,7 +115,8 @@ public class HologramScreen extends Screen {
 
         var m = this.marginX() + 3;
         guiGraphics.blitNineSliced(HOLOGRAM_SCREEN, m, 64, 236, 143, 8, 236, 34, 1, 1);
-        guiGraphics.blit(HOLOGRAM_SCREEN, m + 10, 75, 243, 1, 12, 12);
+        guiGraphics.blit(HOLOGRAM_SCREEN, m, 35, 0, 78, 236, 33);
+        guiGraphics.blit(HOLOGRAM_SCREEN, m + 11, 76, 244, 2, 12, 12);
     }
 
     @Override
@@ -117,7 +125,7 @@ public class HologramScreen extends Screen {
 
         var leftPos = (this.width - 236) / 2;
         this.renderBackground(guiGraphics);
-        guiGraphics.drawCenteredString(this.minecraft.font, this.pageTitle, leftPos + 119, 50, -1);
+        guiGraphics.drawCenteredString(this.minecraft.font, this.pageTitle, leftPos + 119, 40, -1);
         this.searchBox.render(guiGraphics, mouseX, mouseY, partialTick);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
@@ -184,6 +192,7 @@ public class HologramScreen extends Screen {
     @Environment(EnvType.CLIENT)
     public enum Page {
         CREATE_CALL,
+        DISPLAY,
         JOIN_CALL
     }
 }
