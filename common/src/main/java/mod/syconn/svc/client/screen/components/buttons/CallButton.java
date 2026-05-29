@@ -41,11 +41,6 @@ public class CallButton extends ExpandedButton implements IWidgetComponent {
         if (isHovered) guiGraphics.renderTooltip(GameInstance.getClient().font, this.getMessage(), mouseX, mouseY);
     }
 
-    @Override
-    public void playDownSound(SoundManager handler) {
-        handler.play(SimpleSoundInstance.forUI(MathUtil.randomChoice(ModSounds.HOLOGRAM_BUTTON1, ModSounds.HOLOGRAM_BUTTON2, ModSounds.HOLOGRAM_BUTTON3).get(), 1.0F));
-    }
-
     public Type getType() {
         return type;
     }

@@ -1,19 +1,21 @@
 package mod.syconn.svc.server.savedData.extra;
 
 import dev.architectury.utils.GameInstance;
+import mod.syconn.svc.core.ModBlockEntities;
 import mod.syconn.svc.network.Network;
 import mod.syconn.svc.network.packets.client.MessagePlayerPacket;
 import mod.syconn.svc.utils.block.WorldPos;
 import mod.syconn.svc.utils.generic.NBTUtil;
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.BlockPos;
+import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public class CallData {
 
@@ -122,7 +124,7 @@ public class CallData {
             Map<UUID, Callee> map = new HashMap<>();
             for (Callee c : members) {
                 map.put(c.playerUUID, c);
-                if (!c.owner) notifyPlayers(c.playerUUID);
+                if (!c.owner) notifyPlayers(owner.playerUUID, c.playerUUID);
             }
 
             var callId = UUID.randomUUID();
@@ -148,6 +150,8 @@ public class CallData {
                     return rec;
                 });
             }
+
+            System.out.println("TESTING");
         }
 
         public void leaveCall(UUID callId, CallData.Callee callee) {
@@ -206,19 +210,36 @@ public class CallData {
             return this.CALLS.values().stream().filter(call -> !call.secure || call.callers.containsKey(playerID)).toList();
         }
 
-        public Map<UUID, BlockPos> getDebugData() {
-            return BLOCK_RECEIVERS.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().pos.pos()));
+        public List<BlockReceiver> getDebugData() {
+            return BLOCK_RECEIVERS.values().stream().toList();
         }
 
-        private void notifyPlayers(UUID callID) {
-            var call = CALLS.get(callID);
+        public void validateCallLog() {
+            var server = GameInstance.getServer();
+            if (server == null) return;
 
-            for (var callee : call.callers.values()) {
-                if (GameInstance.getServer() != null) {
-                    var owner = GameInstance.getServer().getPlayerList().getPlayer(call.owner);
-                    var serverPlayer = GameInstance.getServer().getPlayerList().getPlayer(callee.playerUUID);
-                    if (serverPlayer != null && owner != null) Network.CHANNEL.sendToPlayer(serverPlayer, new MessagePlayerPacket(Component.literal("Incoming HoloCommunication from " + owner.getName().getString()).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)));
-                }
+            var players = server.getPlayerList();
+            this.CALLS.entrySet().removeIf(entry -> {
+                var call = entry.getValue();
+                call.callers.values().removeIf(v -> players.getPlayer(v.playerUUID) == null);
+                return call.callers.size() <= 1;
+            });
+        }
+
+        public void validateReceivers() {
+            var server = GameInstance.getServer();
+            if (server == null) return;
+
+            var level = server.overworld();
+            this.BLOCK_RECEIVERS.entrySet().removeIf(entry -> level.getBlockEntity(entry.getValue().pos.pos(), ModBlockEntities.HOLO_PROJECTOR.get()).isEmpty());
+            this.BLOCK_RECEIVERS.forEach((uuid, receiver) -> { if (receiver.callID != null && !this.CALLS.containsKey(receiver.callID)) receiver.callID = null; });
+        }
+
+        private void notifyPlayers(UUID ownerID, UUID targetID) {
+            if (GameInstance.getServer() != null) {
+                var owner = GameInstance.getServer().getPlayerList().getPlayer(ownerID);
+                var serverPlayer = GameInstance.getServer().getPlayerList().getPlayer(targetID);
+                if (serverPlayer != null && owner != null) Network.CHANNEL.sendToPlayer(serverPlayer, new MessagePlayerPacket(Component.literal("Incoming HoloCommunication from " + owner.getName().getString()).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)));
             }
         }
 
@@ -234,6 +255,9 @@ public class CallData {
             this.BLOCK_RECEIVERS.clear();
             this.CALLS.putAll(NBTUtil.getMap(tag.getCompound("calls"), NBTUtil::getUUID, Call::from));
             this.BLOCK_RECEIVERS.putAll(NBTUtil.getMap(tag.getCompound("block_receivers"), NBTUtil::getUUID, BlockReceiver::from));
+
+            this.validateCallLog();
+            this.validateReceivers();
         }
     }
 }

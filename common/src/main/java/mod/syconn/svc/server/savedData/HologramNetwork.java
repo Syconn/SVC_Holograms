@@ -5,7 +5,6 @@ import mod.syconn.svc.network.Network;
 import mod.syconn.svc.network.packets.client.UpdateProjectorCache;
 import mod.syconn.svc.server.savedData.extra.CallData;
 import mod.syconn.svc.utils.block.WorldPos;
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
@@ -13,7 +12,6 @@ import net.minecraft.world.level.saveddata.SavedData;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static mod.syconn.svc.server.savedData.extra.CallData.CallManager;
@@ -63,12 +61,14 @@ public class HologramNetwork extends SavedData {
         return this.manager.getCallsForPlayer(playerID);
     }
 
-    public Map<UUID, BlockPos> getDebugData() {
+    public List<CallData.BlockReceiver> getDebugData() {
         return this.manager.getDebugData();
     }
 
     @Override
     public void setDirty() {
+        this.manager.validateCallLog();
+        this.manager.validateReceivers();
         var server = GameInstance.getServer();
         if (server != null) server.overworld().getPlayers(LivingEntity::isAlive).forEach(serverPlayer -> Network.CHANNEL.sendToPlayer(serverPlayer, new UpdateProjectorCache(this.getDebugData())));
         super.setDirty();

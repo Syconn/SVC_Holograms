@@ -32,7 +32,7 @@ import java.util.UUID;
 public class HologramScreen extends Screen {
 
     private static final ResourceLocation HOLOGRAM_SCREEN = Constants.withId("textures/gui/hologram_screen.png");
-    private final @Nullable HoloProjectorBlockEntity holo;
+    private final @Nullable BlockPos holoPos;
     private final @Nullable ItemStack stack;
     private final boolean secure = true; // TODO This should be a toggle on the screen
     private Page page = Page.CREATE_CALL;
@@ -45,7 +45,7 @@ public class HologramScreen extends Screen {
 
     public HologramScreen(@Nullable BlockPos pos, @Nullable ItemStack stack) {
         super(Component.literal("Hologram Projector Screen"));
-        this.holo = this.minecraft != null && this.minecraft.level != null ? this.minecraft.level.getBlockEntity(pos, ModBlockEntities.HOLO_PROJECTOR.get()).orElse(null) : null;
+        this.holoPos = pos;
         this.stack = stack;
     }
 
@@ -62,19 +62,18 @@ public class HologramScreen extends Screen {
     @Override
     protected void init() { // TODO SOUND PLAYS BEFORE PROJECTOR ENDS ALSO LOWKEY ANOYINGLY LOUD
         // System.out.println(Minecraft.getInstance().isSingleplayer()); TODO USEFUL LATER
-
         var leftPos = (this.width - 236) / 2;
         var buttonSize = 220 / 3;
         var newMargin = this.marginX() + 3;
         var string = this.searchBox != null ? this.searchBox.getValue() : "";
 
-        this.addRenderableWidget(new ExpandedButton(leftPos + 10, 44, buttonSize, 20, Component.literal("Create Call"), button -> this.showPage(Page.CREATE_CALL)));
-        this.addRenderableWidget(new ExpandedButton(leftPos + 157, 44, buttonSize, 20, Component.literal("Join Call"), button -> this.showPage(Page.JOIN_CALL)));
-        this.addRenderableWidget(new RefreshButton(newMargin + 11, 90, this.callData::refresh));
-
         this.errorWidget = this.addRenderableWidget(new ErrorWidget(leftPos + 236 / 2, 20));
         this.callData = new CallMenuWidget(this, leftPos + 10, 92, this.page, this::addRenderableWidget);
         if (this.stack == null) this.callButton = this.addRenderableWidget(new CallButton(newMargin + 209, 74, 0.80f, CallButton.Type.START, "Start Call", this::createCall));
+
+        this.addRenderableWidget(new ExpandedButton(leftPos + 10, 44, buttonSize, 20, Component.literal("Create Call"), button -> this.showPage(Page.CREATE_CALL)));
+        this.addRenderableWidget(new ExpandedButton(leftPos + 157, 44, buttonSize, 20, Component.literal("Join Call"), button -> this.showPage(Page.JOIN_CALL)));
+        this.addRenderableWidget(new RefreshButton(newMargin + 11, 90, this.callData::refresh));
 
         this.pageTitle = Component.literal("Create Call");
         this.searchBox = new EditBox(this.font, this.marginX() + 29, 75, 178, 13, Component.literal(string));
@@ -158,7 +157,7 @@ public class HologramScreen extends Screen {
     public void createCall(List<CallData.Callee> callers) {
         var caller = this.getCaller();
         if (caller != null) {
-            Network.CHANNEL.sendToServer(new HoloCallPacket(HoloCallPacket.Type.CREATE, null, secure, callers));
+            Network.CHANNEL.sendToServer(new HoloCallPacket(HoloCallPacket.Type.CREATE, UUID.randomUUID(), secure, callers));
             Minecraft.getInstance().setScreen(null);
         }
     }
@@ -178,8 +177,8 @@ public class HologramScreen extends Screen {
 
     public @Nullable CallData.Callee getCaller() {
 //        var uuid = this.stack == null ? null : HologramData.HologramTag.getOrCreate(this.stack).itemId; TODO SOME SORT OF HANDHELD BS
-        if (this.minecraft == null || this.minecraft.player == null || this.holo == null) return null;
-        return new CallData.Callee(this.minecraft.player.getUUID(), true, CallData.ReceiverType.BLOCK, holo.receiverUUID);
+        if (this.minecraft == null || this.minecraft.player == null || this.minecraft.level == null || this.minecraft.level.getBlockEntity(holoPos, ModBlockEntities.HOLO_PROJECTOR.get()).isEmpty()) return null;
+        return new CallData.Callee(this.minecraft.player.getUUID(), true, CallData.ReceiverType.BLOCK, this.minecraft.level.getBlockEntity(holoPos, ModBlockEntities.HOLO_PROJECTOR.get()).get().receiverUUID);
     }
 
     @Environment(EnvType.CLIENT)

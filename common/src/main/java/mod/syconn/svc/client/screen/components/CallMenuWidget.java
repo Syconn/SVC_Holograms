@@ -77,7 +77,7 @@ public class CallMenuWidget implements IWidgetComponent {
 
     private void toggled(ToggleButton button, int i) {
         var player = this.shownCreateCallPlayers.get(this.scroll + i);
-        this.shownCreateCallPlayers.set(this.scroll + i, new MenuData(player.info, List.of(), button.isActive(), player.locked));
+        this.shownCreateCallPlayers.set(this.scroll + i, new MenuData(player.info, player.callID, List.of(), !button.active(), player.locked));
     }
 
     private void callHandheldPressed(Button button, int i) {
@@ -87,7 +87,7 @@ public class CallMenuWidget implements IWidgetComponent {
     }
 
     private void callPressed(CallButton button, int i) {
-        var uuid = this.shownJoinCallPlayers.get(this.scroll + i).info.getProfile().getId();
+        var uuid = this.shownJoinCallPlayers.get(this.scroll + i).callID;
         if (button.getType() == CallButton.Type.END) this.screen.leaveCall(uuid);
         else this.screen.joinCall(uuid);
 
@@ -144,7 +144,7 @@ public class CallMenuWidget implements IWidgetComponent {
         if (this.minecraft.player != null) {
             this.listedJoinCallPlayers.clear();
             var connection = this.minecraft.player.connection;
-            playerCalls.forEach(call -> this.listedJoinCallPlayers.add(MenuData.ofJoin(connection.getPlayerInfo(call.owner), playerNames(call.callers, connection::getPlayerInfo))));
+            playerCalls.forEach(call -> this.listedJoinCallPlayers.add(MenuData.ofJoin(connection.getPlayerInfo(call.owner), call.callID, playerNames(call.callers, connection::getPlayerInfo))));
         }
 
         this.search(this.lastSearch);
@@ -239,13 +239,13 @@ public class CallMenuWidget implements IWidgetComponent {
         return this.shownCreateCallPlayers.stream().filter(p -> !isPlayerMe(p.info) && p.added).map(p -> new CallData.Callee(p.info.getProfile().getId())).toList();
     }
 
-    record MenuData(PlayerInfo info, List<Component> players, boolean added, boolean locked) {
+    record MenuData(PlayerInfo info, UUID callID, List<Component> players, boolean added, boolean locked) {
         public static MenuData ofCreate(PlayerInfo info, boolean isMe) {
-            return new MenuData(info, List.of(), isMe, isMe);
+            return new MenuData(info, null, List.of(), isMe, isMe);
         }
 
-        public static MenuData ofJoin(PlayerInfo info, List<Component> players) {
-            return new MenuData(info, players, false, false);
+        public static MenuData ofJoin(PlayerInfo info, UUID callID, List<Component> players) {
+            return new MenuData(info, callID, players, false, false);
         }
     }
 }
