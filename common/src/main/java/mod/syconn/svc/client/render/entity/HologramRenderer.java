@@ -44,8 +44,8 @@ public class HologramRenderer extends PlayerRenderer {
             var player = this.data.getPlayer();
 
             poseStack.pushPose();
-//            var scale = this.data.getAnimationScale(partialTicks); TODO ADD BACK
-//            poseStack.scale(scale, scale, scale);
+            var scale = this.data.getAnimationScale(partialTicks);
+            poseStack.scale(scale, scale, scale);
             if (this.data.isStaticRender()) this.setModelProperties(player);
             this.render(player, 0, partialTicks, poseStack, buffer, packedLight);
             poseStack.popPose();
@@ -79,13 +79,13 @@ public class HologramRenderer extends PlayerRenderer {
         this.model.attackTime = this.getAttackAnim(entity, partialTicks);
         this.model.riding = entity.isPassenger();
         this.model.young = entity.isBaby();
-        float f = Mth.rotLerp(partialTicks, entity.yBodyRotO, entity.yBodyRot);
-        float g = Mth.rotLerp(partialTicks, entity.yHeadRotO, entity.yHeadRot);
-        float h = g - f;
+        var f = Mth.rotLerp(partialTicks, entity.yBodyRotO, entity.yBodyRot);
+        var g = Mth.rotLerp(partialTicks, entity.yHeadRotO, entity.yHeadRot);
+        var h = g - f;
         if (entity.isPassenger() && entity.getVehicle() instanceof LivingEntity livingEntity) {
             f = Mth.rotLerp(partialTicks, livingEntity.yBodyRotO, livingEntity.yBodyRot);
             h = g - f;
-            float i = Mth.wrapDegrees(h);
+            var i = Mth.wrapDegrees(h);
             if (i < -85.0F) i = -85.0F;
             if (i >= 85.0F) i = 85.0F;
             f = g - i;
@@ -93,27 +93,27 @@ public class HologramRenderer extends PlayerRenderer {
             h = g - f;
         }
 
-        float j = Mth.lerp(partialTicks, entity.xRotO, entity.getXRot());
+        var j = Mth.lerp(partialTicks, entity.xRotO, entity.getXRot());
         if (isEntityUpsideDown(entity)) {
             j *= -1.0F;
             h *= -1.0F;
         }
 
         if (entity.hasPose(Pose.SLEEPING)) {
-            Direction direction = entity.getBedOrientation();
+            var direction = entity.getBedOrientation();
             if (direction != null) {
-                float k = entity.getEyeHeight(Pose.STANDING) - 0.1F;
+                var k = entity.getEyeHeight(Pose.STANDING) - 0.1F;
                 poseStack.translate(-direction.getStepX() * k, 0.0F, -direction.getStepZ() * k);
             }
         }
 
-        float ix = this.getBob(entity, partialTicks);
+        var ix = this.getBob(entity, partialTicks);
         this.setupRotations(entity, poseStack, ix, f, partialTicks);
         poseStack.scale(-1.0F, -1.0F, 1.0F);
         this.scale(entity, poseStack, partialTicks);
         poseStack.translate(0.0F, -1.501F, 0.0F);
-        float k = 0.0F;
-        float l = 0.0F;
+        var k = 0.0F;
+        var l = 0.0F;
         if (!entity.isPassenger() && entity.isAlive()) {
             k = entity.walkAnimation.speed(partialTicks);
             l = entity.walkAnimation.position(partialTicks);
@@ -122,10 +122,10 @@ public class HologramRenderer extends PlayerRenderer {
 
         this.model.prepareMobModel(entity, l, k, partialTicks);
         this.model.setupAnim(entity, l, k, ix, h, j);
-        Minecraft minecraft = Minecraft.getInstance();
-        boolean bl = this.isBodyVisible(entity);
-        boolean bl2 = !bl && !entity.isInvisibleTo(minecraft.player);
-        boolean bl3 = minecraft.shouldEntityAppearGlowing(entity);
+        var minecraft = Minecraft.getInstance();
+        var bl = this.isBodyVisible(entity);
+        var bl2 = !bl && !entity.isInvisibleTo(minecraft.player);
+        var bl3 = minecraft.shouldEntityAppearGlowing(entity);
         RenderType renderType = this.getRenderType(entity, bl, bl2, bl3);
         if (renderType != null) {
             VertexConsumer vertexConsumer = buffer.getBuffer(renderType);

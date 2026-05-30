@@ -160,6 +160,10 @@ public class HologramScreen extends Screen {
         return stack;
     }
 
+    public @Nullable BlockPos getHoloPos() {
+        return holoPos;
+    }
+
     private void checkSearchStringUpdate(String newText) {
         newText = newText.toLowerCase(Locale.ROOT);
         if (!newText.equals(this.lastSearch)) {

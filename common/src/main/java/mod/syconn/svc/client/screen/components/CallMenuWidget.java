@@ -1,10 +1,14 @@
 package mod.syconn.svc.client.screen.components;
 
+import dev.architectury.utils.GameInstance;
+import mod.syconn.svc.blockentity.HoloProjectorBlockEntity;
 import mod.syconn.svc.client.screen.HologramScreen;
 import mod.syconn.svc.client.screen.components.buttons.CallButton;
 import mod.syconn.svc.client.screen.components.buttons.CheckButton;
 import mod.syconn.svc.client.screen.components.buttons.ToggleButton;
+import mod.syconn.svc.core.ModBlockEntities;
 import mod.syconn.svc.network.Network;
+import mod.syconn.svc.network.packets.server.RenderHoloPlayerPacket;
 import mod.syconn.svc.network.packets.server.RequestHologramPacket;
 import mod.syconn.svc.server.savedData.extra.CallData;
 import mod.syconn.svc.utils.generic.ColorUtil;
@@ -27,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 
-public class CallMenuWidget implements IWidgetComponent { // TODO I have a theory searching only works with listedCreateCallPlayer
+public class CallMenuWidget implements IWidgetComponent {
 
     private final List<MenuData> listedCreateCallPlayers = new ArrayList<>();
     private final List<MenuData> listedJoinCallPlayers = new ArrayList<>();
@@ -102,13 +106,12 @@ public class CallMenuWidget implements IWidgetComponent { // TODO I have a theor
         var uuid = this.shownJoinCallPlayers.get(this.scroll + i).callID;
         if (button.getType() == CallButton.Type.END) this.screen.leaveCall(uuid);
         else this.screen.joinCall(uuid);
-
-        refresh();
     }
 
     private void checkButton(CheckButton button, int i) {
-        System.out.println("Render");
-        refresh();
+        var name = this.shownSearchedPlayer.get(this.scroll + i).info.getProfile().getName();
+        if (this.screen.getHoloPos() != null) Network.CHANNEL.sendToServer(new RenderHoloPlayerPacket(this.screen.getHoloPos(), button.getType() == CheckButton.Type.CHECK ? name : ""));
+        Minecraft.getInstance().setScreen(null);
     }
 
     private void refreshPlayerList() {
@@ -119,12 +122,17 @@ public class CallMenuWidget implements IWidgetComponent { // TODO I have a theor
             if (this.page == HologramScreen.Page.CREATE_CALL) {
                 var connection = this.minecraft.player.connection;
                 connection.getOnlinePlayerIds().forEach(uuid -> this.listedCreateCallPlayers.add(MenuData.ofCreate(connection.getPlayerInfo(uuid), isPlayerMe(connection.getPlayerInfo(uuid)))));
-            } else if (this.page == HologramScreen.Page.JOIN_CALL) Network.CHANNEL.sendToServer(new RequestHologramPacket());
+            } else if (this.page == HologramScreen.Page.JOIN_CALL)
+                Network.CHANNEL.sendToServer(new RequestHologramPacket());
             else {
-                ResourceUtil.getAllInfo().values().forEach(info -> this.listedSearchedPlayer.add(MenuData.ofCreate(info, isPlayerMe(info))));
+                final var listedNames = new HashSet<>();
+                ResourceUtil.getAllInfo().values().forEach(info -> {
+                    if (listedNames.add(info.getProfile().getName())) this.listedSearchedPlayer.add(MenuData.ofCreate(info, isPlayerMe(info)));
+                });
                 var connection = this.minecraft.player.connection;
-                connection.getOnlinePlayerIds().stream().filter(v -> !ResourceUtil.getAllInfo().containsKey(Objects.requireNonNull(connection.getPlayerInfo(v)).getProfile().getName()))
-                        .forEach(uuid -> this.listedSearchedPlayer.add(MenuData.ofCreate(connection.getPlayerInfo(uuid), isPlayerMe(connection.getPlayerInfo(uuid)))));
+                connection.getOnlinePlayerIds().stream().map(connection::getPlayerInfo).filter(Objects::nonNull).forEach(info -> {
+                    if (listedNames.add(info.getProfile().getName())) this.listedSearchedPlayer.add(MenuData.ofCreate(info, isPlayerMe(info)));
+                });
             }
         }
     }
@@ -132,8 +140,10 @@ public class CallMenuWidget implements IWidgetComponent { // TODO I have a theor
     private void updateMenu(int scroll) {
         this.scroll = scroll;
 
-        if (this.page == HologramScreen.Page.CREATE_CALL) this.scroller.updateSize(this.shownCreateCallPlayers.size() - 3);
-        else if (this.page == HologramScreen.Page.JOIN_CALL) this.scroller.updateSize(this.shownJoinCallPlayers.size() - 3);
+        if (this.page == HologramScreen.Page.CREATE_CALL)
+            this.scroller.updateSize(this.shownCreateCallPlayers.size() - 3);
+        else if (this.page == HologramScreen.Page.JOIN_CALL)
+            this.scroller.updateSize(this.shownJoinCallPlayers.size() - 3);
         else this.scroller.updateSize(this.listedSearchedPlayer.size() - 3);
 
         Arrays.stream(this.toggleButtons).forEach(b -> b.visible = false);
@@ -166,7 +176,8 @@ public class CallMenuWidget implements IWidgetComponent { // TODO I have a theor
             }
         } else {
             for (int i = scroll; i < Math.min(scroll + 3, this.shownSearchedPlayer.size()); i++) {
-                this.checkButtons[i - scroll].visible = true; // TODO MOVE THE X TO JUST CURRENT RENDER
+                this.checkButtons[i - scroll].visible =
+                        Minecraft.getInstance().level != null && Minecraft.getInstance().level.getBlockEntity(this.screen.getHoloPos()) instanceof HoloProjectorBlockEntity be && be.getSoloRender().equals(this.shownSearchedPlayer.get(i - scroll).info.getProfile().getName());
                 this.checkButtons[i + 3 - scroll].visible = true;
             }
         }
@@ -191,9 +202,12 @@ public class CallMenuWidget implements IWidgetComponent { // TODO I have a theor
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        if (this.page == HologramScreen.Page.CREATE_CALL) renderScreen(graphics, this.shownCreateCallPlayers, "Add Players to Call", "No Players Found", "You", "", 0);
-        else if (this.page == HologramScreen.Page.JOIN_CALL) renderScreen(graphics, this.shownJoinCallPlayers, "Joinable Holo Calls", "No Calls Found", "My Call", "'s Call", -8);
-        else renderScreen(graphics, this.shownSearchedPlayer, "Find Player Screen", "No Player Found", "My Skin", "", 0);
+        if (this.page == HologramScreen.Page.CREATE_CALL)
+            renderScreen(graphics, this.shownCreateCallPlayers, "Add Players to Call", "No Players Found", "You", "", 0);
+        else if (this.page == HologramScreen.Page.JOIN_CALL)
+            renderScreen(graphics, this.shownJoinCallPlayers, "Joinable Holo Calls", "No Calls Found", "My Call", "'s Call", -8);
+        else
+            renderScreen(graphics, this.shownSearchedPlayer, "Find Player Screen", "No Player Found", "My Skin", "", 0);
     }
 
     private void renderScreen(GuiGraphics graphics, List<MenuData> menu, String topMessage, String emptyList, String mePrefix, String suffix, int offset) {
@@ -202,7 +216,8 @@ public class CallMenuWidget implements IWidgetComponent { // TODO I have a theor
         graphics.drawCenteredString(this.minecraft.font, Component.literal(topMessage), x + width / 2, y, -1);
 
         var y = this.y + 11;
-        if (menu.isEmpty()) graphics.drawCenteredString(this.minecraft.font, Component.literal(emptyList).withStyle(ChatFormatting.BOLD, ChatFormatting.RED), x + width / 2, y + 16, -1);
+        if (menu.isEmpty())
+            graphics.drawCenteredString(this.minecraft.font, Component.literal(emptyList).withStyle(ChatFormatting.BOLD, ChatFormatting.RED), x + width / 2, y + 16, -1);
         for (int i = this.scroll; i < Math.min(this.scroll + 3, menu.size()); i++) {
             var info = menu.get(i).info;
             if (info != null) {
@@ -216,7 +231,7 @@ public class CallMenuWidget implements IWidgetComponent { // TODO I have a theor
             }
         }
     }
-    
+
     private boolean isPlayerMe(@Nullable PlayerInfo info) {
         return this.minecraft.player != null && info != null && info.getProfile().getId().equals(this.minecraft.player.getUUID());
     }
@@ -239,7 +254,8 @@ public class CallMenuWidget implements IWidgetComponent { // TODO I have a theor
     private void searchList(String search, List<MenuData> searchList, List<MenuData> players) {
         searchList.clear();
         if (search == null || search.isEmpty()) searchList.addAll(players);
-        else searchList.addAll(players.stream().filter(s -> s.info.getProfile().getName().toLowerCase().contains(search.toLowerCase())).toList());
+        else
+            searchList.addAll(players.stream().filter(s -> s.info.getProfile().getName().toLowerCase().contains(search.toLowerCase())).toList());
     }
 
     public void refresh() {
@@ -256,7 +272,8 @@ public class CallMenuWidget implements IWidgetComponent { // TODO I have a theor
     }
 
     @Override
-    public void setFocused(boolean focused) {}
+    public void setFocused(boolean focused) {
+    }
 
     @Override
     public boolean isFocused() {
@@ -269,7 +286,8 @@ public class CallMenuWidget implements IWidgetComponent { // TODO I have a theor
     }
 
     @Override
-    public void updateNarration(NarrationElementOutput narrationElementOutput) {}
+    public void updateNarration(NarrationElementOutput narrationElementOutput) {
+    }
 
     public List<CallData.Callee> getCallMembers() {
         return this.shownCreateCallPlayers.stream().filter(p -> !isPlayerMe(p.info) && p.added).map(p -> new CallData.Callee(p.info.getProfile().getId())).toList();

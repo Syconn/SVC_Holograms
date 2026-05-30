@@ -23,6 +23,10 @@ public class CheckButton extends ExpandedButton implements IWidgetComponent {
         if (isHovered) guiGraphics.renderTooltip(GameInstance.getClient().font, this.getMessage(), mouseX, mouseY);
     }
 
+    public Type getType() {
+        return type;
+    }
+
     public enum Type {
         CHECK,
         CROSS

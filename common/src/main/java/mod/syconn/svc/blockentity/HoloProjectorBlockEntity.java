@@ -1,19 +1,20 @@
 package mod.syconn.svc.blockentity;
 
 import mod.syconn.svc.core.ModBlockEntities;
-import mod.syconn.svc.server.savedData.HologramNetwork;
 import mod.syconn.svc.utils.generic.NBTUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
+
 import java.util.UUID;
 
 public class HoloProjectorBlockEntity extends SyncedBlockEntity {
 
+    private String soloRender = "";
+    private double rotation = 0;
     public UUID receiverUUID;
-//    private
 
     public HoloProjectorBlockEntity(BlockPos pWorldPosition, BlockState pBlockState) {
         super(ModBlockEntities.HOLO_PROJECTOR.get(), pWorldPosition, pBlockState);
@@ -55,13 +56,36 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
 //        }
     }
 
+    public void setSoloRender(String soloRender, Vec3 pos) {
+        this.soloRender = soloRender;
+
+        var pos2 = new Vec3(this.worldPosition.getX() + 0.5, 0, this.worldPosition.getZ() + 0.5);
+        double dx = pos.x - pos2.x;
+        double dz = pos.z - pos2.z;
+        this.rotation = Math.toDegrees(Math.atan2(-dx, dz));
+
+        this.markDirty();
+    }
+
+    public String getSoloRender() {
+        return soloRender;
+    }
+
+    public double getRotation() {
+        return rotation;
+    }
+
     @Override
     public void load(CompoundTag tag) {
         this.receiverUUID = NBTUtil.getNullable(tag.getCompound("receiverUUID"), NBTUtil::getUUID);
+        this.soloRender = NBTUtil.getNullable(tag.getCompound("soloRender"), t -> t.getString(""));
+        this.rotation = tag.getDouble("rotation");
     }
 
     @Override
     protected void saveAdditional(CompoundTag tag) {
         tag.put("receiverUUID", NBTUtil.putNullable(this.receiverUUID, NBTUtil::putUUID));
+        tag.put("soloRender", NBTUtil.putNullable(this.soloRender, s -> NBTUtil.convert(t -> t.putString("", s))));
+        tag.putDouble("rotation", this.rotation);
     }
 }

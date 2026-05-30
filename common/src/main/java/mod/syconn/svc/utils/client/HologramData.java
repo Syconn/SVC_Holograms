@@ -14,7 +14,6 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.client.renderer.blockentity.SkullBlockRenderer;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.resources.ResourceLocation;
@@ -72,7 +71,7 @@ public class HologramData {
         this.player = level == null ? null : new AbstractClientPlayer(level, playerInfo.getProfile()) {};
         this.skin = DefaultPlayerSkin.getDefaultSkin();
         this.skinPath = this.skin;
-//        this.transition = TRANSITION_TICKS;
+        this.transition = TRANSITION_TICKS;
 
         SkullBlockEntity.updateGameprofile(new GameProfile(null, name), this::loadSkinAsync);
     }
@@ -155,11 +154,11 @@ public class HologramData {
 //    }
 
     public Vec3 getCurrentPosition() {
-        return currentPosition;
+        return currentPosition == null ? new Vec3(0, 0, 0) : currentPosition;
     }
 
     public Vec3 getInterpolatedPosition() {
-        return previousPosition.lerp(currentPosition, Math.min(1.0, (System.currentTimeMillis() - lastUpdateTime) / 100.0));
+        return previousPosition == null ? new Vec3(0, 0, 0) : previousPosition.lerp(currentPosition, Math.min(1.0, (System.currentTimeMillis() - lastUpdateTime) / 100.0));
     }
 
     public int getTransition() {
