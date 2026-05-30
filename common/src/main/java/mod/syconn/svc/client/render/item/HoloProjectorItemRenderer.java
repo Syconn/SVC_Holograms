@@ -40,38 +40,38 @@ public class HoloProjectorItemRenderer implements IModifiedItemRenderer, IModifi
 
 
     private void renderDirect(ItemStack stack, ItemDisplayContext renderMode, PoseStack poseStack, MultiBufferSource bufferSource) {
-        var holo = HologramData.HologramTag.getOrCreate(stack);
-        var hologramData = getHologramData(holo);
-
-        if (hologramData != null) {
-            poseStack.pushPose();
-
-            poseStack.translate(hologramData.getCurrentPosition().x, hologramData.getCurrentPosition().y, hologramData.getCurrentPosition().z);
-            poseStack.mulPose(Axis.YN.rotationDegrees(ModelUtil.isLeftHanded(renderMode) ? -45f : 45f));
-            poseStack.scale(0.6f, 0.6f, 0.6f);
-
-            hologramData.getRenderer().render(poseStack, bufferSource, SVCClient.getTickDelta(), LightTexture.FULL_BLOCK);
-
-            poseStack.popPose();
-        }
+//        var holo = HologramData.HologramTag.getOrCreate(stack); TODO FIX
+//        var hologramData = getHologramData(holo);
+//
+//        if (hologramData != null) {
+//            poseStack.pushPose();
+//
+//            poseStack.translate(hologramData.getCurrentPosition().x, hologramData.getCurrentPosition().y, hologramData.getCurrentPosition().z);
+//            poseStack.mulPose(Axis.YN.rotationDegrees(ModelUtil.isLeftHanded(renderMode) ? -45f : 45f));
+//            poseStack.scale(0.6f, 0.6f, 0.6f);
+//
+//            hologramData.getRenderer().render(poseStack, bufferSource, SVCClient.getTickDelta(), LightTexture.FULL_BLOCK);
+//
+//            poseStack.popPose();
+//        }
     }
 
-    private HologramData getHologramData(HologramData.HologramTag hologramTag) {
-        var data = RENDERERS.get(hologramTag.itemId);
-        if (data == null && hologramTag.uuid != null) RENDERERS.put(hologramTag.itemId, new HologramData(hologramTag.uuid, new Vec3(0f, -0.43f, 0f), true));
-        else if (data != null) {
-            if (data.getTransition() == 0 && hologramTag.uuid == null) data.endCall(() -> RENDERERS.remove(hologramTag.itemId));
-            else if (hologramTag.uuid != null && !hologramTag.uuid.equals(data.getPlayer().getUUID())) RENDERERS.put(hologramTag.itemId, new HologramData(hologramTag.uuid, new Vec3(0f, -0.43f, 0f), true));
-        }
-        return RENDERERS.get(hologramTag.itemId);
-    }
+//    private HologramData getHologramData(HologramData.HologramTag hologramTag) {
+//        var data = RENDERERS.get(hologramTag.itemId);
+//        if (data == null && hologramTag.uuid != null) RENDERERS.put(hologramTag.itemId, new HologramData(hologramTag.uuid, new Vec3(0f, -0.43f, 0f), true));
+//        else if (data != null) {
+//            if (data.getTransition() == 0 && hologramTag.uuid == null) data.endCall(() -> RENDERERS.remove(hologramTag.itemId));
+//            else if (hologramTag.uuid != null && !hologramTag.uuid.equals(data.getPlayer().getUUID())) RENDERERS.put(hologramTag.itemId, new HologramData(hologramTag.uuid, new Vec3(0f, -0.43f, 0f), true));
+//        }
+//        return RENDERERS.get(hologramTag.itemId);
+//    }
 
     @Override
     public void modifyPose(LivingEntity entity, InteractionHand hand, ItemStack stack, HumanoidModel<? extends LivingEntity> model, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float tickDelta) {
         var mc = GameInstance.getClient();
         if (mc.player == entity && mc.options.getCameraType().isFirstPerson()) return;
 
-        if (HologramData.HologramTag.getOrCreate(stack).uuid != null)
-            ModelUtil.smartLerpArmsRadians(entity, hand, model, 1, 0, 0, 0, MathUtil.toRadians(-145), 0, 0);
+//        if (HologramData.HologramTag.getOrCreate(stack).uuid != null)
+//            ModelUtil.smartLerpArmsRadians(entity, hand, model, 1, 0, 0, 0, MathUtil.toRadians(-145), 0, 0);
     }
 }

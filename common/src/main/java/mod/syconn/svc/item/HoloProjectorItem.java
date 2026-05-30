@@ -31,7 +31,7 @@ public class HoloProjectorItem extends BlockItem implements IItemExtensions {
     public @NotNull InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand usedHand) {
         var stack = player.getItemInHand(usedHand);
         if (level.isClientSide) {
-            EnvExecutor.runInEnv(Env.CLIENT, () -> () -> GameInstance.getClient().setScreen(ClientHooks.createHologramScreen(null, stack)));
+//            EnvExecutor.runInEnv(Env.CLIENT, () -> () -> GameInstance.getClient().setScreen(ClientHooks.createHologramScreen(null, stack)));
             return InteractionResultHolder.success(stack);
         }
         return InteractionResultHolder.pass(stack);
@@ -44,7 +44,7 @@ public class HoloProjectorItem extends BlockItem implements IItemExtensions {
 
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
-        var id = HologramData.HologramTag.getOrCreate(stack);
+//        var id = HologramData.HologramTag.getOrCreate(stack);
 //        if (level instanceof ServerLevel serverLevel) { TODO Deal with item handling
 //            var network = HologramNetwork.get(serverLevel);
 //            var callId = network.getCallId(id.itemId);
