@@ -7,8 +7,10 @@ import com.mojang.blaze3d.platform.NativeImage;
 import dev.architectury.utils.GameInstance;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
@@ -65,8 +67,7 @@ public class ResourceUtil {
     }
 
     public static void registerSkin(String id, NativeImage skin) {
-        var path = new ResourceLocation("skins/" + id);
-        if (!SKINS.containsKey(path)) SKINS.put(path, skin);
+        SKINS.computeIfAbsent(new ResourceLocation("skins/" + id), p -> skin);
     }
 
     public static PlayerInfo getPlayerInfoFromName(String name) {
@@ -124,7 +125,7 @@ public class ResourceUtil {
     }
 
     private static boolean getModelType(String name) {
-        String id = convertUsernameToUUID(name);
+        String id = getUUID(name);
         if (!id.isEmpty()) {
             try {
                 HttpGet request = new HttpGet("https://sessionserver.mojang.com/session/minecraft/profile/" + id);
