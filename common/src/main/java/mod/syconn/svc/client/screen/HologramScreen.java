@@ -1,11 +1,11 @@
 package mod.syconn.svc.client.screen;
 
-import mod.syconn.svc.blockentity.HoloProjectorBlockEntity;
 import mod.syconn.svc.client.screen.components.CallMenuWidget;
 import mod.syconn.svc.client.screen.components.ErrorWidget;
 import mod.syconn.svc.client.screen.components.buttons.CallButton;
 import mod.syconn.svc.client.screen.components.buttons.ExpandedButton;
 import mod.syconn.svc.client.screen.components.buttons.RefreshButton;
+import mod.syconn.svc.client.screen.components.buttons.SearchButton;
 import mod.syconn.svc.core.ModBlockEntities;
 import mod.syconn.svc.network.Network;
 import mod.syconn.svc.network.packets.server.HoloCallPacket;
@@ -22,8 +22,10 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
+
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -35,9 +37,11 @@ public class HologramScreen extends Screen {
     private final @Nullable ItemStack stack;
     private final boolean secure = true; // TODO This should be a toggle on the screen
     private boolean singleplayer;
+    private ExpandedButton[] buttons = new ExpandedButton[3];
     private Page page = Page.CREATE_CALL;
     private String lastSearch = "";
     private CallMenuWidget callData;
+    private SearchButton searchButton;
     private EditBox searchBox;
     private CallButton callButton;
     private ErrorWidget errorWidget;
@@ -70,10 +74,11 @@ public class HologramScreen extends Screen {
         this.errorWidget = this.addRenderableWidget(new ErrorWidget(leftPos + 236 / 2, 20));
         this.callData = new CallMenuWidget(this, leftPos + 10, 92, this.page, this::addRenderableWidget);
         if (this.stack == null) this.callButton = this.addRenderableWidget(new CallButton(newMargin + 209, 74, 0.80f, CallButton.Type.START, "Start Call", this::createCall));
+        this.searchButton = this.addRenderableWidget(new SearchButton(newMargin + 212, 78, "Search For Player", (b) -> this.callData.searchForPlayer()));
 
-        this.addRenderableWidget(new ExpandedButton(leftPos + 10, 51, buttonSize, 20, Component.literal("Create Call"), button -> this.showPage(Page.CREATE_CALL)));
-        this.addRenderableWidget(new ExpandedButton(leftPos + 86, 51, buttonSize, 20, Component.literal("Display"), button -> this.showPage(Page.DISPLAY)));
-        this.addRenderableWidget(new ExpandedButton(leftPos + 162, 51, buttonSize, 20, Component.literal("Join Call"), button -> this.showPage(Page.JOIN_CALL)));
+        this.buttons[0] = this.addRenderableWidget(new ExpandedButton(leftPos + 10, 51, buttonSize, 20, Component.literal("Create Call"), button -> this.showPage(Page.CREATE_CALL)));
+        this.buttons[1] = this.addRenderableWidget(new ExpandedButton(leftPos + 86, 51, buttonSize, 20, Component.literal("Display"), button -> this.showPage(Page.DISPLAY)));
+        this.buttons[2] = this.addRenderableWidget(new ExpandedButton(leftPos + 162, 51, buttonSize, 20, Component.literal("Join Call"), button -> this.showPage(Page.JOIN_CALL)));
         this.addRenderableWidget(new RefreshButton(newMargin + 11, 90, this.callData::refresh));
 
         this.pageTitle = Component.literal("Create Call");
@@ -85,25 +90,32 @@ public class HologramScreen extends Screen {
         this.searchBox.setValue(string);
         this.searchBox.setResponder(this::checkSearchStringUpdate);
         this.addWidget(this.searchBox);
-        this.showPage(this.page);
-
         if (this.singleplayer) showPage(Page.DISPLAY);
+        else this.showPage(this.page);
     }
 
     private void showPage(Page page) {
+        if (this.singleplayer && page != Page.DISPLAY) {
+            this.errorWidget.displayError("Not available in Singleplayer", 250);
+            return;
+        }
+
         this.page = page;
         this.callData.setPage(this.page);
         switch (page) {
             case CREATE_CALL:
                 if (this.stack == null) this.callButton.visible = true;
+                this.searchButton.visible = false;
                 this.pageTitle = Component.literal("Start Call");
                 break;
             case DISPLAY:
                 if (this.stack == null) this.callButton.visible = false;
+                this.searchButton.visible = true;
                 this.pageTitle = Component.literal("Display Mode");
                 break;
             case JOIN_CALL:
                 if (this.stack == null) this.callButton.visible = false;
+                this.searchButton.visible = false;
                 this.pageTitle = Component.literal("Join Call");
                 break;
         }
@@ -125,7 +137,7 @@ public class HologramScreen extends Screen {
 
         var leftPos = (this.width - 236) / 2;
         this.renderBackground(guiGraphics);
-        guiGraphics.drawCenteredString(this.minecraft.font, this.pageTitle, leftPos + 119, 40, -1);
+        guiGraphics.drawCenteredString(this.minecraft.font, this.pageTitle, leftPos + 119, 40, DyeColor.WHITE.getTextColor());
         this.searchBox.render(guiGraphics, mouseX, mouseY, partialTick);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
     }

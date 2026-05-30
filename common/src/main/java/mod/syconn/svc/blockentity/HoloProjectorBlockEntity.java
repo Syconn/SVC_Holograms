@@ -13,15 +13,16 @@ import java.util.UUID;
 public class HoloProjectorBlockEntity extends SyncedBlockEntity {
 
     public UUID receiverUUID;
+//    private
 
     public HoloProjectorBlockEntity(BlockPos pWorldPosition, BlockState pBlockState) {
         super(ModBlockEntities.HOLO_PROJECTOR.get(), pWorldPosition, pBlockState);
     }
 
     public static void tick(Level level, BlockPos pos, BlockState state, HoloProjectorBlockEntity blockEntity) {
-        if (level instanceof ServerLevel serverLevel && blockEntity.receiverUUID != null) {
-            var network = HologramNetwork.get(serverLevel);
-            var networkData = network.getCallForBlock(blockEntity.receiverUUID);
+//        if (level instanceof ServerLevel serverLevel && blockEntity.receiverUUID != null) {
+//            var network = HologramNetwork.get(serverLevel);
+//            var networkData = network.getCallForBlock(blockEntity.receiverUUID);
 //            var handheld = network.getHandheldPlayer(blockEntity.callId);
 //            if (networkData != null && !networkData.isEmpty() || handheld.isPresent()) {
 //                if (networkData != null && !networkData.isEmpty()) {
@@ -51,7 +52,7 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
 //                blockEntity.callId = null;
 //                blockEntity.markDirty();
 //            }
-        }
+//        }
     }
 
     @Override

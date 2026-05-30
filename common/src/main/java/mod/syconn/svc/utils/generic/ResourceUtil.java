@@ -1,23 +1,33 @@
 package mod.syconn.svc.utils.generic;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.platform.NativeImage;
 import dev.architectury.utils.GameInstance;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.function.TriFunction;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Environment(EnvType.CLIENT)
 public class ResourceUtil {
 
     private static final Map<String, ResourceLocation> DYNAMIC_TEXTURES = new HashMap<>();
     private static final Map<ResourceLocation, NativeImage> SKINS = new HashMap<>();
+    private static final Map<String, PlayerInfo> PLAYER_INFO = new HashMap<>();
 
     public static Optional<NativeImage> loadResource(ResourceLocation location) {
         try {
@@ -72,5 +82,31 @@ public class ResourceUtil {
     public static void registerSkin(String id, NativeImage skin) {
         var path = new ResourceLocation("skins/" + id);
         if (!SKINS.containsKey(path)) SKINS.put(path, skin);
+    }
+
+    public static String convertUsernameToUUID(String name){
+        try {
+            HttpGet request = new HttpGet("https://api.mojang.com/users/profiles/minecraft/" + name);
+            CloseableHttpClient client = HttpClients.createDefault();
+            CloseableHttpResponse response = client.execute(request);
+            HttpEntity entity = response.getEntity();
+            JsonObject jsonObject = (JsonObject) JsonParser.parseString(EntityUtils.toString(entity));
+            return jsonObject.get("id").getAsString();
+        } catch (IOException e) {
+            return "";
+        }
+    }
+
+    public static void getPlayerInfoFromName(String name) {
+        if (PLAYER_INFO.containsKey(name)) return;
+        PLAYER_INFO.put(name, new PlayerInfo(new GameProfile(untrimUUID(convertUsernameToUUID(name)), StringUtils.capitalize(name)), false));
+    }
+
+    public static Map<String, PlayerInfo> getAllInfo() {
+        return PLAYER_INFO;
+    }
+
+    private static UUID untrimUUID(String trimmed) {
+        return UUID.fromString(trimmed.substring(0, 8) + "-" + trimmed.substring(8, 12) + "-" + trimmed.substring(12, 16) + "-" + trimmed.substring(16, 20) + "-" + trimmed.substring(20));
     }
 }

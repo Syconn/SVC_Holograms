@@ -16,7 +16,7 @@ import java.util.UUID;
 
 public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<HoloProjectorBlockEntity> {
 
-    private final Map<UUID, HologramData> RENDERERS = new HashMap<>();
+//    private final Map<UUID, HologramData> RENDERERS = new HashMap<>();
 
     public HoloProjectorBlockEntityRenderer(BlockEntityRendererProvider.Context context) {}
 
@@ -49,12 +49,12 @@ public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<Hol
 //        }
     }
 
-    private HologramData getHologramData(UUID entity, Vec3 pos) {
-        var data = RENDERERS.get(entity);
-        if (data == null) RENDERERS.put(entity, new HologramData(entity, pos, false));
-        else if (!pos.equals(data.getCurrentPosition())) RENDERERS.put(entity, data.setPosition(pos));
-        return RENDERERS.get(entity);
-    }
+//    private HologramData getHologramData(UUID entity, Vec3 pos) {
+//        var data = RENDERERS.get(entity);
+//        if (data == null) RENDERERS.put(entity, new HologramData(entity, pos, false));
+//        else if (!pos.equals(data.getCurrentPosition())) RENDERERS.put(entity, data.setPosition(pos));
+//        return RENDERERS.get(entity);
+//    }
 
     @Override
     public int getViewDistance() {
