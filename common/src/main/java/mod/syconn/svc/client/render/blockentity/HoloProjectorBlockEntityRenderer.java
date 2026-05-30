@@ -5,7 +5,6 @@ import com.mojang.math.Axis;
 import dev.architectury.utils.GameInstance;
 import mod.syconn.svc.blockentity.HoloProjectorBlockEntity;
 import mod.syconn.svc.utils.client.HologramData;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -24,7 +23,7 @@ public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<Hol
     @Override
     public void render(HoloProjectorBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) { // TODO ADD END CALL EFFECT
         var soloRender = this.getSoloRenderer(blockEntity.receiverUUID, blockEntity.getSoloRender());
-        if (soloRender != null) {
+        if (soloRender.activeRender()) {
             poseStack.pushPose();
             poseStack.translate(0.5f, 0.1f, 0.5f);
             poseStack.mulPose(Axis.YN.rotationDegrees((float) blockEntity.getRotation()));
@@ -59,9 +58,8 @@ public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<Hol
 
     private HologramData getSoloRenderer(UUID receiverID, String playerName) {
         var data = RENDERERS.get(receiverID);
-        if (data != null && data.getPlayer().getGameProfile().getName().equals(playerName)) return data;
-        if (playerName.isEmpty()) return null;
-        return RENDERERS.compute(receiverID, (_u, _d) -> new HologramData(playerName));
+        if (data != null && data.getRenderName().equals(playerName)) return data;
+        return RENDERERS.compute(receiverID, (_u, d) -> d == null ?  new HologramData(playerName) : d.generateInformation(playerName));
     }
 
     @Override

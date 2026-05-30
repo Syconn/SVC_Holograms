@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
+import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -54,7 +55,7 @@ public class HologramRenderer extends PlayerRenderer {
 
     @Override
     protected @Nullable RenderType getRenderType(AbstractClientPlayer livingEntity, boolean bodyVisible, boolean translucent, boolean glowing) {
-        return RenderType.entityTranslucent(this.data.getSkin());
+        return RenderType.entityTranslucent(this.data.getSkin() == null ? DefaultPlayerSkin.getDefaultSkin() : this.data.getSkin());
 //        return this.data.isItem() ? RenderType.itemEntityTranslucentCull(this.getTextureLocation(livingEntity)) : RenderType.entityTranslucentCull(this.getTextureLocation(livingEntity));
     }
 

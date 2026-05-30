@@ -2,7 +2,6 @@ package mod.syconn.svc.utils.client;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
-import dev.architectury.utils.GameInstance;
 import mod.syconn.svc.client.render.entity.HologramRenderer;
 import mod.syconn.svc.utils.Constants;
 import mod.syconn.svc.utils.generic.AnimationUtil;
@@ -12,7 +11,6 @@ import mod.syconn.svc.utils.generic.ResourceUtil;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.resources.DefaultPlayerSkin;
@@ -21,18 +19,17 @@ import net.minecraft.util.FastColor;
 import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.UUID;
-
 import static mod.syconn.svc.utils.generic.ResourceUtil.getPlayerInfoFromName;
 
 @Environment(EnvType.CLIENT)
 public class HologramData {
 
     public static final byte TRANSITION_TICKS = 16;
-    private final AbstractClientPlayer player;
-    private final boolean item;
-    private final boolean staticRender;
-    private final int textureHeight = 64;
+    private AbstractClientPlayer player;
+    private String renderName = "";
+    private boolean item;
+    private boolean staticRender;
+    private int textureHeight = 64;
     private HologramRenderer renderer;
     private ResourceLocation skin;
     private ResourceLocation skinPath;
@@ -62,9 +59,19 @@ public class HologramData {
 //    }
 
     public HologramData(String name) {
+        generateInformation(name);
+    }
+
+    public HologramData generateInformation(String name) {
+        if (name.isEmpty()) {
+            endCall(this::onEnd);
+            return this;
+        };
+
         final var level = Minecraft.getInstance().level;
         final var playerInfo = getPlayerInfoFromName(name);
 
+        this.renderName = name;
         this.staticRender = true;
         this.item = false;
         this.renderer = new HologramRenderer(this, ResourceUtil.getModel(name));
@@ -74,6 +81,7 @@ public class HologramData {
         this.transition = TRANSITION_TICKS;
 
         SkullBlockEntity.updateGameprofile(new GameProfile(null, name), this::loadSkinAsync);
+        return this;
     }
 
     private void loadSkinAsync(GameProfile profile) {
@@ -86,13 +94,19 @@ public class HologramData {
         this.skin = texture.map(dynamicTexture -> ResourceUtil.registerOrGet(profile.getName(), dynamicTexture)).orElse(this.skinPath);
     }
 
-    private PlayerInfo getPlayerInfo(UUID uuid) {
-        final var player = GameInstance.getClient().player;
-        if (player == null || player.connection.getPlayerInfo(uuid) == null) return new PlayerInfo(new GameProfile(uuid, "Offline-Player"), false);
-        return player.connection.getPlayerInfo(uuid);
+    private void onEnd() {
+        System.out.println("TEST");
+
+        this.player = null;
+        this.renderer = null;
+        this.skinPath = null;
+        this.skin = null;
+        this.renderName = "";
     }
 
     public void tick() {
+        if (!this.activeRender()) return;
+
         tickWait++;
         if (tickWait < 4) return;
         tickWait = 0;
@@ -173,8 +187,16 @@ public class HologramData {
         return Constants.RANDOM.nextInt(55) != 0;
     }
 
+    public boolean activeRender() {
+        return this.player != null;
+    }
+
     public boolean isItem() {
         return item;
+    }
+
+    public String getRenderName() {
+        return renderName;
     }
 
     public HologramRenderer getRenderer() {

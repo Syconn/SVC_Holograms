@@ -71,7 +71,9 @@ public class ResourceUtil {
     }
 
     public static PlayerInfo getPlayerInfoFromName(String name) {
-        return PLAYER_INFO.computeIfAbsent(name, (n) -> new PlayerInfo(new GameProfile(untrimUUID(convertUsernameToUUID(n)), StringUtils.capitalize(n)), false));
+        var uuid = getUUID(name);
+        if (uuid.isEmpty()) return PLAYER_INFO.computeIfAbsent(name, (n) -> new PlayerInfo(new GameProfile(UUID.randomUUID(), StringUtils.capitalize(n)), false));
+        return PLAYER_INFO.computeIfAbsent(name, (n) -> new PlayerInfo(new GameProfile(untrimUUID(uuid), StringUtils.capitalize(n)), false));
     }
 
     public static boolean getModel(String name) {
@@ -118,7 +120,8 @@ public class ResourceUtil {
             CloseableHttpResponse response = client.execute(request);
             HttpEntity entity = response.getEntity();
             JsonObject jsonObject = (JsonObject) JsonParser.parseString(EntityUtils.toString(entity));
-            return jsonObject.get("id").getAsString();
+            if (jsonObject.has("id")) return jsonObject.get("id").getAsString();
+            return "";
         } catch (IOException e) {
             return "";
         }
