@@ -9,6 +9,7 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,19 +35,19 @@ public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<Hol
                 poseStack.popPose();
             }
         } else {
-            blockEntity.getRenderables().forEach(uuid -> this.createMultiplayerRenderer(blockEntity.getReceiverUUID(), uuid));
+            blockEntity.getRenderables().forEach((uuid, pos) -> this.createMultiplayerRenderer(blockEntity.getReceiverUUID(), uuid, pos));
 
             for (var entry : getMulitplayerMap(blockEntity.getReceiverUUID()).entrySet()) {
                 var multiRender = this.getMultiplayerRenderer(blockEntity.getReceiverUUID(), entry.getKey());
                 if (multiRender.activeRender()) {
                     poseStack.pushPose();
-                    poseStack.translate(0.5f, 0.1f, 0.5f);
+                    poseStack.translate(0.5f, 0.5f, 0.5f);
                     poseStack.translate(multiRender.getInterpolatedPosition().x, multiRender.getInterpolatedPosition().y, multiRender.getInterpolatedPosition().z);
                     multiRender.getRenderer().render(poseStack, buffer, partialTick, LightTexture.FULL_BLOCK);
                     poseStack.popPose();
                 }
 
-                if (!blockEntity.getRenderables().contains(multiRender.getPlayerID())) multiRender.endCall();
+                if (!blockEntity.getRenderables().containsKey(multiRender.getPlayerID())) multiRender.endCall();
             }
         }
     }
@@ -58,11 +59,11 @@ public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<Hol
     }
 
     private HologramData getMultiplayerRenderer(UUID receiverID, UUID playerID) {
-        return MULI_RENDERER.computeIfAbsent(receiverID, u -> new HashMap<>()).computeIfAbsent(playerID, HologramData::new);
+        return MULI_RENDERER.computeIfAbsent(receiverID, u -> new HashMap<>()).get(playerID);
     }
 
-    private void createMultiplayerRenderer(UUID receiverID, UUID playerID) {
-        MULI_RENDERER.computeIfAbsent(receiverID, u -> new HashMap<>()).compute(playerID, (uuid, hologramData) -> hologramData == null ? new HologramData(uuid) : hologramData.setActiveRender(true));
+    private void createMultiplayerRenderer(UUID receiverID, UUID playerID, Vec3 pos) {
+        MULI_RENDERER.computeIfAbsent(receiverID, u -> new HashMap<>()).compute(playerID, (uuid, hologramData) -> hologramData == null ? new HologramData(uuid, pos) : hologramData.setActiveRender(true, pos));
     }
 
     private Map<UUID, HologramData> getMulitplayerMap(UUID receiverID) {
@@ -77,6 +78,6 @@ public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<Hol
     @Override
     public boolean shouldRenderOffScreen(HoloProjectorBlockEntity blockEntity) {
         if (GameInstance.getClient().getCameraEntity() == null) return false;
-        return shouldRender(blockEntity, GameInstance.getClient().getCameraEntity().getEyePosition()); // !blockEntity.getRenderables().isEmpty() && shouldRender(blockEntity, GameInstance.getClient().getCameraEntity().getEyePosition());
+        return !getMulitplayerMap(blockEntity.getReceiverUUID()).isEmpty() && shouldRender(blockEntity, GameInstance.getClient().getCameraEntity().getEyePosition());
     }
 }

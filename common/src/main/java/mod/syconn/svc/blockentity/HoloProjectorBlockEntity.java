@@ -13,13 +13,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class HoloProjectorBlockEntity extends SyncedBlockEntity {
 
-    private List<UUID> renderables = new ArrayList<>();
+    private Map<UUID, Vec3> renderables = new HashMap<>();
     private String soloRender = "";
     private double rotation = 0;
     private UUID receiverUUID;
@@ -35,7 +33,8 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
             final var inflate = 3.5;
 
             if (callData != null) {
-                blockEntity.renderables = level.getEntitiesOfClass(Player.class, new AABB(pos).move(0, 1, 0).inflate(inflate)).stream().map(Entity::getUUID).toList();
+                blockEntity.renderables.clear();
+                level.getEntitiesOfClass(Player.class, new AABB(pos).move(0, 1, 0).inflate(inflate)).forEach(player -> blockEntity.renderables.put(player.getUUID(), player.position().subtract(pos.getCenter())));
                 blockEntity.markDirty();
             }
 
@@ -71,7 +70,7 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
         }
     }
 
-    public List<UUID> getRenderables() {
+    public Map<UUID, Vec3> getRenderables() {
         return renderables;
     }
 
@@ -108,7 +107,7 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
         this.receiverUUID = NBTUtil.getNullable(tag.getCompound("receiverUUID"), NBTUtil::getUUID);
         this.soloRender = NBTUtil.getNullable(tag.getCompound("soloRender"), t -> t.getString(""));
         this.rotation = tag.getDouble("rotation");
-        if (tag.contains("renderables")) this.renderables = NBTUtil.getList(tag.getCompound("renderables"), NBTUtil::getUUID);
+        if (tag.contains("renderables")) this.renderables = NBTUtil.getMap(tag.getCompound("renderables"), NBTUtil::getUUID, NBTUtil::getVec3);
     }
 
     @Override
@@ -121,6 +120,6 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
     @Override
     protected void saveSyncData(CompoundTag tag) {
         this.saveAdditional(tag);
-        tag.put("renderables", NBTUtil.putList(this.renderables, NBTUtil::putUUID));
+        tag.put("renderables", NBTUtil.putMap(this.renderables, NBTUtil::putUUID, NBTUtil::putVec3));
     }
 }

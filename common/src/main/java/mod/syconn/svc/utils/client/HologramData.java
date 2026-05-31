@@ -30,7 +30,7 @@ public class HologramData {
 
     public static final byte TRANSITION_TICKS = 16;
     private final int textureHeight = 64;
-    private final long lastUpdateTime = System.currentTimeMillis();
+    private long lastUpdateTime = System.currentTimeMillis();
     private boolean activeRender;
     private AbstractClientPlayer player;
     private String renderName = "";
@@ -49,22 +49,22 @@ public class HologramData {
     private int scanBar1 = 0;
     private int scanBar2 = 16;
 
-    public HologramData(UUID uuid) {
+    public HologramData(UUID uuid, Vec3 currentPosition) {
         final var minecraft = Minecraft.getInstance();
         final var playerInfo = getPlayerInfo(uuid);
         this.skinPath = playerInfo.getSkinLocation();
-        final var clientPlayer = item ? null : minecraft.level.getPlayerByUUID(playerInfo.getProfile().getId());
+        final var clientPlayer = item || minecraft.level == null ? null : minecraft.level.getPlayerByUUID(playerInfo.getProfile().getId());
         final var texture = ResourceUtil.loadSkin(this.skinPath).map(DynamicTexture::new);
         texture.ifPresent(dynamicTexture -> ResourceUtil.modifyTexture(dynamicTexture, this::getPixelColor));
 
 //        this.item = item;
-//        this.currentPosition = currentPosition;
-//        this.previousPosition = currentPosition;
+        this.currentPosition = currentPosition;
+        this.previousPosition = currentPosition;
         this.activeRender = true;
         this.playerID = uuid;
         this.renderName = playerInfo.getProfile().getName();
         this.renderer = new HologramRenderer(this, playerInfo.getModelName().equals("slim"));
-        this.player = clientPlayer != null ? (AbstractClientPlayer) clientPlayer : new AbstractClientPlayer(minecraft.level, playerInfo.getProfile()) {};
+        this.player = clientPlayer != null || minecraft.level == null ? (AbstractClientPlayer) clientPlayer : new AbstractClientPlayer(minecraft.level, playerInfo.getProfile()) {};
         this.skin = texture.map(dynamicTexture -> ResourceUtil.registerOrGet(playerInfo.getProfile().getName(), dynamicTexture)).orElse(this.skinPath);
         this.transition = TRANSITION_TICKS;
     }
@@ -182,32 +182,25 @@ public class HologramData {
         }
     }
 
-//    public HologramData setPosition(Vec3 position) {
-//        if (!position.equals(this.currentPosition)) {
-//            this.previousPosition = this.getInterpolatedPosition();
-//            this.currentPosition = position;
-//            this.lastUpdateTime = System.currentTimeMillis();
-//        }
-//        return this;
-//    }
-
-    public Vec3 getCurrentPosition() {
-        return currentPosition == null ? new Vec3(0, 0, 0) : currentPosition;
+    public HologramData setPosition(Vec3 position) {
+        if (!position.equals(this.currentPosition)) {
+            this.previousPosition = this.getInterpolatedPosition();
+            this.currentPosition = position;
+            this.lastUpdateTime = System.currentTimeMillis();
+        }
+        return this;
     }
 
     public Vec3 getInterpolatedPosition() {
         return previousPosition == null ? new Vec3(0, 0, 0) : previousPosition.lerp(currentPosition, Math.min(1.0, (System.currentTimeMillis() - lastUpdateTime) / 100.0));
     }
 
-    public int getTransition() {
-        return transition;
-    }
-
     private boolean scanBar(int y) {
         return this.scanBar1 == y || MathUtil.wrap(this.scanBar1 - 32, this.textureHeight) == y || this.scanBar2 == y || MathUtil.wrap(this.scanBar2 - 32, this.textureHeight) == y;
     }
 
-    public HologramData setActiveRender(boolean activeRender) {
+    public HologramData setActiveRender(boolean activeRender, Vec3 pos) {
+        this.setPosition(pos);
         if (this.activeRender == activeRender) return this;
         this.activeRender = activeRender;
         if (this.activeRender) this.transition = TRANSITION_TICKS;
