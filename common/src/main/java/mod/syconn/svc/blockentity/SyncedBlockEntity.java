@@ -17,8 +17,12 @@ public abstract class SyncedBlockEntity extends BlockEntity {
     @Override
     @NotNull
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
+        CompoundTag compoundTag = new CompoundTag();
+        this.saveSyncData(compoundTag);
+        return compoundTag;
     }
+
+    protected abstract void saveSyncData(CompoundTag tag);
 
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {

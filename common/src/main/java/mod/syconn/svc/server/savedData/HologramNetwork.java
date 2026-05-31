@@ -74,10 +74,6 @@ public class HologramNetwork extends SavedData {
         super.setDirty();
     }
 
-    public void serverTick(ServerLevel level) { // TODO may not be needed anymore
-
-    }
-
     @Override
     public @NotNull CompoundTag save(CompoundTag compoundTag) {
         compoundTag.put("manager", manager.save());

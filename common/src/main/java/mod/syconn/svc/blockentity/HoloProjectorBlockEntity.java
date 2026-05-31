@@ -1,29 +1,44 @@
 package mod.syconn.svc.blockentity;
 
 import mod.syconn.svc.core.ModBlockEntities;
+import mod.syconn.svc.server.savedData.HologramNetwork;
 import mod.syconn.svc.utils.generic.NBTUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class HoloProjectorBlockEntity extends SyncedBlockEntity {
 
+    private List<UUID> renderables = new ArrayList<>();
     private String soloRender = "";
     private double rotation = 0;
-    public UUID receiverUUID;
+    private UUID receiverUUID;
 
     public HoloProjectorBlockEntity(BlockPos pWorldPosition, BlockState pBlockState) {
         super(ModBlockEntities.HOLO_PROJECTOR.get(), pWorldPosition, pBlockState);
     }
 
     public static void tick(Level level, BlockPos pos, BlockState state, HoloProjectorBlockEntity blockEntity) {
-//        if (level instanceof ServerLevel serverLevel && blockEntity.receiverUUID != null) {
-//            var network = HologramNetwork.get(serverLevel);
-//            var networkData = network.getCallForBlock(blockEntity.receiverUUID);
+        if (level instanceof ServerLevel serverLevel && blockEntity.receiverUUID != null) {
+            final var network = HologramNetwork.get(serverLevel);
+            final var callData = network.getCallForBlock(blockEntity.receiverUUID);
+            final var inflate = 3.5;
+
+            if (callData != null) {
+                blockEntity.renderables = level.getEntitiesOfClass(Player.class, new AABB(pos).move(0, 1, 0).inflate(inflate)).stream().map(Entity::getUUID).toList();
+                blockEntity.markDirty();
+            }
+
 //            var handheld = network.getHandheldPlayer(blockEntity.callId);
 //            if (networkData != null && !networkData.isEmpty() || handheld.isPresent()) {
 //                if (networkData != null && !networkData.isEmpty()) {
@@ -53,7 +68,11 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
 //                blockEntity.callId = null;
 //                blockEntity.markDirty();
 //            }
-//        }
+        }
+    }
+
+    public List<UUID> getRenderables() {
+        return renderables;
     }
 
     public void setSoloRender(String soloRender, Vec3 pos) {
@@ -65,6 +84,15 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
         this.rotation = Math.toDegrees(Math.atan2(-dx, dz));
 
         this.markDirty();
+    }
+
+    public void setReceiverUUID(UUID receiverUUID) {
+        this.receiverUUID = receiverUUID;
+        this.markDirty();
+    }
+
+    public UUID getReceiverUUID() {
+        return receiverUUID;
     }
 
     public String getSoloRender() {
@@ -80,6 +108,7 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
         this.receiverUUID = NBTUtil.getNullable(tag.getCompound("receiverUUID"), NBTUtil::getUUID);
         this.soloRender = NBTUtil.getNullable(tag.getCompound("soloRender"), t -> t.getString(""));
         this.rotation = tag.getDouble("rotation");
+        if (tag.contains("renderables")) this.renderables = NBTUtil.getList(tag.getCompound("renderables"), NBTUtil::getUUID);
     }
 
     @Override
@@ -87,5 +116,11 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
         tag.put("receiverUUID", NBTUtil.putNullable(this.receiverUUID, NBTUtil::putUUID));
         tag.put("soloRender", NBTUtil.putNullable(this.soloRender, s -> NBTUtil.convert(t -> t.putString("", s))));
         tag.putDouble("rotation", this.rotation);
+    }
+
+    @Override
+    protected void saveSyncData(CompoundTag tag) {
+        this.saveAdditional(tag);
+        tag.put("renderables", NBTUtil.putList(this.renderables, NBTUtil::putUUID));
     }
 }

@@ -14,14 +14,9 @@ import net.minecraft.world.level.Level;
 public class SVCServer {
 
     public static void init() {
-        TickEvent.SERVER_PRE.register(SVCServer::serverTick);
         PlayerEvent.PLAYER_QUIT.register(SVCServer::playerLeftServer);
         PlayerEvent.PLAYER_JOIN.register(SVCServer::playerJoinedServer);
         PlayerEvent.CHANGE_DIMENSION.register(SVCServer::playerChangedDimension);
-    }
-
-    public static void serverTick(MinecraftServer server){
-        HologramNetwork.get(server.overworld()).serverTick(server.overworld());
     }
 
     public static void playerLeftServer(ServerPlayer player) {

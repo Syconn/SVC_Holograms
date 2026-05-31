@@ -68,15 +68,15 @@ public class HoloProjectorBlock extends FaceAttachedHorizontalDirectionalBlock i
     @Override
     public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
         if (level instanceof ServerLevel sl && level.getBlockEntity(pos) instanceof HoloProjectorBlockEntity be) {
-            if (be.receiverUUID == null) be.receiverUUID = UUID.randomUUID();
-            HologramNetwork.get(sl).registerReceiver(be.receiverUUID, new WorldPos(level.dimension(), pos));
+            if (be.getReceiverUUID() == null) be.setReceiverUUID(UUID.randomUUID());
+            HologramNetwork.get(sl).registerReceiver(be.getReceiverUUID(), new WorldPos(level.dimension(), pos));
         }
         super.onPlace(state, level, pos, oldState, movedByPiston);
     }
 
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (level instanceof ServerLevel sl && level.getBlockEntity(pos) instanceof HoloProjectorBlockEntity be) HologramNetwork.get(sl).unregisterReceiver(be.receiverUUID);
+        if (level instanceof ServerLevel sl && level.getBlockEntity(pos) instanceof HoloProjectorBlockEntity be) HologramNetwork.get(sl).unregisterReceiver(be.getReceiverUUID());
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
