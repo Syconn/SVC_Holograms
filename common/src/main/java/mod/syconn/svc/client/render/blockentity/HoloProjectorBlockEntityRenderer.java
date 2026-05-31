@@ -22,7 +22,7 @@ public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<Hol
     public HoloProjectorBlockEntityRenderer(BlockEntityRendererProvider.Context context) {}
 
     @Override
-    public void render(HoloProjectorBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) { // TODO ADD END CALL EFFECT
+    public void render(HoloProjectorBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         if (!blockEntity.getSoloRender().isEmpty()) {
             var soloRenderer = this.getSoloRenderer(blockEntity.getReceiverUUID(), blockEntity.getSoloRender());
             if (soloRenderer.activeRender()) {
@@ -34,11 +34,11 @@ public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<Hol
                 poseStack.popPose();
             }
         } else {
-            blockEntity.getRenderables().forEach(uuid -> this.getMultiplayerRenderer(blockEntity.getReceiverUUID(), uuid, true));
+            blockEntity.getRenderables().forEach(uuid -> this.createMultiplayerRenderer(blockEntity.getReceiverUUID(), uuid));
 
             for (var entry : getMulitplayerMap(blockEntity.getReceiverUUID()).entrySet()) {
                 var multiRender = this.getMultiplayerRenderer(blockEntity.getReceiverUUID(), entry.getKey());
-                if (multiRender.activeRender()) { // && blockEntity.getRenderables().contains(multiRender.getPlayerID())
+                if (multiRender.activeRender()) {
                     poseStack.pushPose();
                     poseStack.translate(0.5f, 0.1f, 0.5f);
                     poseStack.translate(multiRender.getInterpolatedPosition().x, multiRender.getInterpolatedPosition().y, multiRender.getInterpolatedPosition().z);
@@ -48,36 +48,7 @@ public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<Hol
 
                 if (!blockEntity.getRenderables().contains(multiRender.getPlayerID())) multiRender.endCall();
             }
-
-//            var multiRender = this.getMultiplayerRenderer(blockEntity.getReceiverUUID(), renderable);
-//            if (multiRender.activeRender()) {
-//                poseStack.pushPose();
-//                poseStack.translate(0.5f, 0.1f, 0.5f);
-//                poseStack.translate(multiRender.getInterpolatedPosition().x, multiRender.getInterpolatedPosition().y, multiRender.getInterpolatedPosition().z);
-//                multiRender.getRenderer().render(poseStack, buffer, partialTick, LightTexture.FULL_BLOCK);
-//                poseStack.popPose();
-//            }
-
-//            for (var renderable : blockEntity.getRenderables()) {
-//
-//            }
         }
-
-//        for (var removed : blockEntity.getDeletions().entrySet()) { // TODO CONCURRENT
-//            poseStack.pushPose();
-//
-//            var data = RENDERERS.get(removed.getKey());
-//            if (data != null) {
-//                poseStack.translate(data.getInterpolatedPosition().x, data.getInterpolatedPosition().y, data.getInterpolatedPosition().z);
-//                data.getRenderer().render(poseStack, buffer, partialTick, LightTexture.FULL_BLOCK);
-//                data.endCall(() -> {
-//                    blockEntity.removeDeletion(removed.getKey());
-//                    this.RENDERERS.remove(removed.getKey());
-//                });
-//            }
-//
-//            poseStack.popPose();
-//        }
     }
 
     private HologramData getSoloRenderer(UUID receiverID, String playerName) {
@@ -90,8 +61,8 @@ public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<Hol
         return MULI_RENDERER.computeIfAbsent(receiverID, u -> new HashMap<>()).computeIfAbsent(playerID, HologramData::new);
     }
 
-    private HologramData getMultiplayerRenderer(UUID receiverID, UUID playerID, boolean render) {
-        return MULI_RENDERER.computeIfAbsent(receiverID, u -> new HashMap<>()).compute(playerID, (uuid, hologramData) -> hologramData == null ? new HologramData(uuid) : hologramData.setActiveRender(render));
+    private void createMultiplayerRenderer(UUID receiverID, UUID playerID) {
+        MULI_RENDERER.computeIfAbsent(receiverID, u -> new HashMap<>()).compute(playerID, (uuid, hologramData) -> hologramData == null ? new HologramData(uuid) : hologramData.setActiveRender(true));
     }
 
     private Map<UUID, HologramData> getMulitplayerMap(UUID receiverID) {

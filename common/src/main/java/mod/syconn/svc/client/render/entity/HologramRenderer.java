@@ -127,17 +127,14 @@ public class HologramRenderer extends PlayerRenderer {
         var bl = this.isBodyVisible(entity);
         var bl2 = !bl && !entity.isInvisibleTo(minecraft.player);
         var bl3 = minecraft.shouldEntityAppearGlowing(entity);
-        RenderType renderType = this.getRenderType(entity, bl, bl2, bl3);
+        var renderType = this.getRenderType(entity, bl, bl2, bl3);
         if (renderType != null) {
-            VertexConsumer vertexConsumer = buffer.getBuffer(renderType);
+            var vertexConsumer = buffer.getBuffer(renderType);
             int m = getOverlayCoords(entity, this.getWhiteOverlayProgress(entity, partialTicks));
             this.model.renderToBuffer(poseStack, vertexConsumer, packedLight, m, 1.0F, 1.0F, 1.0F, bl2 ? 0.15F : 1.0F);
         }
 
-        if (!entity.isSpectator()) {
-            for (var renderLayer : this.layers) renderLayer.render(poseStack, buffer, packedLight, entity, l, k, partialTicks, ix, h, j);
-        }
-
+        if (!entity.isSpectator()) for (var renderLayer : this.layers) renderLayer.render(poseStack, buffer, packedLight, entity, l, k, partialTicks, ix, h, j);
         poseStack.popPose();
         super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
     }
