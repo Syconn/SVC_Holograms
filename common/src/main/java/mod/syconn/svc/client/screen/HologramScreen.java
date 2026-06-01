@@ -33,7 +33,6 @@ public class HologramScreen extends Screen {
     private final @Nullable BlockPos holoPos;
     private final @Nullable ItemStack stack;
     private boolean singleplayer;
-    private ExpandedButton[] buttons = new ExpandedButton[3];
     private Page page = Page.CREATE_CALL;
     private String lastSearch = "";
     private CallMenuWidget callData;
@@ -61,7 +60,7 @@ public class HologramScreen extends Screen {
     }
 
     @Override
-    protected void init() { // TODO SOUND PLAYS BEFORE PROJECTOR ENDS ALSO LOWKEY ANOYINGLY LOUD
+    protected void init() { // TODO SOUND PLAYS BEFORE PROJECTOR ENDS ALSO LOW KEY ANNOYINGLY LOUD
         this.singleplayer = Minecraft.getInstance().isSingleplayer();
         var leftPos = (this.width - 236) / 2;
         var buttonSize = 231 / 3 - 9;
@@ -74,9 +73,9 @@ public class HologramScreen extends Screen {
         this.searchButton = this.addRenderableWidget(new SearchButton(newMargin + 212, 78, "Search For Player", (b) -> this.callData.searchForPlayer()));
 
         this.lockButton = this.addRenderableWidget(new LockButton(this.marginX() + 215, 90, LockButton.Type.LOCK));
-        this.buttons[0] = this.addRenderableWidget(new ExpandedButton(leftPos + 10, 51, buttonSize, 20, Component.literal("Create Call"), button -> this.showPage(Page.CREATE_CALL)));
-        this.buttons[1] = this.addRenderableWidget(new ExpandedButton(leftPos + 86, 51, buttonSize, 20, Component.literal("Display"), button -> this.showPage(Page.DISPLAY)));
-        this.buttons[2] = this.addRenderableWidget(new ExpandedButton(leftPos + 162, 51, buttonSize, 20, Component.literal("Join Call"), button -> this.showPage(Page.JOIN_CALL)));
+        this.addRenderableWidget(new ExpandedButton(leftPos + 10, 51, buttonSize, 20, Component.literal("Create Call"), button -> this.showPage(Page.CREATE_CALL)));
+        this.addRenderableWidget(new ExpandedButton(leftPos + 86, 51, buttonSize, 20, Component.literal("Display"), button -> this.showPage(Page.DISPLAY)));
+        this.addRenderableWidget(new ExpandedButton(leftPos + 162, 51, buttonSize, 20, Component.literal("Join Call"), button -> this.showPage(Page.JOIN_CALL)));
         this.addRenderableWidget(new RefreshButton(newMargin + 11, 90, this.callData::refresh));
 
         this.pageTitle = Component.literal("Create Call");
@@ -201,7 +200,8 @@ public class HologramScreen extends Screen {
 
     public @Nullable CallData.Callee getCaller() {
 //        var uuid = this.stack == null ? null : HologramData.HologramTag.getOrCreate(this.stack).itemId; TODO SOME SORT OF HANDHELD BS
-        if (this.minecraft == null || this.minecraft.player == null || this.minecraft.level == null || this.minecraft.level.getBlockEntity(holoPos, ModBlockEntities.HOLO_PROJECTOR.get()).isEmpty()) return null;
+        if (this.minecraft == null || this.minecraft.player == null || this.minecraft.level == null || this.holoPos == null || this.minecraft.level.getBlockEntity(holoPos, ModBlockEntities.HOLO_PROJECTOR.get()).isEmpty())
+            return new CallData.Callee(UUID.randomUUID());
         return new CallData.Callee(this.minecraft.player.getUUID(), true, CallData.ReceiverType.BLOCK, this.minecraft.level.getBlockEntity(holoPos, ModBlockEntities.HOLO_PROJECTOR.get()).get().getReceiverUUID());
     }
 

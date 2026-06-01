@@ -55,7 +55,7 @@ public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<Hol
     private HologramData getSoloRenderer(UUID receiverID, String playerName) {
         var data = SOLO_RENDERER.get(receiverID);
         if (data != null && data.getRenderName().equals(playerName)) return data;
-        return SOLO_RENDERER.compute(receiverID, (_u, d) -> d == null ?  new HologramData(playerName) : d.generateInformationByName(playerName));
+        return SOLO_RENDERER.compute(receiverID, (_u, d) -> d == null ? new HologramData(playerName) : d.generateInformationByName(playerName));
     }
 
     private HologramData getMultiplayerRenderer(UUID receiverID, UUID playerID) {

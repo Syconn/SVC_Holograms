@@ -235,49 +235,4 @@ public class HologramData {
     public ResourceLocation getSkin() {
         return skin;
     }
-
-//    public static class HologramTag {
-//
-//        private static final String ID = "hologramData";
-//
-//        public final UUID itemId;
-//        public UUID uuid;
-//
-//        public HologramTag(@Nullable UUID uuid) {
-//            this.uuid = uuid;
-//            this.itemId = UUID.randomUUID();
-//        }
-//
-//        public HologramTag(CompoundTag tag) {
-//            this.uuid = tag.hasUUID("uuid") ? tag.getUUID("uuid") : null;
-//            this.itemId = tag.hasUUID("id") ? tag.getUUID("id") : UUID.randomUUID();
-//        }
-//
-//        private CompoundTag save() {
-//            var tag = new CompoundTag();
-//            if (this.uuid != null) tag.putUUID("uuid", this.uuid);
-//            tag.putUUID("id", this.itemId);
-//            return tag;
-//        }
-//
-//        public static HologramTag getOrCreate(ItemStack stack) {
-//            var tag = !stack.getOrCreateTag().contains(ID) ? create() : new HologramTag(stack.getOrCreateTag().getCompound(ID));
-//            tag.change(stack);
-//            return tag;
-//        }
-//
-//        public static void update(ItemStack stack, UUID uuid) {
-//            var holo = getOrCreate(stack);
-//            holo.uuid = uuid;
-//            holo.change(stack);
-//        }
-//
-//        private static HologramTag create() {
-//            return new HologramTag((UUID) null);
-//        }
-//
-//        public void change(ItemStack stack) {
-//            stack.getOrCreateTag().put(ID, save());
-//        }
-//    }
 }

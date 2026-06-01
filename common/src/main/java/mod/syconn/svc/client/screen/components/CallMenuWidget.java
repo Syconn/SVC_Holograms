@@ -1,13 +1,10 @@
 package mod.syconn.svc.client.screen.components;
 
-import dev.architectury.utils.GameInstance;
 import mod.syconn.svc.blockentity.HoloProjectorBlockEntity;
 import mod.syconn.svc.client.screen.HologramScreen;
 import mod.syconn.svc.client.screen.components.buttons.CallButton;
 import mod.syconn.svc.client.screen.components.buttons.CheckButton;
-import mod.syconn.svc.client.screen.components.buttons.LockButton;
 import mod.syconn.svc.client.screen.components.buttons.ToggleButton;
-import mod.syconn.svc.core.ModBlockEntities;
 import mod.syconn.svc.network.Network;
 import mod.syconn.svc.network.packets.server.HoloCallPacket;
 import mod.syconn.svc.network.packets.server.RenderHoloPlayerPacket;
@@ -17,6 +14,7 @@ import mod.syconn.svc.utils.generic.ColorUtil;
 import mod.syconn.svc.utils.generic.GraphicsUtil;
 import mod.syconn.svc.utils.generic.ResourceUtil;
 import mod.syconn.svc.utils.interfaces.IWidgetComponent;
+import mod.syconn.svc.utils.item.HologramTag;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -25,13 +23,13 @@ import net.minecraft.client.gui.components.PlayerFaceRenderer;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.locks.Lock;
 import java.util.function.Function;
 
 public class CallMenuWidget implements IWidgetComponent {
@@ -48,7 +46,6 @@ public class CallMenuWidget implements IWidgetComponent {
     private final CallButton[] callButtons = new CallButton[6];
     private final CheckButton[] checkButtons = new CheckButton[6];
     private final Minecraft minecraft = Minecraft.getInstance();
-    private final int color = ColorUtil.packArgb(74, 74, 74, 255);
     private final int height = 32;
     private final HologramScreen screen;
     private final int x, y;
@@ -115,11 +112,10 @@ public class CallMenuWidget implements IWidgetComponent {
 
     private void checkButton(CheckButton button, int i) {
         var name = this.shownSearchedPlayer.get(this.scroll + i).info.getProfile().getName();
-        if (this.screen.getHoloPos() != null) Network.CHANNEL.sendToServer(new RenderHoloPlayerPacket(this.screen.getHoloPos(), button.getType() == CheckButton.Type.CHECK ? name : ""));
-        if (this.screen.getHoloPos() != null && GameInstance.getClient().level != null && GameInstance.getClient().level.getBlockEntity(this.screen.getHoloPos()) instanceof HoloProjectorBlockEntity be) {
-            var caller = this.screen.getCaller();
-            if (caller != null) Network.CHANNEL.sendToServer(new HoloCallPacket(HoloCallPacket.Type.LEAVE, UUID.randomUUID(), false, true, this.screen.getHoloPos(), List.of(caller)));
-        }
+        var caller = this.screen.getCaller();
+        var pos = this.screen.getHoloPos() == null ? new BlockPos(0, 0, 0) : this.screen.getHoloPos();
+        if (caller != null) Network.CHANNEL.sendToServer(new HoloCallPacket(HoloCallPacket.Type.LEAVE, UUID.randomUUID(), false, true, pos, List.of(caller)));
+        Network.CHANNEL.sendToServer(new RenderHoloPlayerPacket(pos, this.screen.getHoloPos() == null, button.getType() == CheckButton.Type.CHECK ? name : ""));
         Minecraft.getInstance().setScreen(null);
     }
 
@@ -182,8 +178,7 @@ public class CallMenuWidget implements IWidgetComponent {
             }
         } else {
             for (int i = scroll; i < Math.min(scroll + 3, this.shownSearchedPlayer.size()); i++) {
-                this.checkButtons[i - scroll].visible = Minecraft.getInstance().level != null && Minecraft.getInstance().level.getBlockEntity(this.screen.getHoloPos()) instanceof HoloProjectorBlockEntity be &&
-                        be.getSoloRender().equals(this.shownSearchedPlayer.get(i - scroll).info.getProfile().getName());
+                this.checkButtons[i - scroll].visible = Minecraft.getInstance().level != null && getSoloRenderName().equals(this.shownSearchedPlayer.get(i - scroll).info.getProfile().getName());
                 this.checkButtons[i + 3 - scroll].visible = true;
             }
         }
@@ -226,7 +221,7 @@ public class CallMenuWidget implements IWidgetComponent {
                 var minY = y + this.height * (i - this.scroll);
                 var name = me ? mePrefix : (info.getProfile().getName() + suffix);
 
-                GraphicsUtil.fillRect(graphics, this.x, minY, width, this.height, this.color);
+                GraphicsUtil.fillRect(graphics, this.x, minY, width, this.height, ColorUtil.packArgb(74, 74, 74, 255));
                 PlayerFaceRenderer.draw(graphics, info.getSkinLocation(), this.x + 4, minY + 4, 24);
                 graphics.drawString(this.minecraft.font, Component.literal(name).withStyle(ChatFormatting.BOLD).withStyle(me ? ChatFormatting.GOLD : ChatFormatting.WHITE), this.x + 34, minY + 12 + offset, -1);
             }
@@ -261,6 +256,11 @@ public class CallMenuWidget implements IWidgetComponent {
     public void refresh() {
         this.refreshPlayerList();
         this.search(this.lastSearch);
+    }
+
+    private String getSoloRenderName() {
+        if (this.screen.getHoloPos() != null && Minecraft.getInstance().level != null && Minecraft.getInstance().level.getBlockEntity(this.screen.getHoloPos()) instanceof HoloProjectorBlockEntity be) return be.getSoloRender();
+        return this.screen.getStack() != null ? HologramTag.getOrCreate(this.screen.getStack()).getSoloRender() : "";
     }
 
     @Override

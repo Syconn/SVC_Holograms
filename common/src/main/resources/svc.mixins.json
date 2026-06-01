@@ -6,6 +6,7 @@
   "client": [
     "client.HttpTextureMixin",
     "client.ItemRendererInvoker",
+    "client.ItemRendererMixin",
     "client.LevelRendererMixin",
     "client.MinecraftAccessor"
   ],
