@@ -9,6 +9,7 @@ import mod.syconn.svc.utils.generic.NBTUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
@@ -78,13 +79,23 @@ public class CallData {
         }
     }
 
-    public static class Call { // callers: <playerUUID, Callee>
+    public static class Call {
+        public Map<UUID, Vec3> renderMembers;
         public UUID callID;
         public UUID owner;
         public boolean secure;
         public Map<UUID, Callee> callers;
 
         public Call(UUID callID, UUID owner, boolean secure, Map<UUID, Callee> callers) {
+            this.callID = callID;
+            this.owner = owner;
+            this.secure = secure;
+            this.callers = callers;
+            this.renderMembers = new HashMap<>();
+        }
+
+        public Call(UUID callID, UUID owner, boolean secure, Map<UUID, Callee> callers, Map<UUID, Vec3> renderMembers) {
+            this.renderMembers = renderMembers;
             this.callID = callID;
             this.owner = owner;
             this.secure = secure;
@@ -97,11 +108,13 @@ public class CallData {
             tag.put("owner", NBTUtil.putUUID(this.owner));
             tag.putBoolean("secure", this.secure);
             tag.put("callers", NBTUtil.putMap(this.callers, NBTUtil::putUUID, Callee::save));
+            tag.put("renderMembers", NBTUtil.putMap(this.renderMembers, NBTUtil::putUUID, NBTUtil::putVec3));
             return tag;
         }
 
         public static Call from(CompoundTag tag) {
-            return new Call(NBTUtil.getUUID(tag.getCompound("callID")), NBTUtil.getUUID(tag.getCompound("owner")), tag.getBoolean("secure"), NBTUtil.getMap(tag.getCompound("callers"), NBTUtil::getUUID, Callee::from));
+            return new Call(NBTUtil.getUUID(tag.getCompound("callID")), NBTUtil.getUUID(tag.getCompound("owner")), tag.getBoolean("secure"), NBTUtil.getMap(tag.getCompound("callers"), NBTUtil::getUUID, Callee::from),
+                    NBTUtil.getMap(tag.getCompound("renderMembers"), NBTUtil::getUUID, NBTUtil::getVec3));
         }
     }
 
@@ -114,8 +127,7 @@ public class CallData {
             if (members.size() <= 1) return;
 
             var owner = members.stream().filter(v -> v.owner).findFirst().orElse(null);
-            if (owner == null) { // TODO REMOVE LATER
-                System.out.println("Call Creation: Missing owner");
+            if (owner == null) {
                 owner = members.get(0);
                 owner.owner = true;
             }
@@ -123,7 +135,7 @@ public class CallData {
             Map<UUID, Callee> map = new HashMap<>();
             for (Callee c : members) {
                 map.put(c.playerUUID, c);
-                if (!c.owner) notifyPlayers(owner.playerUUID, c.playerUUID);
+                if (!c.owner) notifyCallInvite(owner.playerUUID, c.playerUUID);
             }
 
             var callId = UUID.randomUUID();
@@ -143,6 +155,7 @@ public class CallData {
             if (call.secure && !call.callers.containsKey(callee.playerUUID)) return;
 
             call.callers.put(callee.playerUUID, callee);
+            notifyJoinedCall(call.owner, callee.playerUUID);
             if (callee.type == ReceiverType.BLOCK) {
                 this.BLOCK_RECEIVERS.computeIfPresent(callee.receiverID, (id, rec) -> {
                     rec.callID = callID;
@@ -183,6 +196,11 @@ public class CallData {
             }
         }
 
+        public void addNewRenderMember(UUID callID, UUID playerID, Vec3 pos) {
+            var call = this.CALLS.get(callID);
+            if (call != null) call.renderMembers.put(playerID, pos);
+        }
+
         public void registerReceiver(UUID blockID, WorldPos pos) {
             this.BLOCK_RECEIVERS.put(blockID, new BlockReceiver(blockID, pos, null));
         }
@@ -199,8 +217,12 @@ public class CallData {
             call.callers.entrySet().removeIf(entry -> receiver.blockID.equals(entry.getValue().receiverID));
         }
 
-        public CallData.BlockReceiver getCallForBlock(UUID receiverID) {
+        public CallData.BlockReceiver getBlockReceiver(UUID receiverID) {
             return this.BLOCK_RECEIVERS.get(receiverID);
+        }
+
+        public Call getCall(UUID callID) {
+            return this.CALLS.get(callID);
         }
 
         public List<CallData.Call> getCallsForPlayer(UUID playerID) {
@@ -232,11 +254,19 @@ public class CallData {
             this.BLOCK_RECEIVERS.forEach((uuid, receiver) -> { if (receiver.callID != null && !this.CALLS.containsKey(receiver.callID)) receiver.callID = null; });
         }
 
-        private void notifyPlayers(UUID ownerID, UUID targetID) {
+        private void notifyCallInvite(UUID ownerID, UUID targetID) {
             if (GameInstance.getServer() != null) {
                 var owner = GameInstance.getServer().getPlayerList().getPlayer(ownerID);
                 var serverPlayer = GameInstance.getServer().getPlayerList().getPlayer(targetID);
                 if (serverPlayer != null && owner != null) Network.CHANNEL.sendToPlayer(serverPlayer, new MessagePlayerPacket(Component.literal("Incoming HoloCommunication from " + owner.getName().getString()).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)));
+            }
+        }
+
+        private void notifyJoinedCall(UUID ownerID, UUID joinerID) {
+            if (GameInstance.getServer() != null) {
+                var owner = GameInstance.getServer().getPlayerList().getPlayer(ownerID);
+                var joinedPlayer = GameInstance.getServer().getPlayerList().getPlayer(joinerID);
+                if (joinedPlayer != null && owner != null) Network.CHANNEL.sendToPlayer(owner, new MessagePlayerPacket(Component.literal(joinedPlayer.getName().getString() + " has joined the HoloCommunication").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)));
             }
         }
 

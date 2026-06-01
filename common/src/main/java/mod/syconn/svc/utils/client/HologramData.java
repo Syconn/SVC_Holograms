@@ -81,7 +81,6 @@ public class HologramData {
 
         final var level = Minecraft.getInstance().level;
         final var playerInfo = getPlayerInfoFromName(name);
-
         this.playerID = playerInfo.getProfile().getId();
         this.renderName = name;
         this.staticRender = true;
@@ -92,7 +91,6 @@ public class HologramData {
         this.skinPath = this.skin;
         this.transition = TRANSITION_TICKS;
         this.activeRender = true;
-
         SkullBlockEntity.updateGameprofile(new GameProfile(null, name), this::loadSkinAsync);
         return this;
     }
@@ -182,13 +180,12 @@ public class HologramData {
         }
     }
 
-    public HologramData setPosition(Vec3 position) {
+    public void setPosition(Vec3 position) {
         if (!position.equals(this.currentPosition)) {
             this.previousPosition = this.getInterpolatedPosition();
             this.currentPosition = position;
             this.lastUpdateTime = System.currentTimeMillis();
         }
-        return this;
     }
 
     public Vec3 getInterpolatedPosition() {
@@ -269,11 +266,11 @@ public class HologramData {
 //            return tag;
 //        }
 //
-////        public static void update(ItemStack stack, UUID uuid) {
-////            var holo = getOrCreate(stack);
-////            holo.uuid = uuid;
-////            holo.change(stack);
-////        }
+//        public static void update(ItemStack stack, UUID uuid) {
+//            var holo = getOrCreate(stack);
+//            holo.uuid = uuid;
+//            holo.change(stack);
+//        }
 //
 //        private static HologramTag create() {
 //            return new HologramTag((UUID) null);

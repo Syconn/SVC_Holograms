@@ -9,6 +9,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -21,7 +22,7 @@ public class HologramNetwork extends SavedData {
     private static final String tagID = "hologram_network";
     private final CallManager manager = new CallManager();
 
-    public HologramNetwork() {}
+    public HologramNetwork() { }
 
     public void createCall(List<CallData.Callee> members, boolean secure) {
         this.manager.createCall(members, secure);
@@ -53,8 +54,17 @@ public class HologramNetwork extends SavedData {
         this.setDirty();
     }
 
-    public CallData.BlockReceiver getCallForBlock(UUID receiverID) {
-        return this.manager.getCallForBlock(receiverID);
+    public void addNewRenderMember(UUID callID, UUID playerID, Vec3 pos) {
+        this.manager.addNewRenderMember(callID, playerID, pos);
+        this.setDirty();
+    }
+
+    public CallData.Call getCall(UUID callID) {
+        return this.manager.getCall(callID);
+    }
+
+    public CallData.BlockReceiver getBlockReceiver(UUID receiverID) {
+        return this.manager.getBlockReceiver(receiverID);
     }
 
     public List<CallData.Call> getCallsForPlayer(UUID playerID) {
@@ -70,7 +80,8 @@ public class HologramNetwork extends SavedData {
         this.manager.validateCallLog();
         this.manager.validateReceivers();
         var server = GameInstance.getServer();
-        if (server != null) server.overworld().getPlayers(LivingEntity::isAlive).forEach(serverPlayer -> Network.CHANNEL.sendToPlayer(serverPlayer, new UpdateProjectorCache(this.getDebugData())));
+        if (server != null)
+            server.overworld().getPlayers(LivingEntity::isAlive).forEach(serverPlayer -> Network.CHANNEL.sendToPlayer(serverPlayer, new UpdateProjectorCache(this.getDebugData())));
         super.setDirty();
     }
 

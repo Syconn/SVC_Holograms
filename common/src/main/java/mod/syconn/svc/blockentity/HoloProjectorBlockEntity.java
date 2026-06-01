@@ -2,11 +2,11 @@ package mod.syconn.svc.blockentity;
 
 import mod.syconn.svc.core.ModBlockEntities;
 import mod.syconn.svc.server.savedData.HologramNetwork;
+import mod.syconn.svc.utils.client.HologramData;
 import mod.syconn.svc.utils.generic.NBTUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -29,44 +29,20 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
     public static void tick(Level level, BlockPos pos, BlockState state, HoloProjectorBlockEntity blockEntity) {
         if (level instanceof ServerLevel serverLevel && blockEntity.receiverUUID != null) {
             final var network = HologramNetwork.get(serverLevel);
-            final var callData = network.getCallForBlock(blockEntity.receiverUUID);
-            final var inflate = 3.5;
-
-            if (callData != null) {
+            final var callData = network.getBlockReceiver(blockEntity.receiverUUID);
+            if (callData != null && callData.callID != null) {
+                if (!blockEntity.soloRender.isEmpty()) blockEntity.soloRender = "";
+                final var players = level.getEntitiesOfClass(Player.class, new AABB(pos).move(0, 1, 0).inflate(3.5));
+                final Set<UUID> uuids = new HashSet<>(players.size());
+                for (Player player : players) uuids.add(player.getUUID());
                 blockEntity.renderables.clear();
-                level.getEntitiesOfClass(Player.class, new AABB(pos).move(0, 1, 0).inflate(inflate)).forEach(player -> blockEntity.renderables.put(player.getUUID(), player.position().subtract(pos.getCenter())));
+                for (var entry : network.getCall(callData.callID).renderMembers.entrySet()) if (!uuids.contains(entry.getKey())) blockEntity.renderables.put(entry.getKey(), entry.getValue());
+                for (Player player : players) network.addNewRenderMember(callData.callID, player.getUUID(), player.position().subtract(pos.getCenter()));
+                blockEntity.markDirty();
+            } else if (callData != null && !blockEntity.renderables.isEmpty()) {
+                blockEntity.renderables.clear();
                 blockEntity.markDirty();
             }
-
-//            var handheld = network.getHandheldPlayer(blockEntity.callId);
-//            if (networkData != null && !networkData.isEmpty() || handheld.isPresent()) {
-//                if (networkData != null && !networkData.isEmpty()) {
-//                    var update = false;
-//                    var map = networkData.entrySet().stream().filter(e -> !e.getKey().equals(new WorldPos(level.dimension(), pos))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-//                    var entities = map.values().stream().flatMap(Collection::stream).toList();
-//                    var removals = Map.copyOf(blockEntity.renderables).keySet().stream().filter(u -> !entities.contains(u)).toList();
-//                    if (!removals.isEmpty()) update = true;
-//                    removals.forEach(blockEntity.renderables::remove);
-//                    for (var entry : map.entrySet()) {
-//                        for (var uuid : entry.getValue()) {
-//                            if (!blockEntity.renderables.containsKey(uuid) || !blockEntity.renderables.get(uuid).equals(entry.getKey())) {
-//                                var player = level.getServer().getLevel(entry.getKey().level()).getPlayerByUUID(uuid);
-//                                blockEntity.renderables.put(uuid, player == null ? new Vec3(0, 0, 0) : player.position().subtract(entry.getKey().toVector()));
-//                                update = true;
-//                            }
-//                        }
-//                    }
-//                    if (update) blockEntity.markDirty();
-//                }
-//                if (handheld.isPresent() && !blockEntity.renderables.containsKey(handheld.get())) {
-//                    blockEntity.renderables.put(handheld.get(), new Vec3(0.5f, 0.12f, 0.5f));
-//                    blockEntity.markDirty();
-//                }
-//            } else if (!blockEntity.renderables.isEmpty()) {
-//                blockEntity.renderables.clear();
-//                blockEntity.callId = null;
-//                blockEntity.markDirty();
-//            }
         }
     }
 

@@ -2,10 +2,7 @@ package mod.syconn.svc.client.screen;
 
 import mod.syconn.svc.client.screen.components.CallMenuWidget;
 import mod.syconn.svc.client.screen.components.ErrorWidget;
-import mod.syconn.svc.client.screen.components.buttons.CallButton;
-import mod.syconn.svc.client.screen.components.buttons.ExpandedButton;
-import mod.syconn.svc.client.screen.components.buttons.RefreshButton;
-import mod.syconn.svc.client.screen.components.buttons.SearchButton;
+import mod.syconn.svc.client.screen.components.buttons.*;
 import mod.syconn.svc.core.ModBlockEntities;
 import mod.syconn.svc.network.Network;
 import mod.syconn.svc.network.packets.server.HoloCallPacket;
@@ -35,7 +32,6 @@ public class HologramScreen extends Screen {
     private static final ResourceLocation HOLOGRAM_SCREEN = Constants.withId("textures/gui/hologram_screen.png");
     private final @Nullable BlockPos holoPos;
     private final @Nullable ItemStack stack;
-    private final boolean secure = true; // TODO This should be a toggle on the screen
     private boolean singleplayer;
     private ExpandedButton[] buttons = new ExpandedButton[3];
     private Page page = Page.CREATE_CALL;
@@ -43,6 +39,7 @@ public class HologramScreen extends Screen {
     private CallMenuWidget callData;
     private SearchButton searchButton;
     private EditBox searchBox;
+    private LockButton lockButton;
     private CallButton callButton;
     private ErrorWidget errorWidget;
     private Component pageTitle;
@@ -76,6 +73,7 @@ public class HologramScreen extends Screen {
         if (this.stack == null) this.callButton = this.addRenderableWidget(new CallButton(newMargin + 209, 74, 0.80f, CallButton.Type.START, "Start Call", this::createCall));
         this.searchButton = this.addRenderableWidget(new SearchButton(newMargin + 212, 78, "Search For Player", (b) -> this.callData.searchForPlayer()));
 
+        this.lockButton = this.addRenderableWidget(new LockButton(this.marginX() + 215, 90, LockButton.Type.LOCK));
         this.buttons[0] = this.addRenderableWidget(new ExpandedButton(leftPos + 10, 51, buttonSize, 20, Component.literal("Create Call"), button -> this.showPage(Page.CREATE_CALL)));
         this.buttons[1] = this.addRenderableWidget(new ExpandedButton(leftPos + 86, 51, buttonSize, 20, Component.literal("Display"), button -> this.showPage(Page.DISPLAY)));
         this.buttons[2] = this.addRenderableWidget(new ExpandedButton(leftPos + 162, 51, buttonSize, 20, Component.literal("Join Call"), button -> this.showPage(Page.JOIN_CALL)));
@@ -105,16 +103,19 @@ public class HologramScreen extends Screen {
         switch (page) {
             case CREATE_CALL:
                 if (this.stack == null) this.callButton.visible = true;
+                this.lockButton.visible = true;
                 this.searchButton.visible = false;
                 this.pageTitle = Component.literal("Start Call");
                 break;
             case DISPLAY:
                 if (this.stack == null) this.callButton.visible = false;
+                this.lockButton.visible = false;
                 this.searchButton.visible = true;
                 this.pageTitle = Component.literal("Display Mode");
                 break;
             case JOIN_CALL:
                 if (this.stack == null) this.callButton.visible = false;
+                this.lockButton.visible = false;
                 this.searchButton.visible = false;
                 this.pageTitle = Component.literal("Join Call");
                 break;
@@ -174,29 +175,28 @@ public class HologramScreen extends Screen {
     }
 
     private void createCall(Button button) {
-        if (!this.callData.getCallMembers().isEmpty()) this.createCall(ListUtil.append(getCaller(), this.callData.getCallMembers()));
-        else this.errorWidget.displayError("ERROR: You must add at least one player", 100);
-    }
-
-    public void createCall(List<CallData.Callee> callers) {
-        var caller = this.getCaller();
-        if (caller != null) {
-            Network.CHANNEL.sendToServer(new HoloCallPacket(HoloCallPacket.Type.CREATE, UUID.randomUUID(), secure, callers));
-            Minecraft.getInstance().setScreen(null);
+        if (!this.callData.getCallMembers().isEmpty()) {
+            var caller = this.getCaller();
+            if (caller != null) {
+                Network.CHANNEL.sendToServer(new HoloCallPacket(HoloCallPacket.Type.CREATE, UUID.randomUUID(), this.lockButton.getType() == LockButton.Type.LOCK, false,
+                        new BlockPos(0, 0, 0), ListUtil.append(getCaller(), this.callData.getCallMembers())));
+                Minecraft.getInstance().setScreen(null);
+            }
         }
+        else this.errorWidget.displayError("ERROR: You must add at least one player", 100);
     }
 
     public void joinCall(UUID callId) {
         var caller = this.getCaller();
         if (caller != null) {
-            Network.CHANNEL.sendToServer(new HoloCallPacket(HoloCallPacket.Type.CONNECT, callId, secure, List.of(getCaller())));
+            Network.CHANNEL.sendToServer(new HoloCallPacket(HoloCallPacket.Type.CONNECT, callId, this.lockButton.getType() == LockButton.Type.LOCK, false, new BlockPos(0, 0, 0), List.of(getCaller())));
             Minecraft.getInstance().setScreen(null);
         }
     }
 
     public void leaveCall(UUID callId) {
         var caller = this.getCaller();
-        if (caller != null) Network.CHANNEL.sendToServer(new HoloCallPacket(HoloCallPacket.Type.LEAVE, callId, secure, List.of(caller)));
+        if (caller != null) Network.CHANNEL.sendToServer(new HoloCallPacket(HoloCallPacket.Type.LEAVE, callId, this.lockButton.getType() == LockButton.Type.LOCK, false, new BlockPos(0, 0, 0), List.of(caller)));
     }
 
     public @Nullable CallData.Callee getCaller() {

@@ -60,8 +60,7 @@ public class HologramRenderer extends PlayerRenderer {
     }
 
     @Override
-    protected void renderNameTag(AbstractClientPlayer entity, Component displayName, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
-    }
+    protected void renderNameTag(AbstractClientPlayer entity, Component displayName, PoseStack poseStack, MultiBufferSource buffer, int packedLight) { }
 
     private void setModelProperties(AbstractClientPlayer pClientPlayer) {
         PlayerModel<AbstractClientPlayer> playermodel = this.getModel();
