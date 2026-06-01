@@ -17,8 +17,8 @@ import java.util.UUID;
 
 public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<HoloProjectorBlockEntity> {
 
-    private final Map<UUID, HologramData> SOLO_RENDERER = new HashMap<>();
-    private final Map<UUID, Map<UUID, HologramData>> MULI_RENDERER = new HashMap<>();
+    private final HashMap<UUID, HologramData> SOLO_RENDERER = new HashMap<>();
+    private final HashMap<UUID, Map<UUID, HologramData>> MULI_RENDERER = new HashMap<>();
 
     public HoloProjectorBlockEntityRenderer(BlockEntityRendererProvider.Context context) {}
 
@@ -63,7 +63,8 @@ public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<Hol
     }
 
     private void createMultiplayerRenderer(UUID receiverID, UUID playerID, Vec3 pos) {
-        MULI_RENDERER.computeIfAbsent(receiverID, u -> new HashMap<>()).compute(playerID, (uuid, hologramData) -> hologramData == null ? new HologramData(uuid, pos) : hologramData.setActiveRender(true, pos));
+        MULI_RENDERER.computeIfAbsent(receiverID, u -> new HashMap<>())
+                .compute(playerID, (uuid, hologramData) -> hologramData == null ? new HologramData(uuid, pos) : hologramData.setActiveRender(true, pos));
     }
 
     private Map<UUID, HologramData> getMulitplayerMap(UUID receiverID) {
@@ -78,6 +79,6 @@ public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<Hol
     @Override
     public boolean shouldRenderOffScreen(HoloProjectorBlockEntity blockEntity) {
         if (GameInstance.getClient().getCameraEntity() == null) return false;
-        return !getMulitplayerMap(blockEntity.getReceiverUUID()).isEmpty() && shouldRender(blockEntity, GameInstance.getClient().getCameraEntity().getEyePosition());
+        return shouldRender(blockEntity, GameInstance.getClient().getCameraEntity().getEyePosition());
     }
 }

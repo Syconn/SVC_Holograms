@@ -2,7 +2,6 @@ package mod.syconn.svc.blockentity;
 
 import mod.syconn.svc.core.ModBlockEntities;
 import mod.syconn.svc.server.savedData.HologramNetwork;
-import mod.syconn.svc.utils.client.HologramData;
 import mod.syconn.svc.utils.generic.NBTUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -33,11 +32,13 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
             if (callData != null && callData.callID != null) {
                 if (!blockEntity.soloRender.isEmpty()) blockEntity.soloRender = "";
                 final var players = level.getEntitiesOfClass(Player.class, new AABB(pos).move(0, 1, 0).inflate(3.5));
-                final Set<UUID> uuids = new HashSet<>(players.size());
-                for (Player player : players) uuids.add(player.getUUID());
+                final var renderMembers = new HashMap<UUID, Vec3>();
                 blockEntity.renderables.clear();
-                for (var entry : network.getCall(callData.callID).renderMembers.entrySet()) if (!uuids.contains(entry.getKey())) blockEntity.renderables.put(entry.getKey(), entry.getValue());
-                for (Player player : players) network.addNewRenderMember(callData.callID, player.getUUID(), player.position().subtract(pos.getCenter()));
+                if (network.getCall(callData.callID).renderMembers.containsKey(blockEntity.getReceiverUUID())) {
+                    for (var entry : network.getCall(callData.callID).renderMembers.entrySet()) if (entry.getKey() != blockEntity.receiverUUID) blockEntity.renderables.putAll(entry.getValue());
+                }
+                for (Player player : players) renderMembers.put(player.getUUID(), player.position().subtract(pos.getCenter()));
+                network.setRenderMembers(callData.callID, blockEntity.getReceiverUUID(), renderMembers);
                 blockEntity.markDirty();
             } else if (callData != null && !blockEntity.renderables.isEmpty()) {
                 blockEntity.renderables.clear();

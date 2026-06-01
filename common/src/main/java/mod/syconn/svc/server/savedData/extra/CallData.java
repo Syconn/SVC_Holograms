@@ -80,7 +80,7 @@ public class CallData {
     }
 
     public static class Call {
-        public Map<UUID, Vec3> renderMembers;
+        public Map<UUID, Map<UUID, Vec3>> renderMembers;
         public UUID callID;
         public UUID owner;
         public boolean secure;
@@ -94,7 +94,7 @@ public class CallData {
             this.renderMembers = new HashMap<>();
         }
 
-        public Call(UUID callID, UUID owner, boolean secure, Map<UUID, Callee> callers, Map<UUID, Vec3> renderMembers) {
+        public Call(UUID callID, UUID owner, boolean secure, Map<UUID, Callee> callers, Map<UUID, Map<UUID, Vec3>> renderMembers) {
             this.renderMembers = renderMembers;
             this.callID = callID;
             this.owner = owner;
@@ -108,18 +108,17 @@ public class CallData {
             tag.put("owner", NBTUtil.putUUID(this.owner));
             tag.putBoolean("secure", this.secure);
             tag.put("callers", NBTUtil.putMap(this.callers, NBTUtil::putUUID, Callee::save));
-            tag.put("renderMembers", NBTUtil.putMap(this.renderMembers, NBTUtil::putUUID, NBTUtil::putVec3));
+            tag.put("renderMembers", NBTUtil.putMap(this.renderMembers, NBTUtil::putUUID, uuid -> NBTUtil.putMap(uuid, NBTUtil::putUUID, NBTUtil::putVec3)));
             return tag;
         }
 
         public static Call from(CompoundTag tag) {
             return new Call(NBTUtil.getUUID(tag.getCompound("callID")), NBTUtil.getUUID(tag.getCompound("owner")), tag.getBoolean("secure"), NBTUtil.getMap(tag.getCompound("callers"), NBTUtil::getUUID, Callee::from),
-                    NBTUtil.getMap(tag.getCompound("renderMembers"), NBTUtil::getUUID, NBTUtil::getVec3));
+                    NBTUtil.getMap(tag.getCompound("renderMembers"), NBTUtil::getUUID, t -> NBTUtil.getMap(t, NBTUtil::getUUID, NBTUtil::getVec3)));
         }
     }
 
     public static class CallManager {
-
         private final Map<UUID, Call> CALLS = new HashMap<>();
         private final Map<UUID, BlockReceiver> BLOCK_RECEIVERS = new HashMap<>();
 
@@ -196,9 +195,9 @@ public class CallData {
             }
         }
 
-        public void addNewRenderMember(UUID callID, UUID playerID, Vec3 pos) {
+        public void setRenderMembers(UUID callID, UUID receiverID, Map<UUID, Vec3> renderMembers) {
             var call = this.CALLS.get(callID);
-            if (call != null) call.renderMembers.put(playerID, pos);
+            if (call != null) call.renderMembers.put(receiverID, renderMembers);
         }
 
         public void registerReceiver(UUID blockID, WorldPos pos) {

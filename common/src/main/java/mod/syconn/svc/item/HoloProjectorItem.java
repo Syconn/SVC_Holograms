@@ -31,7 +31,7 @@ public class HoloProjectorItem extends BlockItem implements IItemExtensions {
     public @NotNull InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand usedHand) {
         var stack = player.getItemInHand(usedHand);
         if (level.isClientSide) {
-//            EnvExecutor.runInEnv(Env.CLIENT, () -> () -> GameInstance.getClient().setScreen(ClientHooks.createHologramScreen(null, stack)));
+            EnvExecutor.runInEnv(Env.CLIENT, () -> () -> GameInstance.getClient().setScreen(ClientHooks.createHologramScreen(null, stack)));
             return InteractionResultHolder.success(stack);
         }
         return InteractionResultHolder.pass(stack);

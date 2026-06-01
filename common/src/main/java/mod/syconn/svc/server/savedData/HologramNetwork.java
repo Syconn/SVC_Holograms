@@ -13,6 +13,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static mod.syconn.svc.server.savedData.extra.CallData.CallManager;
@@ -54,8 +55,8 @@ public class HologramNetwork extends SavedData {
         this.setDirty();
     }
 
-    public void addNewRenderMember(UUID callID, UUID playerID, Vec3 pos) {
-        this.manager.addNewRenderMember(callID, playerID, pos);
+    public void setRenderMembers(UUID callID, UUID receiverID, Map<UUID, Vec3> renderMembers) {
+        this.manager.setRenderMembers(callID, receiverID, renderMembers);
         this.setDirty();
     }
 
