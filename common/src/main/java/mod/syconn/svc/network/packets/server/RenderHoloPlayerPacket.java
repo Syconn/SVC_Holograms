@@ -36,7 +36,6 @@ public class RenderHoloPlayerPacket {
         context.get().queue(() -> {
             if (!this.itemMode) context.get().getPlayer().level().getBlockEntity(this.pos, ModBlockEntities.HOLO_PROJECTOR.get()).ifPresent(be -> be.setSoloRender(this.name, context.get().getPlayer().position()));
             else HologramTag.update(context.get().getPlayer().getUseItem(), tag -> tag.setSoloRender(this.name));
-            System.out.println(context.get().getPlayer().getUseItem());
         });
     }
 }

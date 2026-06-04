@@ -47,6 +47,6 @@ public class HoloProjectorItem extends BlockItem implements IItemExtensions {
 
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
-        HologramTag.getOrCreate(stack);
+        if (!level.isClientSide && entity instanceof Player p) HologramTag.update(stack, tag -> tag.serverHandling(p));
     }
 }

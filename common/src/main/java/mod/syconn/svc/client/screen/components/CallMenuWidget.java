@@ -18,7 +18,6 @@ import mod.syconn.svc.utils.item.HologramTag;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.PlayerFaceRenderer;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -75,7 +74,7 @@ public class CallMenuWidget implements IWidgetComponent {
             final var v = i;
             var row = this.height * v;
             this.toggleButtons[v] = (ToggleButton) widgets.apply(new ToggleButton(this.x + 180, this.y + 21 + row, false, ToggleButton.Color.GREEN, b -> this.toggled(b, v)));
-            this.callButtonsHandheld[v] = (CallButton) widgets.apply(new CallButton(this.x + 180, this.y + 17 + row, CallButton.Type.START, "Begin Call", b -> this.callHandheldPressed(b, v)));
+            this.callButtonsHandheld[v] = (CallButton) widgets.apply(new CallButton(this.x + 180, this.y + 17 + row, CallButton.Type.START, "Begin Call", b -> this.callHandheldPressed(v)));
             this.playerCountWidgets[v] = (PlayerCountWidget) widgets.apply(new PlayerCountWidget(this.x + 195, this.y + 28 + row));
             this.callButtons[v] = (CallButton) widgets.apply(new CallButton(this.x + 34, this.y + 26 + row, 0.75f, CallButton.Type.START, "Join Call", b -> callPressed((CallButton) b, v)));
             this.callButtons[v + 3] = (CallButton) widgets.apply(new CallButton(this.x + 100, this.y + 26 + row, 0.75f, CallButton.Type.END, "Decline Call", b -> callPressed((CallButton) b, v)));
@@ -91,10 +90,12 @@ public class CallMenuWidget implements IWidgetComponent {
         this.shownCreateCallPlayers.set(this.scroll + i, new MenuData(player.info, player.callID, List.of(), !button.active(), player.locked));
     }
 
-    private void callHandheldPressed(Button button, int i) {
-//        var holo = HologramData.HologramTag.getOrCreate(this.stack); TODO Incomplete
-//        var player = this.shownCreateCallPlayers.get(this.scroll + i);
-//        this.screen.createCall(ListUtil.append(this.screen.getCaller(), List.of(new HologramNetwork.Caller(player.info.getProfile().getId(), null, null))));
+    private void callHandheldPressed(int i) {
+        var caller = this.screen.getCaller();
+        if (caller != null) {
+            Network.CHANNEL.sendToServer(new HoloCallPacket(HoloCallPacket.Type.CREATE, UUID.randomUUID(), true, false, new BlockPos(0, 0, 0), List.of(caller, new CallData.Callee(this.shownCreateCallPlayers.get(this.scroll + i).info.getProfile().getId()))));
+            Minecraft.getInstance().setScreen(null);
+        }
     }
 
     public void searchForPlayer() {

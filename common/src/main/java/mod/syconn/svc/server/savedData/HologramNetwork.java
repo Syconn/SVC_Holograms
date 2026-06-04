@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.StreamSupport;
 
 import static mod.syconn.svc.server.savedData.extra.CallData.CallManager;
 
@@ -41,12 +42,17 @@ public class HologramNetwork extends SavedData {
     }
 
     public void registerReceiver(UUID blockID, WorldPos pos) {
-        this.manager.registerReceiver(blockID, pos);
+        this.manager.registerBlockReceiver(blockID, pos);
+        this.setDirty();
+    }
+
+    public void registerItemReceiver(UUID itemID) {
+        this.manager.registerItemReceiver(itemID);
         this.setDirty();
     }
 
     public void unregisterReceiver(UUID blockID) {
-        this.manager.unregisterReceiver(blockID);
+        this.manager.unregisterBlockReceiver(blockID);
         this.setDirty();
     }
 
@@ -68,6 +74,10 @@ public class HologramNetwork extends SavedData {
         return this.manager.getBlockReceiver(receiverID);
     }
 
+    public CallData.ItemReceiver getItemReceiver(UUID receiverID) {
+        return this.manager.getItemReceiver(receiverID);
+    }
+
     public List<CallData.Call> getCallsForPlayer(UUID playerID) {
         return this.manager.getCallsForPlayer(playerID);
     }
@@ -81,8 +91,7 @@ public class HologramNetwork extends SavedData {
         this.manager.validateCallLog();
         this.manager.validateReceivers();
         var server = GameInstance.getServer();
-        if (server != null)
-            server.overworld().getPlayers(LivingEntity::isAlive).forEach(serverPlayer -> Network.CHANNEL.sendToPlayer(serverPlayer, new UpdateProjectorCache(this.getDebugData())));
+        if (server != null) server.overworld().getPlayers(LivingEntity::isAlive).forEach(serverPlayer -> Network.CHANNEL.sendToPlayer(serverPlayer, new UpdateProjectorCache(this.getDebugData())));
         super.setDirty();
     }
 

@@ -3,6 +3,7 @@ package mod.syconn.svc.client.render.entity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.architectury.utils.GameInstance;
+import mod.syconn.svc.item.HoloProjectorItem;
 import mod.syconn.svc.utils.client.HologramData;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
@@ -11,6 +12,7 @@ import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.layers.PlayerItemInHandLayer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.resources.DefaultPlayerSkin;
@@ -133,8 +135,12 @@ public class HologramRenderer extends PlayerRenderer {
             this.model.renderToBuffer(poseStack, vertexConsumer, packedLight, m, 1.0F, 1.0F, 1.0F, bl2 ? 0.15F : 1.0F);
         }
 
-        if (!entity.isSpectator()) for (var renderLayer : this.layers) renderLayer.render(poseStack, buffer, packedLight, entity, l, k, partialTicks, ix, h, j);
+        if (!entity.isSpectator()) {
+            for (var renderLayer : this.layers) {
+                if (renderLayer instanceof PlayerItemInHandLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>>) continue; // TODO Maybe Add Items and there Effects
+                renderLayer.render(poseStack, buffer, packedLight, entity, l, k, partialTicks, ix, h, j);
+            }
+        }
         poseStack.popPose();
-        super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
     }
 }

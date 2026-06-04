@@ -5,13 +5,13 @@
   "minVersion": "0.8",
   "client": [
     "client.HttpTextureMixin",
+    "client.ItemInHandRendererMixin",
     "client.ItemRendererInvoker",
     "client.ItemRendererMixin",
     "client.LevelRendererMixin",
     "client.MinecraftAccessor"
   ],
-  "mixins": [
-  ],
+  "mixins": [],
   "injectors": {
     "defaultRequire": 1
   }

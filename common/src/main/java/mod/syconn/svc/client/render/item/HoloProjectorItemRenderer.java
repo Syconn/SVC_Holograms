@@ -18,9 +18,11 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 public class HoloProjectorItemRenderer implements IModifiedItemRenderer, IModifiedPoseRenderer {
@@ -41,7 +43,9 @@ public class HoloProjectorItemRenderer implements IModifiedItemRenderer, IModifi
         var tag = HologramTag.getOrCreate(stack);
         var hologramData = getHologramData(tag);
 
-        if (!tag.getSoloRender().isEmpty() && hologramData != null) {
+//        System.out.println(tag.getRenderTarget());
+
+        if (hologramData.activeRender()) { // (!tag.getSoloRender().isEmpty() || tag.getRenderTarget() != null) && hologramData != null
             poseStack.pushPose();
             poseStack.mulPose(Axis.YN.rotationDegrees(ModelUtil.isLeftHanded(renderMode) ? -45f : 45f));
             poseStack.translate(0f, -0.4f, 0f);
@@ -51,10 +55,12 @@ public class HoloProjectorItemRenderer implements IModifiedItemRenderer, IModifi
         }
     }
 
-    private HologramData getHologramData(HologramTag hologramTag) {
-        final var data = RENDERER.get(hologramTag.getReceiverID());
-        if (data != null && data.getRenderName().equals(hologramTag.getSoloRender())) return data;
-        return RENDERER.compute(hologramTag.getReceiverID(), (_u, d) -> d == null ? new HologramData(hologramTag.getSoloRender()) : d.generateInformationByName(hologramTag.getSoloRender()));
+    private HologramData getHologramData(HologramTag tag) {
+        return RENDERER.compute(tag.getReceiverID(), (_u, d) -> {
+            if (d != null && ((Objects.equals(d.getRenderName(), tag.getSoloRender()) && !tag.getSoloRender().isEmpty()) || (d.getPlayerID() != null && d.getPlayerID().equals(tag.getRenderTarget())))) return d;
+            if (tag.getRenderTarget() != null) return new HologramData(tag.getRenderTarget(), new Vec3(0, 0, 0));
+            return d == null ? new HologramData(tag.getSoloRender()) : d.generateInformationByName(tag.getSoloRender());
+        });
     }
 
     @Override

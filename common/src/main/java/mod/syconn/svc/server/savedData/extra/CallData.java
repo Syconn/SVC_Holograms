@@ -45,6 +45,30 @@ public class CallData {
         }
     }
 
+    public static class ItemReceiver {
+        public UUID itemID;
+        public @Nullable UUID userID;
+        public @Nullable UUID callID;
+
+        public ItemReceiver(UUID itemID, @Nullable UUID userID, @Nullable UUID callID) {
+            this.itemID = itemID;
+            this.userID = userID;
+            this.callID = callID;
+        }
+
+        public CompoundTag save() {
+            var tag = new CompoundTag();
+            tag.put("itemID", NBTUtil.putUUID(this.itemID));
+            tag.put("userID", NBTUtil.putNullable(this.userID, NBTUtil::putUUID));
+            tag.put("callID", NBTUtil.putNullable(this.callID, NBTUtil::putUUID));
+            return tag;
+        }
+
+        public static ItemReceiver from(CompoundTag tag) {
+            return new ItemReceiver(NBTUtil.getUUID(tag.getCompound("itemID")), NBTUtil.getNullable(tag.getCompound("userID"), NBTUtil::getUUID), NBTUtil.getNullable(tag.getCompound("callID"), NBTUtil::getUUID));
+        }
+    }
+
     public static class Callee {
         public UUID playerUUID;
         public boolean owner;
@@ -121,15 +145,12 @@ public class CallData {
     public static class CallManager {
         private final Map<UUID, Call> CALLS = new HashMap<>();
         private final Map<UUID, BlockReceiver> BLOCK_RECEIVERS = new HashMap<>();
+        private final Map<UUID, ItemReceiver> ITEM_RECEIVERS = new HashMap<>();
 
         public void createCall(List<Callee> members, boolean secure) {
             if (members.size() <= 1) return;
-
             var owner = members.stream().filter(v -> v.owner).findFirst().orElse(null);
-            if (owner == null) {
-                owner = members.get(0);
-                owner.owner = true;
-            }
+            if (owner == null) return;
 
             Map<UUID, Callee> map = new HashMap<>();
             for (Callee c : members) {
@@ -143,6 +164,14 @@ public class CallData {
             if (owner.type == ReceiverType.BLOCK) {
                 this.BLOCK_RECEIVERS.computeIfPresent(owner.receiverID, (id, rec) -> {
                     rec.callID = callId;
+                    return rec;
+                });
+            } else if (owner.type == ReceiverType.ITEM) {
+                System.out.println(owner.receiverID);
+
+                this.ITEM_RECEIVERS.computeIfPresent(owner.receiverID, (id, rec) -> {
+                    rec.callID = callId;
+                    rec.userID = owner.playerUUID;
                     return rec;
                 });
             }
@@ -160,10 +189,16 @@ public class CallData {
                     rec.callID = callID;
                     return rec;
                 });
+            } else if (callee.type == ReceiverType.ITEM) {
+                this.ITEM_RECEIVERS.computeIfPresent(callee.receiverID, (id, rec) -> {
+                    rec.callID = callID;
+                    rec.userID = callee.playerUUID;
+                    return rec;
+                });
             }
         }
 
-        public void leaveCall(UUID callId, CallData.Callee callee) {
+        public void leaveCall(UUID callId, Callee callee) {
             var call = this.CALLS.get(callId);
 
             if (call == null) return;
@@ -173,6 +208,12 @@ public class CallData {
             if (removed.type == ReceiverType.BLOCK && removed.receiverID != null) {
                 var receiver = this.BLOCK_RECEIVERS.get(removed.receiverID);
                 if (receiver != null && receiver.callID != null && receiver.callID.equals(callId)) receiver.callID = null;
+            } else if (removed.type == ReceiverType.ITEM && removed.receiverID != null) {
+                var receiver = this.ITEM_RECEIVERS.get(removed.receiverID);
+                if (receiver != null && receiver.callID != null && receiver.callID.equals(callId)) {
+                    receiver.callID = null;
+                    receiver.userID = null;
+                }
             }
 
             if (call.callers.isEmpty()) this.CALLS.remove(callId);
@@ -190,6 +231,9 @@ public class CallData {
                 if (removed.type == ReceiverType.BLOCK && removed.receiverID != null) {
                     var receiver = BLOCK_RECEIVERS.get(removed.receiverID);
                     if (receiver != null && receiver.callID != null && receiver.callID.equals(call.callID)) receiver.callID = null;
+                } else if (removed.type == ReceiverType.ITEM && removed.receiverID != null) {
+                    var receiver = ITEM_RECEIVERS.get(removed.receiverID);
+                    if (receiver != null && receiver.callID != null && receiver.callID.equals(call.callID)) receiver.callID = null;
                 }
                 if (call.callers.isEmpty()) iterator.remove();
             }
@@ -200,11 +244,15 @@ public class CallData {
             if (call != null) call.renderMembers.put(receiverID, renderMembers);
         }
 
-        public void registerReceiver(UUID blockID, WorldPos pos) {
+        public void registerBlockReceiver(UUID blockID, WorldPos pos) {
             this.BLOCK_RECEIVERS.put(blockID, new BlockReceiver(blockID, pos, null));
         }
 
-        public void unregisterReceiver(UUID blockID) {
+        public void registerItemReceiver(UUID itemID) {
+            this.ITEM_RECEIVERS.put(itemID, new ItemReceiver(itemID, null, null));
+        }
+
+        public void unregisterBlockReceiver(UUID blockID) {
             var rec = this.BLOCK_RECEIVERS.remove(blockID);
             if (rec != null) removeCallReceiver(rec);
         }
@@ -216,15 +264,19 @@ public class CallData {
             call.callers.entrySet().removeIf(entry -> receiver.blockID.equals(entry.getValue().receiverID));
         }
 
-        public CallData.BlockReceiver getBlockReceiver(UUID receiverID) {
+        public BlockReceiver getBlockReceiver(UUID receiverID) {
             return this.BLOCK_RECEIVERS.get(receiverID);
+        }
+
+        public ItemReceiver getItemReceiver(UUID receiverID) {
+            return this.ITEM_RECEIVERS.get(receiverID);
         }
 
         public Call getCall(UUID callID) {
             return this.CALLS.get(callID);
         }
 
-        public List<CallData.Call> getCallsForPlayer(UUID playerID) {
+        public List<Call> getCallsForPlayer(UUID playerID) {
             return this.CALLS.values().stream().filter(call -> !call.secure || call.callers.containsKey(playerID)).toList();
         }
 
@@ -273,15 +325,17 @@ public class CallData {
             var tag = new CompoundTag();
             tag.put("calls", NBTUtil.putMap(this.CALLS, NBTUtil::putUUID, Call::save));
             tag.put("block_receivers", NBTUtil.putMap(this.BLOCK_RECEIVERS, NBTUtil::putUUID, BlockReceiver::save));
+            tag.put("item_receivers", NBTUtil.putMap(this.ITEM_RECEIVERS, NBTUtil::putUUID, ItemReceiver::save));
             return tag;
         }
 
         public void read(CompoundTag tag) {
             this.CALLS.clear();
             this.BLOCK_RECEIVERS.clear();
+            this.ITEM_RECEIVERS.clear();
             this.CALLS.putAll(NBTUtil.getMap(tag.getCompound("calls"), NBTUtil::getUUID, Call::from));
             this.BLOCK_RECEIVERS.putAll(NBTUtil.getMap(tag.getCompound("block_receivers"), NBTUtil::getUUID, BlockReceiver::from));
-
+            this.ITEM_RECEIVERS.putAll(NBTUtil.getMap(tag.getCompound("item_receivers"), NBTUtil::getUUID, ItemReceiver::from));
             this.validateCallLog();
             this.validateReceivers();
         }

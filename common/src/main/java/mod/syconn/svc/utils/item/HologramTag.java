@@ -1,7 +1,14 @@
 package mod.syconn.svc.utils.item;
 
+import dev.architectury.utils.GameInstance;
+import mod.syconn.svc.server.savedData.HologramNetwork;
+import mod.syconn.svc.server.savedData.extra.CallData;
+import mod.syconn.svc.utils.generic.NBTUtil;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -10,6 +17,7 @@ public class HologramTag {
 
     private static final String ID = "hologramData";
     private final UUID receiverID;
+    private @Nullable UUID renderTarget;
     private String soloRender = "";
 
     public HologramTag() {
@@ -18,6 +26,7 @@ public class HologramTag {
 
     public HologramTag(CompoundTag tag) {
         this.receiverID = tag.hasUUID("receiverID") ? tag.getUUID("receiverID") : UUID.randomUUID();
+        this.renderTarget = NBTUtil.getNullable(tag.getCompound("renderTarget"), NBTUtil::getUUID);
         this.soloRender = tag.getString("soloRender");
     }
 
@@ -29,35 +38,55 @@ public class HologramTag {
         return receiverID;
     }
 
+    public @Nullable UUID getRenderTarget() {
+        return renderTarget;
+    }
+
     public String getSoloRender() {
         return soloRender;
+    }
+
+    public void serverHandling(Player player) {
+        if (GameInstance.getServer() == null) return;
+
+        var network = HologramNetwork.get(GameInstance.getServer().overworld());
+        var receiver = network.getItemReceiver(this.receiverID);
+        if (receiver == null) network.registerItemReceiver(this.receiverID);
+        else if (receiver.callID != null && network.getCall(receiver.callID) != null) {
+            var legalCall = true;
+            for (var entry : network.getCall(receiver.callID).callers.entrySet()) {
+                if (!entry.getKey().equals(player.getUUID())) this.renderTarget = entry.getKey();
+                if (entry.getValue().type == CallData.ReceiverType.NULL) legalCall = false;
+            }
+            if (!legalCall) this.renderTarget = null;
+        } else this.renderTarget = null;
     }
 
     private CompoundTag save() {
         var tag = new CompoundTag();
         tag.putUUID("receiverID", this.receiverID);
+        tag.put("renderTarget", NBTUtil.putNullable(this.renderTarget, NBTUtil::putUUID));
         tag.putString("soloRender", this.soloRender);
         return tag;
     }
 
     public static HologramTag getOrCreate(ItemStack stack) {
         var tag = !stack.getOrCreateTag().contains(ID) ? create() : new HologramTag(stack.getOrCreateTag().getCompound(ID));
-        tag.change(stack);
+        if (!stack.getOrCreateTag().contains(ID)) tag.change(stack);
         return tag;
     }
 
-    public static ItemStack update(ItemStack stack, Consumer<HologramTag> consumer) {
+    public static void update(ItemStack stack, Consumer<HologramTag> consumer) {
         var tag = getOrCreate(stack);
         consumer.accept(tag);
-        return tag.change(stack);
+        tag.change(stack);
     }
 
     private static HologramTag create() {
         return new HologramTag();
     }
 
-    public ItemStack change(ItemStack stack) {
+    public void change(ItemStack stack) {
         stack.getOrCreateTag().put(ID, save());
-        return stack;
     }
 }

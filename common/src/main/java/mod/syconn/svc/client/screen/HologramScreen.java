@@ -8,7 +8,9 @@ import mod.syconn.svc.network.Network;
 import mod.syconn.svc.network.packets.server.HoloCallPacket;
 import mod.syconn.svc.server.savedData.extra.CallData;
 import mod.syconn.svc.utils.Constants;
+import mod.syconn.svc.utils.client.HologramData;
 import mod.syconn.svc.utils.generic.ListUtil;
+import mod.syconn.svc.utils.item.HologramTag;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -70,9 +72,9 @@ public class HologramScreen extends Screen {
         this.errorWidget = this.addRenderableWidget(new ErrorWidget(leftPos + 236 / 2, 20));
         this.callData = new CallMenuWidget(this, leftPos + 10, 92, this.page, this::addRenderableWidget);
         if (this.stack == null) this.callButton = this.addRenderableWidget(new CallButton(newMargin + 209, 74, 0.80f, CallButton.Type.START, "Start Call", this::createCall));
+        if (this.stack == null) this.lockButton = this.addRenderableWidget(new LockButton(this.marginX() + 215, 90, LockButton.Type.LOCK));
         this.searchButton = this.addRenderableWidget(new SearchButton(newMargin + 212, 78, "Search For Player", (b) -> this.callData.searchForPlayer()));
 
-        this.lockButton = this.addRenderableWidget(new LockButton(this.marginX() + 215, 90, LockButton.Type.LOCK));
         this.addRenderableWidget(new ExpandedButton(leftPos + 10, 51, buttonSize, 20, Component.literal("Create Call"), button -> this.showPage(Page.CREATE_CALL)));
         this.addRenderableWidget(new ExpandedButton(leftPos + 86, 51, buttonSize, 20, Component.literal("Display"), button -> this.showPage(Page.DISPLAY)));
         this.addRenderableWidget(new ExpandedButton(leftPos + 162, 51, buttonSize, 20, Component.literal("Join Call"), button -> this.showPage(Page.JOIN_CALL)));
@@ -102,19 +104,19 @@ public class HologramScreen extends Screen {
         switch (page) {
             case CREATE_CALL:
                 if (this.stack == null) this.callButton.visible = true;
-                this.lockButton.visible = true;
+                if (this.stack == null) this.lockButton.visible = true;
                 this.searchButton.visible = false;
                 this.pageTitle = Component.literal("Start Call");
                 break;
             case DISPLAY:
                 if (this.stack == null) this.callButton.visible = false;
-                this.lockButton.visible = false;
+                if (this.stack == null) this.lockButton.visible = false;
                 this.searchButton.visible = true;
                 this.pageTitle = Component.literal("Display Mode");
                 break;
             case JOIN_CALL:
                 if (this.stack == null) this.callButton.visible = false;
-                this.lockButton.visible = false;
+                if (this.stack == null) this.lockButton.visible = false;
                 this.searchButton.visible = false;
                 this.pageTitle = Component.literal("Join Call");
                 break;
@@ -177,8 +179,7 @@ public class HologramScreen extends Screen {
         if (!this.callData.getCallMembers().isEmpty()) {
             var caller = this.getCaller();
             if (caller != null) {
-                Network.CHANNEL.sendToServer(new HoloCallPacket(HoloCallPacket.Type.CREATE, UUID.randomUUID(), this.lockButton.getType() == LockButton.Type.LOCK, false,
-                        new BlockPos(0, 0, 0), ListUtil.append(getCaller(), this.callData.getCallMembers())));
+                Network.CHANNEL.sendToServer(new HoloCallPacket(HoloCallPacket.Type.CREATE, UUID.randomUUID(), this.lockButton.getType() == LockButton.Type.LOCK, false, new BlockPos(0, 0, 0), ListUtil.append(getCaller(), this.callData.getCallMembers())));
                 Minecraft.getInstance().setScreen(null);
             }
         }
@@ -188,20 +189,20 @@ public class HologramScreen extends Screen {
     public void joinCall(UUID callId) {
         var caller = this.getCaller();
         if (caller != null) {
-            Network.CHANNEL.sendToServer(new HoloCallPacket(HoloCallPacket.Type.CONNECT, callId, this.lockButton.getType() == LockButton.Type.LOCK, false, new BlockPos(0, 0, 0), List.of(getCaller())));
+            Network.CHANNEL.sendToServer(new HoloCallPacket(HoloCallPacket.Type.CONNECT, callId, false, false, new BlockPos(0, 0, 0), List.of(getCaller())));
             Minecraft.getInstance().setScreen(null);
         }
     }
 
     public void leaveCall(UUID callId) {
         var caller = this.getCaller();
-        if (caller != null) Network.CHANNEL.sendToServer(new HoloCallPacket(HoloCallPacket.Type.LEAVE, callId, this.lockButton.getType() == LockButton.Type.LOCK, false, new BlockPos(0, 0, 0), List.of(caller)));
+        if (caller != null) Network.CHANNEL.sendToServer(new HoloCallPacket(HoloCallPacket.Type.LEAVE, callId, false, false, new BlockPos(0, 0, 0), List.of(caller)));
     }
 
     public @Nullable CallData.Callee getCaller() {
-//        var uuid = this.stack == null ? null : HologramData.HologramTag.getOrCreate(this.stack).itemId; TODO SOME SORT OF HANDHELD BS
-        if (this.minecraft == null || this.minecraft.player == null || this.minecraft.level == null || this.holoPos == null || this.minecraft.level.getBlockEntity(holoPos, ModBlockEntities.HOLO_PROJECTOR.get()).isEmpty())
-            return new CallData.Callee(UUID.randomUUID());
+        var uuid = this.stack == null ? null : HologramTag.getOrCreate(this.stack).getReceiverID();
+        if (this.minecraft == null || this.minecraft.player == null || this.minecraft.level == null) return new CallData.Callee(UUID.randomUUID());
+        if (uuid != null) return new CallData.Callee(this.minecraft.player.getUUID(), true, CallData.ReceiverType.ITEM, uuid);
         return new CallData.Callee(this.minecraft.player.getUUID(), true, CallData.ReceiverType.BLOCK, this.minecraft.level.getBlockEntity(holoPos, ModBlockEntities.HOLO_PROJECTOR.get()).get().getReceiverUUID());
     }
 
