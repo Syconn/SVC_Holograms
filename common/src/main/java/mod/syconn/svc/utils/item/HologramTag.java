@@ -59,6 +59,7 @@ public class HologramTag {
                 if (entry.getValue().type == CallData.ReceiverType.NULL) legalCall = false;
             }
             if (!legalCall) this.renderTarget = null;
+            if (legalCall) this.soloRender = "";
         } else this.renderTarget = null;
     }
 

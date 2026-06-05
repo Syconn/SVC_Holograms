@@ -25,20 +25,4 @@ public interface IModifiedItemRenderer {
     }
 
     boolean render(LivingEntity entity, ItemStack stack, ItemDisplayContext renderMode, boolean leftHanded, PoseStack poseStack, MultiBufferSource buffer, int light, int overlay, BakedModel model);
-
-    default void renderItemModel(ItemStack stack, PoseStack poseStack, MultiBufferSource buffer, int light, int overlay, BakedModel model) {
-        var invoker = ((ItemRendererInvoker) GameInstance.getClient().getItemRenderer());
-        var renderType = ItemBlockRenderTypes.getRenderType(stack, true);
-        var vertexConsumer = invoker.getFoil(buffer, renderType, true, stack.hasFoil());
-
-        poseStack.pushPose();
-        poseStack.translate(-0.5F, -0.5F, -0.5F);
-        invoker.renderModel(model, stack, light, overlay, poseStack, vertexConsumer);
-        poseStack.popPose();
-    }
-
-    static BakedModel getModel(ResourceLocation modelPath, BakedModel backupModel) {
-        var model = GameInstance.getClient().getModelManager().getModel(new ModelResourceLocation(modelPath, "inventory"));
-        return model == GameInstance.getClient().getModelManager().getMissingModel() ? backupModel : model;
-    }
 }

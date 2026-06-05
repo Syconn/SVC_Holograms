@@ -182,8 +182,10 @@ public class CallData {
             if (call == null || callee.type == ReceiverType.NULL) return;
             if (call.secure && !call.callers.containsKey(callee.playerUUID)) return;
 
+            for (var caller : call.callers.entrySet()) if (caller.getValue().type != ReceiverType.NULL) notifyJoinedCall(caller.getKey(), callee.playerUUID);
+
             call.callers.put(callee.playerUUID, callee);
-            notifyJoinedCall(call.owner, callee.playerUUID);
+
             if (callee.type == ReceiverType.BLOCK) {
                 this.BLOCK_RECEIVERS.computeIfPresent(callee.receiverID, (id, rec) -> {
                     rec.callID = callID;
@@ -203,6 +205,8 @@ public class CallData {
 
             if (call == null) return;
             var removed = call.callers.remove(callee.playerUUID);
+
+            for (var caller : call.callers.entrySet()) if (caller.getValue().type != ReceiverType.NULL) notifyLeftCall(caller.getKey(), callee.playerUUID);
 
             if (removed == null) return;
             if (removed.type == ReceiverType.BLOCK && removed.receiverID != null) {
@@ -318,6 +322,14 @@ public class CallData {
                 var owner = GameInstance.getServer().getPlayerList().getPlayer(ownerID);
                 var joinedPlayer = GameInstance.getServer().getPlayerList().getPlayer(joinerID);
                 if (joinedPlayer != null && owner != null) Network.CHANNEL.sendToPlayer(owner, new MessagePlayerPacket(Component.literal(joinedPlayer.getName().getString() + " has joined the HoloCommunication").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)));
+            }
+        }
+
+        private void notifyLeftCall(UUID ownerID, UUID leftID) {
+            if (GameInstance.getServer() != null) {
+                var owner = GameInstance.getServer().getPlayerList().getPlayer(ownerID);
+                var leftPlayer = GameInstance.getServer().getPlayerList().getPlayer(leftID);
+                if (leftPlayer != null && owner != null) Network.CHANNEL.sendToPlayer(owner, new MessagePlayerPacket(Component.literal(leftPlayer.getName().getString() + " has left the HoloCommunication").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)));
             }
         }
 

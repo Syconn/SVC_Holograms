@@ -8,6 +8,7 @@ import mod.syconn.svc.utils.generic.AnimationUtil;
 import mod.syconn.svc.utils.generic.ColorUtil;
 import mod.syconn.svc.utils.generic.MathUtil;
 import mod.syconn.svc.utils.generic.ResourceUtil;
+import mod.syconn.svc.utils.interfaces.IHologramEntity;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -35,7 +36,6 @@ public class HologramData {
     private AbstractClientPlayer player;
     private String renderName = "";
     private UUID playerID;
-    private boolean item;
     private boolean staticRender;
     private HologramRenderer renderer;
     private ResourceLocation skin;
@@ -52,19 +52,37 @@ public class HologramData {
     public HologramData(UUID uuid, Vec3 currentPosition) {
         final var minecraft = Minecraft.getInstance();
         final var playerInfo = getPlayerInfo(uuid);
-        this.skinPath = playerInfo.getSkinLocation();
-        final var clientPlayer = item || minecraft.level == null ? null : minecraft.level.getPlayerByUUID(playerInfo.getProfile().getId());
-        final var texture = ResourceUtil.loadSkin(this.skinPath).map(DynamicTexture::new);
+        final var texture = ResourceUtil.loadSkin(playerInfo.getSkinLocation()).map(DynamicTexture::new);
         texture.ifPresent(dynamicTexture -> ResourceUtil.modifyTexture(dynamicTexture, this::getPixelColor));
 
-//        this.item = item;
+        this.skinPath = playerInfo.getSkinLocation();
         this.currentPosition = currentPosition;
         this.previousPosition = currentPosition;
         this.activeRender = true;
         this.playerID = uuid;
         this.renderName = playerInfo.getProfile().getName();
         this.renderer = new HologramRenderer(this, playerInfo.getModelName().equals("slim"));
-        this.player = clientPlayer != null || minecraft.level == null ? (AbstractClientPlayer) clientPlayer : new AbstractClientPlayer(minecraft.level, playerInfo.getProfile()) {};
+        this.player = minecraft.level == null ? null : (AbstractClientPlayer) minecraft.level.getPlayerByUUID(playerInfo.getProfile().getId());
+        if (this.player != null) ((IHologramEntity) player).svc$setHologram(true);
+        this.skin = texture.map(dynamicTexture -> ResourceUtil.registerOrGet(playerInfo.getProfile().getName(), dynamicTexture)).orElse(this.skinPath);
+        this.transition = TRANSITION_TICKS;
+    }
+
+    public HologramData(UUID uuid) {
+        final var minecraft = Minecraft.getInstance();
+        final var playerInfo = getPlayerInfo(uuid);
+        final var texture = ResourceUtil.loadSkin(playerInfo.getSkinLocation()).map(DynamicTexture::new);
+        texture.ifPresent(dynamicTexture -> ResourceUtil.modifyTexture(dynamicTexture, this::getPixelColor));
+
+        this.skinPath = playerInfo.getSkinLocation();
+        this.currentPosition = new Vec3(0, 0, 0);
+        this.previousPosition = new Vec3(0, 0, 0);
+        this.activeRender = true;
+        this.playerID = uuid;
+        this.renderName = playerInfo.getProfile().getName();
+        this.renderer = new HologramRenderer(this, playerInfo.getModelName().equals("slim"));
+        this.player = minecraft.level == null ? null : (AbstractClientPlayer) minecraft.level.getPlayerByUUID(playerInfo.getProfile().getId());
+        if (this.player != null) ((IHologramEntity) player).svc$setHologram(true);
         this.skin = texture.map(dynamicTexture -> ResourceUtil.registerOrGet(playerInfo.getProfile().getName(), dynamicTexture)).orElse(this.skinPath);
         this.transition = TRANSITION_TICKS;
     }
@@ -81,10 +99,10 @@ public class HologramData {
 
         final var level = Minecraft.getInstance().level;
         final var playerInfo = getPlayerInfoFromName(name);
+
         this.playerID = playerInfo.getProfile().getId();
         this.renderName = name;
         this.staticRender = true;
-        this.item = false;
         this.renderer = new HologramRenderer(this, ResourceUtil.getModel(name));
         this.player = level == null ? null : new AbstractClientPlayer(level, playerInfo.getProfile()) {};
         this.skin = DefaultPlayerSkin.getDefaultSkin();
@@ -210,10 +228,6 @@ public class HologramData {
 
     public boolean activeRender() {
         return this.player != null && this.skinPath != null && activeRender;
-    }
-
-    public boolean isItem() {
-        return item;
     }
 
     public String getRenderName() {

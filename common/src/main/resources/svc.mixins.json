@@ -4,7 +4,9 @@
   "compatibilityLevel": "JAVA_17",
   "minVersion": "0.8",
   "client": [
+    "client.AbstractClientPlayerMixin",
     "client.HttpTextureMixin",
+    "client.HumanoidModelMixin",
     "client.ItemInHandRendererMixin",
     "client.ItemRendererInvoker",
     "client.ItemRendererMixin",
