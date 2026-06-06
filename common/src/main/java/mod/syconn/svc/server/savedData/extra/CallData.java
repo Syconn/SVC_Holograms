@@ -167,8 +167,6 @@ public class CallData {
                     return rec;
                 });
             } else if (owner.type == ReceiverType.ITEM) {
-                System.out.println(owner.receiverID);
-
                 this.ITEM_RECEIVERS.computeIfPresent(owner.receiverID, (id, rec) -> {
                     rec.callID = callId;
                     rec.userID = owner.playerUUID;
@@ -181,6 +179,7 @@ public class CallData {
             var call = this.CALLS.get(callID);
             if (call == null || callee.type == ReceiverType.NULL) return;
             if (call.secure && !call.callers.containsKey(callee.playerUUID)) return;
+            if (call.callers.containsKey(callee.playerUUID)) this.leaveCall(callID, call.callers.get(callee.playerUUID));
 
             for (var caller : call.callers.entrySet()) if (caller.getValue().type != ReceiverType.NULL) notifyJoinedCall(caller.getKey(), callee.playerUUID);
 
