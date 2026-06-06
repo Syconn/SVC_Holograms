@@ -32,9 +32,11 @@ public class HoloProjectorItemRenderer implements IModifiedItemRenderer, IModifi
 
     @Override
     public boolean render(LivingEntity entity, HumanoidModel<? extends LivingEntity> playerModel, ItemStack stack, ItemDisplayContext renderMode, boolean leftHanded, PoseStack poseStack, MultiBufferSource bufferSource, int light, int overlay, BakedModel model) {
+        if (playerModel instanceof HologramModel) return true;
+
         poseStack.pushPose();
         model.getTransforms().getTransform(renderMode).apply(leftHanded, poseStack);
-        if (renderMode != ItemDisplayContext.GUI && !(playerModel instanceof HologramModel)) renderDirect(stack, renderMode, poseStack, bufferSource);
+        if (renderMode != ItemDisplayContext.GUI) renderDirect(stack, renderMode, poseStack, bufferSource);
         poseStack.popPose();
         return false;
     }
@@ -44,8 +46,9 @@ public class HoloProjectorItemRenderer implements IModifiedItemRenderer, IModifi
         var hologramData = getHologramData(tag);
         if (!tag.getSoloRender().isEmpty()) this.spin += 0.25f;
 
-        if (hologramData.activeRender()) { // TODO PICKUP CALL FROM BLOCK ENTITY, ADD HOLOGRAM TO ITEM?
+        if (hologramData.activeRender()) { // TODO PICKUP CALL FROM BLOCK ENTITY, ADD HOLOGRAM TO ITEM, Multiple Call Points bad
             poseStack.pushPose();
+            poseStack.mulPose(Axis.YN.rotationDegrees(-hologramData.getPlayer().getYRot()));
             poseStack.mulPose(Axis.YN.rotationDegrees(ModelUtil.isLeftHanded(renderMode) ? -45f : 45f));
             if (tag.getRenderTarget() == null) poseStack.mulPose(Axis.YN.rotationDegrees(spin));
             poseStack.translate(0f, -0.4f, 0f);

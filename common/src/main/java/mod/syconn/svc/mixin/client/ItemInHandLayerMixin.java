@@ -37,8 +37,8 @@ public abstract class ItemInHandLayerMixin<T extends Player, M extends EntityMod
             final BakedModel bakedModel = Minecraft.getInstance().getItemRenderer().getModel(itemStack, livingEntity.level(), livingEntity, livingEntity.getId() + displayContext.ordinal());
             final IModifiedItemRenderer itemRenderer = IModifiedItemRenderer.INSTANCES.get(itemStack.getItem().getClass());
             if (itemRenderer != null) {
-                itemRenderer.render(livingEntity, (HumanoidModel<? extends LivingEntity>) getParentModel(), itemStack, displayContext, arm == HumanoidArm.LEFT, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, bakedModel);
-                Minecraft.getInstance().getItemRenderer().render(itemStack, displayContext, arm == HumanoidArm.LEFT, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, bakedModel);
+                if (!itemRenderer.render(livingEntity, (HumanoidModel<? extends LivingEntity>) getParentModel(), itemStack, displayContext, arm == HumanoidArm.LEFT, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, bakedModel))
+                    Minecraft.getInstance().getItemRenderer().render(itemStack, displayContext, arm == HumanoidArm.LEFT, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, bakedModel);
                 ci.cancel();
             }
         }
