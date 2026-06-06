@@ -9,8 +9,11 @@ import mod.syconn.svc.core.ModBlockEntities;
 import mod.syconn.svc.server.savedData.HologramNetwork;
 import mod.syconn.svc.utils.block.WorldPos;
 import mod.syconn.svc.utils.interfaces.IEntityBlock;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
@@ -27,6 +30,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
@@ -89,7 +93,7 @@ public class HoloProjectorBlock extends FaceAttachedHorizontalDirectionalBlock i
     @Override
     public @NotNull InteractionResult use(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit) {
         if (pLevel.isClientSide) {
-            EnvExecutor.runInEnv(Env.CLIENT, () -> () -> GameInstance.getClient().setScreen(ClientHooks.createHologramScreen(pPos, null))); // TODO CRASHING RN
+            EnvExecutor.runInEnv(Env.CLIENT, () -> () -> GameInstance.getClient().setScreen(ClientHooks.createHologramScreen(pPos, null)));
             return InteractionResult.SUCCESS;
         }
         return InteractionResult.PASS;
@@ -102,14 +106,73 @@ public class HoloProjectorBlock extends FaceAttachedHorizontalDirectionalBlock i
 
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
-//        EnvExecutor.runInEnv(Env.CLIENT, () -> () -> {
-//            if (level.getBlockEntity(pos) instanceof HoloProjectorBlockEntity blockEntity) {
+        EnvExecutor.runInEnv(Env.CLIENT, () -> () -> {
+            if (level.getGameTime() % 3 == 0) {
+                double x = pos.getX() + 0.5, y = pos.getY() + 0.05, z = pos.getZ() + 0.5;
+                var spread = 0.35;
+                double dx = (level.random.nextDouble() - 0.5) * spread, dz = (level.random.nextDouble() - 0.5) * spread;
+                double vx = -dx * 0.02, vy = 0.02, vz = -dz * 0.02;
+                level.addParticle(ParticleTypes.END_ROD, x + dx, y, z + dz, vx, vy, vz);
+            }
+
+//            if (level.getBlockEntity(pos) instanceof HoloProjectorBlockEntity blockEntity) { TODO SOUNDS
 //                if (blockEntity.getCallId() == null) this.playAudio = true;
 //                else if (this.playAudio) {
 //                    ClientHooks.playerHoloSound(pos);
 //                    this.playAudio = false;
 //                }
 //            }
-//        });
+        });
+    }
+
+    private void renderParticleEffect(float scale) {
+        if (scale <= 0.01f) return;
+
+        var level = Minecraft.getInstance().level;
+        if (level == null) return;
+
+        var pos = Vec3.ZERO; // or your stored block pos this.data.getInterpolatedPosition()
+
+        if (level.getGameTime() % 2 != 0) return;
+
+        double cx = pos.x + 0.5;
+        double cy = pos.y + 0.05;
+        double cz = pos.z + 0.5;
+
+        float time = level.getGameTime();
+
+        float radius = 0.7f * scale;
+        float speed = 0.02f + scale * 0.12f;
+        float pull = 0.02f + scale * 0.15f;
+
+        int points = 2 + (int)(scale * 6);
+
+        for (int i = 0; i < points; i++) {
+
+            float angle = (float)(Math.random() * Math.PI * 2);
+            float rot = time * speed;
+
+            float a = angle + rot;
+
+            double x = cx + Math.cos(a) * radius;
+            double z = cz + Math.sin(a) * radius;
+
+            double vx = (cx - x) * pull;
+            double vz = (cz - z) * pull;
+
+            double vy = 0.02 + scale * 0.06;
+
+            ParticleOptions particle;
+
+            if (scale < 0.3f) {
+                particle = ParticleTypes.END_ROD;
+            } else if (scale < 0.7f) {
+                particle = ParticleTypes.SCULK_SOUL;
+            } else {
+                particle = ParticleTypes.PORTAL;
+            }
+
+            level.addParticle(particle, x, cy, z, vx, vy, vz);
+        }
     }
 }

@@ -18,6 +18,8 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.layers.*;
 import net.minecraft.client.resources.DefaultPlayerSkin;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -62,7 +64,7 @@ public class HologramRenderer extends LivingEntityRenderer<AbstractClientPlayer,
             var scale = this.data.getAnimationScale(partialTicks);
             poseStack.scale(scale, scale, scale);
             if (this.data.isStaticRender()) this.setModelProperties(player);
-            this.render(player, partialTicks, poseStack, buffer, packedLight);
+//            this.render(player, partialTicks, poseStack, buffer, packedLight);
             poseStack.popPose();
         }
     }

@@ -2,6 +2,7 @@ package mod.syconn.svc.blockentity;
 
 import mod.syconn.svc.core.ModBlockEntities;
 import mod.syconn.svc.server.savedData.HologramNetwork;
+import mod.syconn.svc.utils.client.ParticleEvent;
 import mod.syconn.svc.utils.generic.NBTUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -16,6 +17,7 @@ import java.util.*;
 
 public class HoloProjectorBlockEntity extends SyncedBlockEntity {
 
+    private List<ParticleEvent> particleQueue = new ArrayList<>();
     private Map<UUID, Vec3> renderables = new HashMap<>();
     private String soloRender = "";
     private double rotation = 0;
@@ -45,6 +47,12 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
                 blockEntity.markDirty();
             }
         }
+    }
+
+    private float getProgress(HoloProjectorBlockEntity be) {
+        if (be.getLevel() == null) return 0;
+        if (!be.getRenderables().isEmpty()) return 1.0f;
+        return 0.2f;
     }
 
     public Map<UUID, Vec3> getRenderables() {

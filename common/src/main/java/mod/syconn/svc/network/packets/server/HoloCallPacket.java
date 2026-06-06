@@ -60,7 +60,7 @@ public class HoloCallPacket {
                 else if (this.type == Type.CONNECT) network.connect(this.id, caller);
                 else if (this.unknownID && sp.level().getBlockEntity(this.pos) instanceof HoloProjectorBlockEntity be) {
                     var uuid = be.getReceiverUUID();
-                    network.leaveCall(network.getBlockReceiver(uuid).callID, caller);
+                    if (network.getBlockReceiver(uuid) != null) network.leaveCall(network.getBlockReceiver(uuid).callID, caller);
                 } else network.leaveCall(this.id, caller);
             }
         });
