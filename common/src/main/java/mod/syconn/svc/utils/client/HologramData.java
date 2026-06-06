@@ -8,12 +8,13 @@ import mod.syconn.svc.utils.generic.AnimationUtil;
 import mod.syconn.svc.utils.generic.ColorUtil;
 import mod.syconn.svc.utils.generic.MathUtil;
 import mod.syconn.svc.utils.generic.ResourceUtil;
-import mod.syconn.svc.utils.interfaces.IHologramEntity;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.resources.ResourceLocation;
@@ -63,7 +64,6 @@ public class HologramData {
         this.renderName = playerInfo.getProfile().getName();
         this.renderer = new HologramRenderer(this, playerInfo.getModelName().equals("slim"));
         this.player = minecraft.level == null ? null : (AbstractClientPlayer) minecraft.level.getPlayerByUUID(playerInfo.getProfile().getId());
-        if (this.player != null) ((IHologramEntity) player).svc$setHologram(true);
         this.skin = texture.map(dynamicTexture -> ResourceUtil.registerOrGet(playerInfo.getProfile().getName(), dynamicTexture)).orElse(this.skinPath);
         this.transition = TRANSITION_TICKS;
     }
@@ -82,7 +82,6 @@ public class HologramData {
         this.renderName = playerInfo.getProfile().getName();
         this.renderer = new HologramRenderer(this, playerInfo.getModelName().equals("slim"));
         this.player = minecraft.level == null ? null : (AbstractClientPlayer) minecraft.level.getPlayerByUUID(playerInfo.getProfile().getId());
-        if (this.player != null) ((IHologramEntity) player).svc$setHologram(true);
         this.skin = texture.map(dynamicTexture -> ResourceUtil.registerOrGet(playerInfo.getProfile().getName(), dynamicTexture)).orElse(this.skinPath);
         this.transition = TRANSITION_TICKS;
     }
@@ -99,7 +98,6 @@ public class HologramData {
 
         final var level = Minecraft.getInstance().level;
         final var playerInfo = getPlayerInfoFromName(name);
-
         this.playerID = playerInfo.getProfile().getId();
         this.renderName = name;
         this.staticRender = true;

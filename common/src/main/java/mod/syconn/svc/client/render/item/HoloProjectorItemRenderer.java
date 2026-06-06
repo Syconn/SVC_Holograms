@@ -4,10 +4,10 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dev.architectury.utils.GameInstance;
 import mod.syconn.svc.client.SVCClient;
+import mod.syconn.svc.client.model.HologramModel;
 import mod.syconn.svc.utils.client.HologramData;
 import mod.syconn.svc.utils.generic.MathUtil;
 import mod.syconn.svc.utils.generic.ModelUtil;
-import mod.syconn.svc.utils.interfaces.IHologramEntity;
 import mod.syconn.svc.utils.interfaces.IModifiedItemRenderer;
 import mod.syconn.svc.utils.interfaces.IModifiedPoseRenderer;
 import mod.syconn.svc.utils.item.HologramTag;
@@ -31,21 +31,18 @@ public class HoloProjectorItemRenderer implements IModifiedItemRenderer, IModifi
     private float spin = 0;
 
     @Override
-    public boolean render(LivingEntity entity, ItemStack stack, ItemDisplayContext renderMode, boolean leftHanded, PoseStack poseStack, MultiBufferSource bufferSource, int light, int overlay, BakedModel model) {
+    public boolean render(LivingEntity entity, HumanoidModel<? extends LivingEntity> playerModel, ItemStack stack, ItemDisplayContext renderMode, boolean leftHanded, PoseStack poseStack, MultiBufferSource bufferSource, int light, int overlay, BakedModel model) {
         poseStack.pushPose();
         model.getTransforms().getTransform(renderMode).apply(leftHanded, poseStack);
-        if (renderMode != ItemDisplayContext.GUI && (!(entity instanceof IHologramEntity e) || !e.svc$isHologram())) renderDirect(stack, renderMode, poseStack, bufferSource);
+        if (renderMode != ItemDisplayContext.GUI && !(playerModel instanceof HologramModel)) renderDirect(stack, renderMode, poseStack, bufferSource);
         poseStack.popPose();
         return false;
     }
 
-
     private void renderDirect(ItemStack stack, ItemDisplayContext renderMode, PoseStack poseStack, MultiBufferSource bufferSource) {
         var tag = HologramTag.getOrCreate(stack);
         var hologramData = getHologramData(tag);
-        this.spin += 0.25f;
-
-        System.out.println(RENDERER.get(tag.getReceiverID()));
+        if (!tag.getSoloRender().isEmpty()) this.spin += 0.25f;
 
         if (hologramData.activeRender()) { // TODO TURN OFF IF NOT IN ACTIVE HAND,
             poseStack.pushPose();
@@ -71,7 +68,7 @@ public class HoloProjectorItemRenderer implements IModifiedItemRenderer, IModifi
         var mc = GameInstance.getClient();
         var tag = HologramTag.getOrCreate(stack);
 
-        if (entity instanceof IHologramEntity e && e.svc$isHologram()) return;
+        if (model instanceof HologramModel) return;
         if (mc.player == entity && mc.options.getCameraType().isFirstPerson()) return;
         if (!tag.getSoloRender().isEmpty() || tag.getRenderTarget() != null) ModelUtil.smartLerpArmsRadians(entity, hand, model, 1, 0, 0, 0, MathUtil.toRadians(-145), 0, 0);
     }

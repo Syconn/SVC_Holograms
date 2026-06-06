@@ -71,6 +71,8 @@ public class ResourceUtil {
     }
 
     public static PlayerInfo getPlayerInfoFromName(String name) {
+        System.out.println(name);
+
         var uuid = getUUID(name);
         if (uuid.isEmpty()) return PLAYER_INFO.computeIfAbsent(name, (n) -> new PlayerInfo(new GameProfile(UUID.randomUUID(), StringUtils.capitalize(n)), false));
         return PLAYER_INFO.computeIfAbsent(name, (n) -> new PlayerInfo(new GameProfile(untrimUUID(uuid), StringUtils.capitalize(n)), false));

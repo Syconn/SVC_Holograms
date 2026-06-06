@@ -26,15 +26,7 @@ public abstract class ItemRendererMixin {
         if (!itemStack.isEmpty()) {
             final BakedModel bakedModel = this.getModel(itemStack, level, entity, seed);
             final IModifiedItemRenderer itemRenderer = IModifiedItemRenderer.INSTANCES.get(itemStack.getItem().getClass());
-            if (itemRenderer != null && itemRenderer.render(entity, itemStack, displayContext, leftHand, poseStack, buffer, combinedLight, combinedOverlay, bakedModel)) ci.cancel();
-        }
-    }
-
-    @Inject(method = "render", at = @At("HEAD"), cancellable = true)
-    public void renderItem(ItemStack itemStack, ItemDisplayContext displayContext, boolean leftHand, PoseStack poseStack, MultiBufferSource buffer, int combinedLight, int combinedOverlay, BakedModel model, CallbackInfo ci) {
-        if (!itemStack.isEmpty()) {
-            final IModifiedItemRenderer itemRenderer = IModifiedItemRenderer.INSTANCES.get(itemStack.getItem().getClass());
-            if (itemRenderer != null && itemRenderer.render(null, itemStack, displayContext, leftHand, poseStack, buffer, combinedLight, combinedOverlay, model)) ci.cancel();
+            if (itemRenderer != null && itemRenderer.render(entity, null, itemStack, displayContext, leftHand, poseStack, buffer, combinedLight, combinedOverlay, bakedModel)) ci.cancel();
         }
     }
 }
