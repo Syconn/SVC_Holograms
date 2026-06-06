@@ -3,7 +3,7 @@
   "id": "svc",
   "version": "${version}",
   "name": "SVC Holograms",
-  "description": "A mod that add the Holographic Communicators from Syconn's Star Wars Mod.",
+  "description": "A mod that add the Holographic Communicators from Syconn's Star Wars Mod and adds support for Simple Voice Chat Mod.",
   "authors": [
     "Syconn"
   ],

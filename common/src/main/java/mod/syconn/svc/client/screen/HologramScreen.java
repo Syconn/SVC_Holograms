@@ -39,7 +39,7 @@ public class HologramScreen extends Screen {
     private String lastSearch = "";
     private CallMenuWidget callData;
     private SearchButton searchButton;
-    private EditBox searchBox;
+    public EditBox searchBox;
     private LockButton lockButton;
     private CallButton callButton;
     private ErrorWidget errorWidget;

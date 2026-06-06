@@ -99,7 +99,7 @@ public class CallMenuWidget implements IWidgetComponent {
     }
 
     public void searchForPlayer() {
-        if (!Objects.equals(this.lastSearch, "")) ResourceUtil.getPlayerInfoFromName(this.lastSearch);
+        if (!Objects.equals(this.screen.searchBox.getValue(), "")) ResourceUtil.getPlayerInfoFromName(this.screen.searchBox.getValue());
         this.refresh();
     }
 
