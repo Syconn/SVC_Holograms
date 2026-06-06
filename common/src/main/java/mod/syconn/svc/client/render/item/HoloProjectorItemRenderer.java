@@ -44,7 +44,7 @@ public class HoloProjectorItemRenderer implements IModifiedItemRenderer, IModifi
         var hologramData = getHologramData(tag);
         if (!tag.getSoloRender().isEmpty()) this.spin += 0.25f;
 
-        if (hologramData.activeRender()) { // TODO TURN OFF IF NOT IN ACTIVE HAND, PICKUP CALL FROM BLOCK ENTITY, ADD HOLOGRAM TO ITEM?
+        if (hologramData.activeRender()) { // TODO PICKUP CALL FROM BLOCK ENTITY, ADD HOLOGRAM TO ITEM?
             poseStack.pushPose();
             poseStack.mulPose(Axis.YN.rotationDegrees(ModelUtil.isLeftHanded(renderMode) ? -45f : 45f));
             if (tag.getRenderTarget() == null) poseStack.mulPose(Axis.YN.rotationDegrees(spin));
