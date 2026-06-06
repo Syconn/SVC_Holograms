@@ -58,13 +58,10 @@ public class HologramRenderer extends LivingEntityRenderer<AbstractClientPlayer,
 
         if (this.data.shouldRender()) {
             var player = this.data.getPlayer();
-//            var player2 = this.data.getPlayer();
-
             poseStack.pushPose();
             var scale = this.data.getAnimationScale(partialTicks);
             poseStack.scale(scale, scale, scale);
             if (this.data.isStaticRender()) this.setModelProperties(player);
-//            if (player instanceof HologramPlayer hp) player2 = hp.getTargetPlayer();
             this.render(player, partialTicks, poseStack, buffer, packedLight);
             poseStack.popPose();
         }
@@ -142,12 +139,7 @@ public class HologramRenderer extends LivingEntityRenderer<AbstractClientPlayer,
             this.model.renderToBuffer(poseStack, vertexConsumer, packedLight, m, 1.0F, 1.0F, 1.0F, bl2 ? 0.15F : 1.0F);
         }
 
-        if (!player.isSpectator()) {
-            for (var renderLayer : this.layers) {
-//                if (renderLayer instanceof PlayerItemInHandLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>>) continue; // TODO Maybe Add Items and there Effects
-                renderLayer.render(poseStack, buffer, packedLight, player, l, k, partialTicks, ix, h, j);
-            }
-        }
+        if (!player.isSpectator()) for (var renderLayer : this.layers) renderLayer.render(poseStack, buffer, packedLight, player, l, k, partialTicks, ix, h, j);
         poseStack.popPose();
     }
 
