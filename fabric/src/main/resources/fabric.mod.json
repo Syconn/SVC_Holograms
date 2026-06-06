@@ -11,7 +11,7 @@
     "homepage": ""
   },
   "license": "All-Rights-Reserved",
-  "icon": "assets/svc/icon.png",
+  "icon": "icon.png",
   "environment": "*",
   "entrypoints": {
     "main": [
