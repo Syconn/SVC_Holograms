@@ -111,7 +111,7 @@ public class HoloProjectorBlock extends FaceAttachedHorizontalDirectionalBlock i
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
         EnvExecutor.runInEnv(Env.CLIENT, () -> () -> {
-            if (level.getGameTime() % 4 == 0 && level.getBlockEntity(pos) instanceof HoloProjectorBlockEntity be && (!be.getRenderables().isEmpty() || !be.getSoloRender().isEmpty())) {
+            if (level.getGameTime() % 4 == 0 && level.getBlockEntity(pos) instanceof HoloProjectorBlockEntity be && be.isActive()) {
                 double centerX = pos.getX() + 0.5, centerY = pos.getY() + 0.4, centerZ = pos.getZ() + 0.5;
                 var blueParticle = new DustColorTransitionOptions(new Vector3f(0.2f, 0.7f, 1.0f), new Vector3f(1.0f, 1.0f, 1.0f), 1.2f);
 

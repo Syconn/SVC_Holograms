@@ -46,7 +46,7 @@ public class HoloProjectorItemRenderer implements IModifiedItemRenderer, IModifi
         var hologramData = getHologramData(tag);
         if (!tag.getSoloRender().isEmpty()) this.spin += 0.25f;
 
-        if (hologramData.activeRender()) { // TODO PICKUP CALL FROM BLOCK ENTITY, ADD HOLOGRAM TO ITEM, Sounds, Screenshots, Fix No animations on blockentity
+        if (hologramData.activeRender()) { // TODO PICKUP CALL FROM BLOCK ENTITY, ADD HOLOGRAM TO ITEM, Sounds, Screenshots
             poseStack.pushPose();
             poseStack.mulPose(Axis.YN.rotationDegrees(-hologramData.getPlayer().getYRot()));
             poseStack.mulPose(Axis.YN.rotationDegrees(ModelUtil.isLeftHanded(renderMode) ? -45f : 45f));

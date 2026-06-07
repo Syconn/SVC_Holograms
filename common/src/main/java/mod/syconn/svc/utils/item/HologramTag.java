@@ -52,7 +52,7 @@ public class HologramTag {
         var network = HologramNetwork.get(GameInstance.getServer().overworld());
         var receiver = network.getItemReceiver(this.receiverID);
         if (receiver == null) network.registerItemReceiver(this.receiverID);
-        else if (!heldItem && receiver.callID != null && network.getCall(receiver.callID).callers != null) network.leaveCall(receiver.callID, network.getCall(receiver.callID).callers.get(receiver.userID));
+        else if (!heldItem && receiver.callID != null && network.getCall(receiver.callID) != null) network.leaveCall(receiver.callID, network.getCall(receiver.callID).callers.get(receiver.userID));
         else if (receiver.callID != null && network.getCall(receiver.callID) != null) {
             var legalCall = true;
             for (var entry : network.getCall(receiver.callID).callers.entrySet()) {

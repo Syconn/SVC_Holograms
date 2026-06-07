@@ -20,6 +20,7 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
 
     private List<ParticleEvent> particleQueue = new ArrayList<>();
     private Map<UUID, Vec3> renderables = new HashMap<>();
+    private boolean active;
     private String soloRender = "";
     private double rotation = 0;
     private UUID receiverUUID;
@@ -33,22 +34,24 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
             final var network = HologramNetwork.get(serverLevel);
             final var callData = network.getBlockReceiver(blockEntity.receiverUUID);
             if (callData != null && callData.callID != null) {
+                blockEntity.active = true;
                 if (!blockEntity.soloRender.isEmpty()) blockEntity.soloRender = "";
                 final var players = level.getEntitiesOfClass(Player.class, new AABB(pos).move(0, 1, 0).inflate(3.5));
                 final var renderMembers = new HashMap<UUID, Vec3>();
                 blockEntity.renderables.clear();
-                if (network.getCall(callData.callID).renderMembers.containsKey(blockEntity.getReceiverUUID())) for (var entry : network.getCall(callData.callID).renderMembers.entrySet()) if (entry.getKey() != blockEntity.receiverUUID) blockEntity.renderables.putAll(entry.getValue());
+                if (network.getCall(callData.callID).renderMembers.containsKey(blockEntity.getReceiverUUID()))
+                    for (var entry : network.getCall(callData.callID).renderMembers.entrySet())
+                        if (entry.getKey() != blockEntity.receiverUUID) blockEntity.renderables.putAll(entry.getValue());
                 for (Player player : players) renderMembers.put(player.getUUID(), player.position().subtract(pos.getCenter()));
                 network.setRenderMembers(callData.callID, blockEntity.getReceiverUUID(), renderMembers);
                 blockEntity.markDirty();
             } else if (callData != null && !blockEntity.renderables.isEmpty()) {
                 blockEntity.renderables.clear();
+                blockEntity.active = false;
                 blockEntity.markDirty();
             }
         } else if (level instanceof ClientLevel && !blockEntity.particleQueue.isEmpty()) {
-            for (var event : blockEntity.particleQueue) {
-                level.addParticle(event.type(), event.pos().x, event.pos().y, event.pos().z, event.velocity().x, event.velocity().y, event.velocity().z);
-            }
+            for (var event : blockEntity.particleQueue) level.addParticle(event.type(), event.pos().x, event.pos().y, event.pos().z, event.velocity().x, event.velocity().y, event.velocity().z);
             blockEntity.particleQueue.clear();
             blockEntity.markDirty();
         }
@@ -59,12 +62,17 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
         this.markDirty();
     }
 
+    public boolean isActive() {
+        return active;
+    }
+
     public Map<UUID, Vec3> getRenderables() {
         return renderables;
     }
 
     public void setSoloRender(String soloRender, Vec3 pos) {
         this.soloRender = soloRender;
+        this.active = !soloRender.isEmpty();
 
         var pos2 = new Vec3(this.worldPosition.getX() + 0.5, 0, this.worldPosition.getZ() + 0.5);
         double dx = pos.x - pos2.x;
@@ -97,6 +105,7 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
         this.soloRender = NBTUtil.getNullable(tag.getCompound("soloRender"), t -> t.getString(""));
         this.rotation = tag.getDouble("rotation");
         this.particleQueue = NBTUtil.getList(tag.getCompound("queue"), ParticleEvent::from);
+        this.active = tag.getBoolean("active");
         if (tag.contains("renderables")) this.renderables = NBTUtil.getMap(tag.getCompound("renderables"), NBTUtil::getUUID, NBTUtil::getVec3);
     }
 
@@ -106,6 +115,7 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
         tag.put("soloRender", NBTUtil.putNullable(this.soloRender, s -> NBTUtil.convert(t -> t.putString("", s))));
         tag.putDouble("rotation", this.rotation);
         tag.put("queue", NBTUtil.putList(this.particleQueue, ParticleEvent::save));
+        tag.putBoolean("active", this.active);
     }
 
     @Override
