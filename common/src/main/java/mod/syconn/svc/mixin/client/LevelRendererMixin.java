@@ -1,13 +1,11 @@
 package mod.syconn.svc.mixin.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import mod.syconn.svc.client.render.debug.HoloProjectorDebugRenderer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderBuffers;
-import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;

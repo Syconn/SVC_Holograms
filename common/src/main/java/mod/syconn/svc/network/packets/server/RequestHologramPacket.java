@@ -6,7 +6,6 @@ import mod.syconn.svc.network.packets.client.RequestedHologramPacket;
 import mod.syconn.svc.server.savedData.HologramNetwork;
 import mod.syconn.svc.server.savedData.extra.CallData;
 import mod.syconn.svc.utils.generic.NBTUtil;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 

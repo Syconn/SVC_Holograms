@@ -1,13 +1,9 @@
 package mod.syconn.svc.client.screen.components.buttons;
 
 import dev.architectury.utils.GameInstance;
-import mod.syconn.svc.core.ModSounds;
 import mod.syconn.svc.utils.Constants;
-import mod.syconn.svc.utils.generic.MathUtil;
 import mod.syconn.svc.utils.interfaces.IWidgetComponent;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 

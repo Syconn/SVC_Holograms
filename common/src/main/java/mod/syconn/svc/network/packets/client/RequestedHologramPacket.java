@@ -3,7 +3,6 @@ package mod.syconn.svc.network.packets.client;
 import dev.architectury.networking.NetworkManager;
 import dev.architectury.utils.GameInstance;
 import mod.syconn.svc.client.screen.HologramScreen;
-import mod.syconn.svc.server.savedData.HologramNetwork;
 import mod.syconn.svc.server.savedData.extra.CallData;
 import mod.syconn.svc.utils.generic.NBTUtil;
 import net.minecraft.nbt.CompoundTag;

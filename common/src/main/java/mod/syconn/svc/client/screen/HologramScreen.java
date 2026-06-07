@@ -8,7 +8,6 @@ import mod.syconn.svc.network.Network;
 import mod.syconn.svc.network.packets.server.HoloCallPacket;
 import mod.syconn.svc.server.savedData.extra.CallData;
 import mod.syconn.svc.utils.Constants;
-import mod.syconn.svc.utils.client.HologramData;
 import mod.syconn.svc.utils.generic.ListUtil;
 import mod.syconn.svc.utils.item.HologramTag;
 import net.fabricmc.api.EnvType;

@@ -5,9 +5,9 @@ import mod.syconn.svc.server.savedData.HologramNetwork;
 import mod.syconn.svc.server.savedData.extra.CallData;
 import mod.syconn.svc.utils.generic.NBTUtil;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import org.apache.logging.log4j.core.appender.rolling.action.IfAll;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
@@ -54,12 +54,27 @@ public class HologramTag {
         if (receiver == null) network.registerItemReceiver(this.receiverID);
         else if (!heldItem && receiver.callID != null && network.getCall(receiver.callID) != null) network.leaveCall(receiver.callID, network.getCall(receiver.callID).callers.get(receiver.userID));
         else if (receiver.callID != null && network.getCall(receiver.callID) != null) {
-            var legalCall = true;
-            for (var entry : network.getCall(receiver.callID).callers.entrySet()) {
-                if (!entry.getKey().equals(player.getUUID())) this.renderTarget = entry.getKey();
-                if (entry.getValue().type == CallData.ReceiverType.NULL) legalCall = false;
+            boolean legalCall = true, exitLoop = false;
+            for (var entries : network.getCall(receiver.callID).renderMembers.entrySet()) {
+                for (var uuid : entries.getValue().keySet()) {
+                    if (!uuid.equals(player.getUUID())) {
+                        this.renderTarget = uuid;
+                        exitLoop = true;
+                        break;
+                    }
+                }
+                if (exitLoop) break;
             }
-            if (!legalCall) this.renderTarget = null;
+            if (!exitLoop) {
+                for (var entry : network.getCall(receiver.callID).callers.entrySet()) {
+                    if (!entry.getKey().equals(player.getUUID()) && entry.getValue().type == CallData.ReceiverType.ITEM) {
+                        this.renderTarget = entry.getKey();
+                        exitLoop = true;
+                    }
+                    if (entry.getValue().type == CallData.ReceiverType.NULL) legalCall = false;
+                }
+            }
+            if (!legalCall || !exitLoop) this.renderTarget = null;
             if (legalCall) this.soloRender = "";
         } else this.renderTarget = null;
     }

@@ -6,7 +6,6 @@ import mod.syconn.svc.utils.Constants;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -168,18 +167,6 @@ public class MathUtil {
         var q = new Quaternionf(w, (float)cross.x, (float)cross.y, (float)cross.z);
         q.normalize();
         return q;
-    }
-
-    public static float calculateDopplerShift(Entity a, Entity b) { // TODO: move doppler handling to OpenAL through SoundSystem's updateListenerPosition call?
-        var velA = a.position().subtract(a.xOld, a.yOld, a.zOld);
-        var velB = b.position().subtract(b.xOld, b.yOld, b.zOld);
-
-        var posA = a.getEyePosition();
-        var posB = b.getEyePosition();
-
-        var relativeSpeed = posA.distanceTo(posB) - posA.add(velA).distanceTo(posB.add(velB));
-
-        return Mth.clamp((float)(relativeSpeed / SPEED_OF_SOUND), -1, 1);
     }
 
     /**

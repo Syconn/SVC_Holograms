@@ -2,6 +2,7 @@ package mod.syconn.svc.blockentity;
 
 import mod.syconn.svc.core.ModBlockEntities;
 import mod.syconn.svc.server.savedData.HologramNetwork;
+import mod.syconn.svc.server.savedData.extra.CallData;
 import mod.syconn.svc.utils.client.ParticleEvent;
 import mod.syconn.svc.utils.generic.NBTUtil;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -33,20 +34,35 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
         if (level instanceof ServerLevel serverLevel && blockEntity.receiverUUID != null) {
             final var network = HologramNetwork.get(serverLevel);
             final var callData = network.getBlockReceiver(blockEntity.receiverUUID);
+
             if (callData != null && callData.callID != null) {
                 blockEntity.active = true;
                 if (!blockEntity.soloRender.isEmpty()) blockEntity.soloRender = "";
                 final var players = level.getEntitiesOfClass(Player.class, new AABB(pos).move(0, 1, 0).inflate(3.5));
                 final var renderMembers = new HashMap<UUID, Vec3>();
+                final var call = network.getCall(callData.callID);
                 blockEntity.renderables.clear();
-                if (network.getCall(callData.callID).renderMembers.containsKey(blockEntity.getReceiverUUID()))
-                    for (var entry : network.getCall(callData.callID).renderMembers.entrySet())
-                        if (entry.getKey() != blockEntity.receiverUUID) blockEntity.renderables.putAll(entry.getValue());
+                if (call.renderMembers.containsKey(blockEntity.getReceiverUUID())) {
+                    for (var entry : call.renderMembers.entrySet())
+                        if (entry.getKey() != blockEntity.receiverUUID)
+                            blockEntity.renderables.putAll(entry.getValue());
+                }
                 for (Player player : players) renderMembers.put(player.getUUID(), player.position().subtract(pos.getCenter()));
                 network.setRenderMembers(callData.callID, blockEntity.getReceiverUUID(), renderMembers);
+
+                for (var entry : call.callers.entrySet()) {
+                    if (entry.getValue().type == CallData.ReceiverType.ITEM) {
+                        blockEntity.renderables.put(entry.getKey(), new Vec3(0, -0.3f, 0));
+                        break;
+                    }
+                }
                 blockEntity.markDirty();
             } else if (callData != null && !blockEntity.renderables.isEmpty()) {
                 blockEntity.renderables.clear();
+                blockEntity.markDirty();
+            }
+
+            if (callData == null || callData.callID == null) {
                 blockEntity.active = false;
                 blockEntity.markDirty();
             }
