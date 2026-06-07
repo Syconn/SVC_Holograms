@@ -4,6 +4,7 @@ import mod.syconn.svc.core.ModBlockEntities;
 import mod.syconn.svc.server.savedData.HologramNetwork;
 import mod.syconn.svc.utils.client.ParticleEvent;
 import mod.syconn.svc.utils.generic.NBTUtil;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
@@ -36,9 +37,7 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
                 final var players = level.getEntitiesOfClass(Player.class, new AABB(pos).move(0, 1, 0).inflate(3.5));
                 final var renderMembers = new HashMap<UUID, Vec3>();
                 blockEntity.renderables.clear();
-                if (network.getCall(callData.callID).renderMembers.containsKey(blockEntity.getReceiverUUID())) {
-                    for (var entry : network.getCall(callData.callID).renderMembers.entrySet()) if (entry.getKey() != blockEntity.receiverUUID) blockEntity.renderables.putAll(entry.getValue());
-                }
+                if (network.getCall(callData.callID).renderMembers.containsKey(blockEntity.getReceiverUUID())) for (var entry : network.getCall(callData.callID).renderMembers.entrySet()) if (entry.getKey() != blockEntity.receiverUUID) blockEntity.renderables.putAll(entry.getValue());
                 for (Player player : players) renderMembers.put(player.getUUID(), player.position().subtract(pos.getCenter()));
                 network.setRenderMembers(callData.callID, blockEntity.getReceiverUUID(), renderMembers);
                 blockEntity.markDirty();
@@ -46,13 +45,18 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
                 blockEntity.renderables.clear();
                 blockEntity.markDirty();
             }
+        } else if (level instanceof ClientLevel && !blockEntity.particleQueue.isEmpty()) {
+            for (var event : blockEntity.particleQueue) {
+                level.addParticle(event.type(), event.pos().x, event.pos().y, event.pos().z, event.velocity().x, event.velocity().y, event.velocity().z);
+            }
+            blockEntity.particleQueue.clear();
+            blockEntity.markDirty();
         }
     }
 
-    private float getProgress(HoloProjectorBlockEntity be) {
-        if (be.getLevel() == null) return 0;
-        if (!be.getRenderables().isEmpty()) return 1.0f;
-        return 0.2f;
+    public void addParticleEvent(ParticleEvent event) {
+        particleQueue.add(event);
+        this.markDirty();
     }
 
     public Map<UUID, Vec3> getRenderables() {
@@ -92,6 +96,7 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
         this.receiverUUID = NBTUtil.getNullable(tag.getCompound("receiverUUID"), NBTUtil::getUUID);
         this.soloRender = NBTUtil.getNullable(tag.getCompound("soloRender"), t -> t.getString(""));
         this.rotation = tag.getDouble("rotation");
+        this.particleQueue = NBTUtil.getList(tag.getCompound("queue"), ParticleEvent::from);
         if (tag.contains("renderables")) this.renderables = NBTUtil.getMap(tag.getCompound("renderables"), NBTUtil::getUUID, NBTUtil::getVec3);
     }
 
@@ -100,6 +105,7 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
         tag.put("receiverUUID", NBTUtil.putNullable(this.receiverUUID, NBTUtil::putUUID));
         tag.put("soloRender", NBTUtil.putNullable(this.soloRender, s -> NBTUtil.convert(t -> t.putString("", s))));
         tag.putDouble("rotation", this.rotation);
+        tag.put("queue", NBTUtil.putList(this.particleQueue, ParticleEvent::save));
     }
 
     @Override

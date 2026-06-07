@@ -7,14 +7,17 @@ import mod.syconn.svc.blockentity.HoloProjectorBlockEntity;
 import mod.syconn.svc.client.ClientHooks;
 import mod.syconn.svc.core.ModBlockEntities;
 import mod.syconn.svc.server.savedData.HologramNetwork;
+import mod.syconn.svc.utils.Constants;
 import mod.syconn.svc.utils.block.WorldPos;
 import mod.syconn.svc.utils.interfaces.IEntityBlock;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.DustColorTransitionOptions;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -35,6 +38,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 
 import java.util.UUID;
 
@@ -101,18 +105,35 @@ public class HoloProjectorBlock extends FaceAttachedHorizontalDirectionalBlock i
 
     @Override
     public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
-        return !level.isClientSide ? createTickerHelper(blockEntityType, ModBlockEntities.HOLO_PROJECTOR.get(), HoloProjectorBlockEntity::tick) : null;
+        return createTickerHelper(blockEntityType, ModBlockEntities.HOLO_PROJECTOR.get(), HoloProjectorBlockEntity::tick);
     }
 
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
         EnvExecutor.runInEnv(Env.CLIENT, () -> () -> {
-            if (level.getGameTime() % 3 == 0) {
-                double x = pos.getX() + 0.5, y = pos.getY() + 0.05, z = pos.getZ() + 0.5;
-                var spread = 0.35;
-                double dx = (level.random.nextDouble() - 0.5) * spread, dz = (level.random.nextDouble() - 0.5) * spread;
-                double vx = -dx * 0.02, vy = 0.02, vz = -dz * 0.02;
-                level.addParticle(ParticleTypes.END_ROD, x + dx, y, z + dz, vx, vy, vz);
+            if (level.getGameTime() % 4 == 0 && level.getBlockEntity(pos) instanceof HoloProjectorBlockEntity be && (!be.getRenderables().isEmpty() || !be.getSoloRender().isEmpty())) {
+                double centerX = pos.getX() + 0.5, centerY = pos.getY() + 0.4, centerZ = pos.getZ() + 0.5;
+                var blueParticle = new DustColorTransitionOptions(new Vector3f(0.2f, 0.7f, 1.0f), new Vector3f(1.0f, 1.0f, 1.0f), 1.2f);
+
+                for (int i = 0; i < Mth.randomBetweenInclusive(Constants.RANDOM, 1, 8); i++) {
+                    double angle = level.random.nextDouble() * (Math.PI * 2.0), radius = 0.25 + level.random.nextDouble() * 0.35;
+                    double x = centerX + Math.cos(angle) * radius, y = centerY + (level.random.nextDouble() - 0.5) * 0.25, z = centerZ + Math.sin(angle) * radius;
+                    double dx = x - centerX, dy = y - centerY, dz = z - centerZ;
+                    var len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+                    if (len > 0.0001) {
+                        dx /= len;
+                        dy /= len;
+                        dz /= len;
+                    }
+
+                    double tangentX = -dz, tangentZ = dx;
+                    var pulse = 0.8f + 0.2f * Mth.sin(level.getGameTime() * 0.1f);
+                    double outwardSpeed = 0.012 * pulse, swirlSpeed = 0.004;
+
+                    if (level.random.nextFloat() < 0.45f) level.addParticle(ParticleTypes.END_ROD, x, y, z, dx * 0.04 + tangentX * 0.01, 0.01, dz * 0.04 + tangentZ * 0.01);
+                    else level.addParticle(blueParticle, x, y, z, dx * outwardSpeed + tangentX * swirlSpeed, dy * outwardSpeed * 0.3 + 0.003, dz * outwardSpeed + tangentZ * swirlSpeed);
+                }
             }
 
 //            if (level.getBlockEntity(pos) instanceof HoloProjectorBlockEntity blockEntity) { TODO SOUNDS
@@ -123,56 +144,5 @@ public class HoloProjectorBlock extends FaceAttachedHorizontalDirectionalBlock i
 //                }
 //            }
         });
-    }
-
-    private void renderParticleEffect(float scale) {
-        if (scale <= 0.01f) return;
-
-        var level = Minecraft.getInstance().level;
-        if (level == null) return;
-
-        var pos = Vec3.ZERO; // or your stored block pos this.data.getInterpolatedPosition()
-
-        if (level.getGameTime() % 2 != 0) return;
-
-        double cx = pos.x + 0.5;
-        double cy = pos.y + 0.05;
-        double cz = pos.z + 0.5;
-
-        float time = level.getGameTime();
-
-        float radius = 0.7f * scale;
-        float speed = 0.02f + scale * 0.12f;
-        float pull = 0.02f + scale * 0.15f;
-
-        int points = 2 + (int)(scale * 6);
-
-        for (int i = 0; i < points; i++) {
-
-            float angle = (float)(Math.random() * Math.PI * 2);
-            float rot = time * speed;
-
-            float a = angle + rot;
-
-            double x = cx + Math.cos(a) * radius;
-            double z = cz + Math.sin(a) * radius;
-
-            double vx = (cx - x) * pull;
-            double vz = (cz - z) * pull;
-
-            double vy = 0.02 + scale * 0.06;
-
-            ParticleOptions particle;
-
-            if (scale < 0.3f) {
-                particle = ParticleTypes.END_ROD;
-            } else if (scale < 0.7f) {
-                particle = ParticleTypes.SCULK_SOUL;
-            } else {
-                particle = ParticleTypes.PORTAL;
-            }
-
-            level.addParticle(particle, x, cy, z, vx, vy, vz);
-        }
     }
 }

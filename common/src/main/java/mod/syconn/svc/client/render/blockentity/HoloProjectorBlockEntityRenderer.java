@@ -5,8 +5,10 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import dev.architectury.utils.GameInstance;
 import mod.syconn.svc.blockentity.HoloProjectorBlockEntity;
+import mod.syconn.svc.blocks.HoloProjectorBlock;
 import mod.syconn.svc.utils.Constants;
 import mod.syconn.svc.utils.client.HologramData;
+import mod.syconn.svc.utils.client.ParticleEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -14,27 +16,33 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<HoloProjectorBlockEntity> {
 
-    private static final ResourceLocation HOLOGRAM_TEXTURE = new ResourceLocation("svc", "textures/block/holo/hologram_ring.png");
-    private static final ResourceLocation BEAM = new ResourceLocation("minecraft", "textures/entity/beacon_beam.png");
+    private static final ResourceLocation HOLOGRAM_TEXTURE = Constants.withId("textures/block/holo/hologram_ring.png");
     private final HashMap<UUID, HologramData> SOLO_RENDERER = new HashMap<>();
     private final HashMap<UUID, Map<UUID, HologramData>> MULI_RENDERER = new HashMap<>();
 
-    public HoloProjectorBlockEntityRenderer(BlockEntityRendererProvider.Context context) {}
+    public HoloProjectorBlockEntityRenderer(BlockEntityRendererProvider.Context context) { }
 
     @Override
-    public void render(HoloProjectorBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        if (blockEntity.getLevel() != null) { //&& (!blockEntity.getSoloRender().isEmpty() || !blockEntity.getRenderables().isEmpty())
+    public void render(HoloProjectorBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) { // TODO NOT DOING ANIMATION CURRENTLY
+        if (blockEntity.getLevel() != null && (!blockEntity.getSoloRender().isEmpty() || !blockEntity.getRenderables().isEmpty())) {
             float time = blockEntity.getLevel().getGameTime() + partialTick;
             renderRing(poseStack, buffer, time * -1.3f, 0.3f + noise(time, 1) * 0.06f, 0.2f, 1f + noise(time, 1) * 0.5f);
             renderRing(poseStack, buffer, time, 0.25f + noise(time, 2) * 0.05f, 0.15f, 0.8f);
@@ -43,20 +51,7 @@ public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<Hol
             renderRing(poseStack, buffer, time * 1.8f, 0.1f + noise(time, 5) * 0.02f, 0.085f, 0.1f + noise(time, 1) * 0.2f);
         }
 
-
-        if (!blockEntity.getSoloRender().isEmpty()) {
-            var soloRenderer = this.getSoloRenderer(blockEntity.getReceiverUUID(), blockEntity.getSoloRender());
-            if (soloRenderer.activeRender()) {
-                poseStack.pushPose();
-                poseStack.translate(0.5f, 0.2f, 0.5f);
-                poseStack.mulPose(Axis.YN.rotationDegrees((float) blockEntity.getRotation()));
-                poseStack.translate(soloRenderer.getInterpolatedPosition().x, soloRenderer.getInterpolatedPosition().y, soloRenderer.getInterpolatedPosition().z);
-                soloRenderer.getRenderer().render(poseStack, buffer, partialTick, LightTexture.FULL_BLOCK);
-                poseStack.popPose();
-            }
-        } else {
-            blockEntity.getRenderables().forEach((uuid, pos) -> this.createMultiplayerRenderer(blockEntity.getReceiverUUID(), uuid, pos));
-
+        if (!getMulitplayerMap(blockEntity.getReceiverUUID()).isEmpty()) {
             for (var entry : getMulitplayerMap(blockEntity.getReceiverUUID()).entrySet()) {
                 var multiRender = this.getMultiplayerRenderer(blockEntity.getReceiverUUID(), entry.getKey());
                 if (multiRender.activeRender()) {
@@ -64,18 +59,32 @@ public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<Hol
                     poseStack.translate(0.5f, 0.5f, 0.5f);
                     poseStack.translate(multiRender.getInterpolatedPosition().x, multiRender.getInterpolatedPosition().y, multiRender.getInterpolatedPosition().z);
                     multiRender.getRenderer().render(poseStack, buffer, partialTick, LightTexture.FULL_BLOCK);
+                    this.updateVFX(blockEntity, multiRender.getAnimationScale(partialTick));
                     poseStack.popPose();
                 }
 
                 if (!blockEntity.getRenderables().containsKey(multiRender.getPlayerID())) multiRender.endCall();
             }
+        } else {
+            var soloRenderer = this.getSoloRenderer(blockEntity.getReceiverUUID(), blockEntity.getSoloRender());
+            if (soloRenderer.activeRender()) {
+                poseStack.pushPose();
+                poseStack.translate(0.5f, 0.2f, 0.5f);
+                poseStack.mulPose(Axis.YN.rotationDegrees((float) blockEntity.getRotation()));
+                poseStack.translate(soloRenderer.getInterpolatedPosition().x, soloRenderer.getInterpolatedPosition().y, soloRenderer.getInterpolatedPosition().z);
+                soloRenderer.getRenderer().render(poseStack, buffer, partialTick, LightTexture.FULL_BLOCK);
+                this.updateVFX(blockEntity, soloRenderer.getAnimationScale(partialTick));
+                poseStack.popPose();
+            } else this.SOLO_RENDERER.remove(blockEntity.getReceiverUUID());
+            blockEntity.getRenderables().forEach((uuid, pos) -> this.createMultiplayerRenderer(blockEntity.getReceiverUUID(), uuid, pos));
         }
     }
 
     private HologramData getSoloRenderer(UUID receiverID, String playerName) {
-        var data = SOLO_RENDERER.get(receiverID);
-        if (data != null && data.getRenderName().equals(playerName)) return data;
-        return SOLO_RENDERER.compute(receiverID, (_u, d) -> d == null ? new HologramData(playerName) : d.generateInformationByName(playerName));
+        return SOLO_RENDERER.compute(receiverID, (_u, d) -> {
+            if (d != null && ((Objects.equals(d.getRenderName(), playerName) && !playerName.isEmpty()))) return d;
+            return d == null ? new HologramData(playerName) : d.generateInformationByName(playerName);
+        });
     }
 
     private HologramData getMultiplayerRenderer(UUID receiverID, UUID playerID) {
@@ -83,8 +92,7 @@ public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<Hol
     }
 
     private void createMultiplayerRenderer(UUID receiverID, UUID playerID, Vec3 pos) {
-        MULI_RENDERER.computeIfAbsent(receiverID, u -> new HashMap<>())
-                .compute(playerID, (uuid, hologramData) -> hologramData == null ? new HologramData(uuid, pos) : hologramData.setActiveRender(true, pos));
+        MULI_RENDERER.computeIfAbsent(receiverID, u -> new HashMap<>()).compute(playerID, (uuid, hologramData) -> hologramData == null ? new HologramData(uuid, pos) : hologramData.setActiveRender(true, pos));
     }
 
     private Map<UUID, HologramData> getMulitplayerMap(UUID receiverID) {
@@ -100,6 +108,50 @@ public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<Hol
     public boolean shouldRenderOffScreen(HoloProjectorBlockEntity blockEntity) {
         if (GameInstance.getClient().getCameraEntity() == null) return false;
         return shouldRender(blockEntity, GameInstance.getClient().getCameraEntity().getEyePosition());
+    }
+
+    private void updateVFX(HoloProjectorBlockEntity blockEntity, float scale) {
+        if (scale <= 0.01f) return;
+        if (blockEntity.getLevel() == null) return;
+
+        final var level = blockEntity.getLevel();
+        final var pos = blockEntity.getBlockPos();
+        final float time = level.getGameTime();
+        final double cx = pos.getX() + 0.5, cz = pos.getZ() + 0.5;
+        final float radius = 0.7f * scale, speed = 0.02f + scale * 0.12f, pull = 0.02f + scale * 0.15f;
+        final int points = Math.max(1, (int) (2 + scale * 4));
+
+        for (int i = 0; i < points; i++) {
+            float angle = (float) (Math.random() * Math.PI * 2.0), rot = time * speed, a = angle + rot;
+            var chargeStrength = 1.0f - scale;
+            if (chargeStrength > 0.05f) {
+                var chargeParticles = Math.max(1, (int) (chargeStrength * 3));
+
+                for (int j = 0; j < chargeParticles; j++) {
+                    var chargeAngle = a + (float) (Math.random() * 0.5 - 0.25);
+                    var chargeRadius = radius * (0.9f + (float) Math.random() * 0.4f);
+                    double x = cx + Math.cos(chargeAngle) * chargeRadius, z = cz + Math.sin(chargeAngle) * chargeRadius;
+                    var particlePos = new Vec3(x, pos.getY() + 0.05, z);
+                    var velocity = new Vec3((cx - x) * (pull * 1.8f), 0.03 + chargeStrength * 0.05, (cz - z) * (pull * 1.8f));
+                    blockEntity.addParticleEvent(new ParticleEvent(particlePos, velocity, ParticleTypes.END_ROD));
+                }
+            }
+
+            if (scale > 0.15f && scale < 0.95f) {
+                double x = cx + Math.cos(a) * radius, z = cz + Math.sin(a) * radius;
+                var particlePos = new Vec3(x, pos.getY() + 0.03, z);
+                var velocity = new Vec3((cx - x) * pull, 0.015 + scale * 0.02, (cz - z) * pull);
+                blockEntity.addParticleEvent(new ParticleEvent(particlePos, velocity, new DustParticleOptions(new Vector3f(0.65f, 0.90f, 1.00f), 0.9f)));
+            }
+
+            if (scale > 0.15f) {
+                var innerRadius = radius * 0.55f;
+                double x = cx + Math.cos(a) * innerRadius, z = cz + Math.sin(a) * innerRadius;
+                var particlePos = new Vec3(x, pos.getY() + 0.01, z);
+                var velocity = new Vec3((cx - x) * pull * 1.4f, 0.01 + scale * 0.025, (cz - z) * pull * 1.4f);
+                blockEntity.addParticleEvent(new ParticleEvent(particlePos, velocity, new DustParticleOptions(new Vector3f(0.20f, 0.85f, 1.00f), 1.15f)));
+            }
+        }
     }
 
     private void renderRing(PoseStack poseStack, MultiBufferSource bufferSource, float time, float radius, float height, float alpha) {
@@ -118,12 +170,12 @@ public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<Hol
     }
 
     private void vertex(VertexConsumer vc, Matrix4f mat, float x, float y, float u, float v, int r, int g, int b, float alpha) {
-        vc.vertex(mat, x, y, (float) 0).color(r, g, b, (int)(alpha * 255)).uv(u, v).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(0xF000F0).normal(0, 1, 0).endVertex();
+        vc.vertex(mat, x, y, (float) 0).color(r, g, b, (int) (alpha * 255)).uv(u, v).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(0xF000F0).normal(0, 1, 0).endVertex();
     }
 
     private float noise(float time, float seed) {
-        var hash = (int)(time * 3.0f);
-        hash ^= (int)(seed * 374761393);
+        var hash = (int) (time * 3.0f);
+        hash ^= (int) (seed * 374761393);
         hash *= 1664525;
         hash += 1013904223;
         hash ^= (hash >> 13);
