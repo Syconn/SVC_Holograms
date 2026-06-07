@@ -3,6 +3,7 @@ package mod.syconn.svc.utils.generic;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.mojang.math.MatrixUtil;
+import mod.syconn.svc.mixin.client.ItemRendererAccessor;
 import mod.syconn.svc.utils.interfaces.IItemExtensions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
@@ -10,6 +11,7 @@ import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
@@ -79,7 +81,7 @@ public class RenderUtil {
                     poseStack.popPose();
                 }
                 renderHolographicItemEffect(poseStack, model, buffer, packedLight);
-            } else new BlockEntityWithoutLevelRenderer(Minecraft.getInstance().getBlockEntityRenderDispatcher(), Minecraft.getInstance().getEntityModels()).renderByItem(itemStack, displayContext, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
+            } else ((ItemRendererAccessor) Minecraft.getInstance().getItemRenderer()).getBlockEntityRenderer().renderByItem(itemStack, displayContext, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY); // TODO NEED TO GET IN HERE NOW
             poseStack.popPose();
         }
     }
@@ -92,7 +94,7 @@ public class RenderUtil {
         var consumer = buffer.getBuffer(RenderType.entityTranslucentCull(InventoryMenu.BLOCK_ATLAS));
         var pose = poseStack.last();
         var random = RandomSource.create();
-        float r = 0f, g = 0.25f, b = 1.0f, a = 0.75f;
+        float r = 1.0f, g = 1.0f, b = 1.0f, a = 0.50f;
 
         for (Direction direction : Direction.values()) {
             random.setSeed(42L);

@@ -8,12 +8,11 @@
     "client.HumanoidModelMixin",
     "client.ItemInHandLayerMixin",
     "client.ItemInHandRendererMixin",
+    "client.ItemRendererAccessor",
     "client.ItemRendererInvoker",
     "client.ItemRendererMixin",
     "client.LevelRendererMixin",
-    "client.MinecraftAccessor",
-    "client.SpriteContentsAccessor",
-    "client.TextureAtlasSpriteAccessor"
+    "client.MinecraftAccessor"
   ],
   "mixins": [],
   "injectors": {
