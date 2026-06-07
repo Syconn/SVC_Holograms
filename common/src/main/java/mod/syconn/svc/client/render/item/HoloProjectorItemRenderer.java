@@ -46,11 +46,11 @@ public class HoloProjectorItemRenderer implements IModifiedItemRenderer, IModifi
         var hologramData = getHologramData(tag);
         if (!tag.getSoloRender().isEmpty()) this.spin += 0.25f;
 
-        if (hologramData.activeRender()) { // TODO ADD HOLOGRAM TO ITEM, ARMOR, Sounds, Screenshots, SVC
+        if (hologramData.activeRender()) { // TODO ARMOR, Sounds, Screenshots, SVC
             poseStack.pushPose();
             poseStack.mulPose(Axis.YN.rotationDegrees(-hologramData.getPlayer().getYRot()));
             poseStack.mulPose(Axis.YN.rotationDegrees(ModelUtil.isLeftHanded(renderMode) ? -45f : 45f));
-//            if (tag.getRenderTarget() == null) poseStack.mulPose(Axis.YN.rotationDegrees(spin)); TODO ADD BACK
+            if (tag.getRenderTarget() == null) poseStack.mulPose(Axis.YN.rotationDegrees(spin));
             poseStack.translate(0f, -0.4f, 0f);
             poseStack.scale(0.6f, 0.6f, 0.6f);
             hologramData.getRenderer().render(poseStack, bufferSource, SVCClient.getTickDelta(), LightTexture.FULL_BLOCK);

@@ -1,19 +1,16 @@
 package mod.syconn.svc.utils.generic;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.mojang.math.MatrixUtil;
 import mod.syconn.svc.utils.interfaces.IItemExtensions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.Direction;
@@ -22,17 +19,12 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.inventory.InventoryMenu;
-import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.HalfTransparentBlock;
-import net.minecraft.world.level.block.StainedGlassPaneBlock;
 import org.jetbrains.annotations.NotNull;
 
 import static mod.syconn.svc.utils.generic.ModelUtil.renderQuadAlpha;
-import static net.minecraft.client.renderer.entity.ItemRenderer.*;
 
 public class RenderUtil {
 
@@ -97,29 +89,17 @@ public class RenderUtil {
     }
 
     private static void renderHolographicItemEffect(PoseStack poseStack, BakedModel bakedModel, MultiBufferSource buffer, int packedLight) {
-
         var consumer = buffer.getBuffer(RenderType.entityTranslucentCull(InventoryMenu.BLOCK_ATLAS));
         var pose = poseStack.last();
         var random = RandomSource.create();
-
-        float r = 0f;
-        float g = 0.25f;
-        float b = 1.0f;
-        float a = 0.75f;
+        float r = 0f, g = 0.25f, b = 1.0f, a = 0.75f;
 
         for (Direction direction : Direction.values()) {
-
             random.setSeed(42L);
-
-            for (BakedQuad quad : bakedModel.getQuads(null, direction, random)) {
-                renderQuadAlpha(consumer, pose, quad, r, g, b, a, packedLight, OverlayTexture.NO_OVERLAY);
-            }
+            for (BakedQuad quad : bakedModel.getQuads(null, direction, random)) renderQuadAlpha(consumer, pose, quad, r, g, b, a, packedLight, OverlayTexture.NO_OVERLAY);
         }
 
         random.setSeed(42L);
-
-        for (BakedQuad quad : bakedModel.getQuads(null, null, random)) {
-            renderQuadAlpha(consumer, pose, quad, r, g, b, a, packedLight, OverlayTexture.NO_OVERLAY);
-        }
+        for (BakedQuad quad : bakedModel.getQuads(null, null, random)) renderQuadAlpha(consumer, pose, quad, r, g, b, a, packedLight, OverlayTexture.NO_OVERLAY);
     }
 }
