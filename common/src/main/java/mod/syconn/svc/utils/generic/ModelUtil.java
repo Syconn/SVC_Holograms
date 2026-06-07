@@ -1,7 +1,11 @@
 package mod.syconn.svc.utils.generic;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.core.Vec3i;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
@@ -9,6 +13,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import java.util.Collection;
@@ -44,33 +50,19 @@ public class ModelUtil {
         leftArm.zRot = Mth.lerp(delta, leftArm.zRot, leftRoll);
     }
 
-    public static <T extends LivingEntity> void lerpLeftArmToDegrees(HumanoidModel<T> model, float delta, float pitch, float yaw, float roll) {
-        model.leftArm.xRot = Mth.rotLerp(delta, model.leftArm.xRot * Mth.DEG_TO_RAD, pitch * Mth.DEG_TO_RAD) * Mth.RAD_TO_DEG;
-        model.leftArm.yRot = Mth.rotLerp(delta, model.leftArm.yRot * Mth.DEG_TO_RAD, yaw * Mth.DEG_TO_RAD) * Mth.RAD_TO_DEG;
-        model.leftArm.zRot = Mth.rotLerp(delta, model.leftArm.zRot * Mth.DEG_TO_RAD, roll * Mth.DEG_TO_RAD) * Mth.RAD_TO_DEG;
-    }
+    public static void renderQuadAlpha(VertexConsumer consumer, PoseStack.Pose pose, BakedQuad quad, float red, float green, float blue, float alpha, int light, int overlay) {
+        var vertices = quad.getVertices();
+        var matrix = pose.pose();
+        var normalMatrix = pose.normal();
+        var normal = quad.getDirection().getNormal();
+        float nx = normal.getX(), ny = normal.getY(), nz = normal.getZ();
 
-    public static <T extends LivingEntity> void lerpRightArmToDegrees(HumanoidModel<T> model, float delta, float pitch, float yaw, float roll) {
-        model.rightArm.xRot = Mth.rotLerp(delta, model.rightArm.xRot * Mth.DEG_TO_RAD, pitch * Mth.DEG_TO_RAD) * Mth.RAD_TO_DEG;
-        model.rightArm.yRot = Mth.rotLerp(delta, model.rightArm.yRot * Mth.DEG_TO_RAD, yaw * Mth.DEG_TO_RAD) * Mth.RAD_TO_DEG;
-        model.rightArm.zRot = Mth.rotLerp(delta, model.rightArm.zRot * Mth.DEG_TO_RAD, roll * Mth.DEG_TO_RAD) * Mth.RAD_TO_DEG;
-    }
-
-    public static AABB getBounds(Collection<Vector3f> vectors) {
-        var min = new Vector3f(Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE);
-        var max = new Vector3f(Float.MIN_VALUE, Float.MIN_VALUE, Float.MIN_VALUE);
-
-        for (var v : vectors) {
-            if (v.x < min.x) min.set(v.x, min.y, min.z);
-            if (v.y < min.y) min.set(min.x, v.y, min.z);
-            if (v.z < min.z) min.set(min.x, min.y, v.z);
-
-            if (v.x > max.x) max.set(v.x, max.y, max.z);
-            if (v.y > max.y) max.set(max.x, v.y, max.z);
-            if (v.z > max.z) max.set(max.x, max.y, v.z);
+        for (int vertex = 0; vertex < 4; vertex++) {
+            var offset = vertex * 8;
+            float x = Float.intBitsToFloat(vertices[offset]), y = Float.intBitsToFloat(vertices[offset + 1]), z = Float.intBitsToFloat(vertices[offset + 2]);
+            float u = Float.intBitsToFloat(vertices[offset + 4]), v = Float.intBitsToFloat(vertices[offset + 5]);
+            consumer.vertex(matrix, x, y, z).color((int)(red * 255.0f), (int)(green * 255.0f), (int)(blue * 255.0f), (int)(alpha * 255.0f)).uv(u, v).overlayCoords(overlay).uv2(light).normal(normalMatrix, nx, ny, nz).endVertex();
         }
-
-        return new AABB(new Vec3(min), new Vec3(max));
     }
 
     public static boolean isLeftHanded(ItemDisplayContext renderMode) {

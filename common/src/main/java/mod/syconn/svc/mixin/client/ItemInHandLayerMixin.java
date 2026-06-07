@@ -1,6 +1,8 @@
 package mod.syconn.svc.mixin.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import mod.syconn.svc.client.model.HologramModel;
+import mod.syconn.svc.utils.generic.RenderUtil;
 import mod.syconn.svc.utils.interfaces.IModifiedItemRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.ArmedModel;
@@ -27,6 +29,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(PlayerItemInHandLayer.class)
 public abstract class ItemInHandLayerMixin<T extends Player, M extends EntityModel<T> & ArmedModel & HeadedModel> extends ItemInHandLayer<T, M> {
 
+    // TODO LOOK AT ITEMCOLORS
+    //  appears to be used in ItemRenderer renderQuadList
+    //  WAIT ARMOR NEEDS THIS EFFECT TOO
+
     public ItemInHandLayerMixin(RenderLayerParent<T, M> renderer, ItemInHandRenderer itemInHandRenderer) {
         super(renderer, itemInHandRenderer);
     }
@@ -39,6 +45,9 @@ public abstract class ItemInHandLayerMixin<T extends Player, M extends EntityMod
             if (itemRenderer != null) {
                 if (!itemRenderer.render(livingEntity, (HumanoidModel<? extends LivingEntity>) getParentModel(), itemStack, displayContext, arm == HumanoidArm.LEFT, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, bakedModel))
                     Minecraft.getInstance().getItemRenderer().render(itemStack, displayContext, arm == HumanoidArm.LEFT, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, bakedModel);
+                ci.cancel();
+            } else if (getParentModel() instanceof HologramModel) {
+                RenderUtil.renderStaticHolographicItem(poseStack, (HumanoidModel<? extends LivingEntity>) getParentModel(), arm, itemStack, displayContext, bakedModel, buffer, packedLight);
                 ci.cancel();
             }
         }

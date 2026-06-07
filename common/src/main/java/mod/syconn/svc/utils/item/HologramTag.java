@@ -7,7 +7,6 @@ import mod.syconn.svc.utils.generic.NBTUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import org.apache.logging.log4j.core.appender.rolling.action.IfAll;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;

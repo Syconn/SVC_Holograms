@@ -21,6 +21,7 @@ import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +62,8 @@ public class HologramRenderer extends LivingEntityRenderer<AbstractClientPlayer,
             poseStack.pushPose();
             var scale = this.data.getAnimationScale(partialTicks);
             poseStack.scale(scale, scale, scale);
-            if (this.data.isStaticRender()) this.setModelProperties(player);
+
+//            if (this.data.isStaticRender()) this.setModelProperties(player); TODO ADD BACK
             this.render(player, partialTicks, poseStack, buffer, packedLight);
             poseStack.popPose();
         }

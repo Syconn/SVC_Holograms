@@ -95,17 +95,21 @@ public class HologramData {
         }
 
         final var level = Minecraft.getInstance().level;
-        final var playerInfo = getPlayerInfoFromName(name);
-        this.playerID = playerInfo.getProfile().getId();
+//        final var playerInfo = getPlayerInfoFromName(name);
+
+        this.playerID = Minecraft.getInstance().player.getUUID();
         this.renderName = name;
         this.staticRender = true;
         this.renderer = new HologramRenderer(this, ResourceUtil.getModel(name));
-        this.player = level == null ? null : new AbstractClientPlayer(level, playerInfo.getProfile()) {};
+
+//        this.player = level == null ? null : new AbstractClientPlayer(level, playerInfo.getProfile()) {}; TODO EASY TESTING CHANGE
+        this.player = level == null ? null : Minecraft.getInstance().player;
+
         this.skin = DefaultPlayerSkin.getDefaultSkin();
         this.skinPath = this.skin;
         this.transition = TRANSITION_TICKS;
         this.activeRender = true;
-        SkullBlockEntity.updateGameprofile(new GameProfile(null, name), this::loadSkinAsync);
+//        SkullBlockEntity.updateGameprofile(new GameProfile(null, name), this::loadSkinAsync);
         return this;
     }
 
