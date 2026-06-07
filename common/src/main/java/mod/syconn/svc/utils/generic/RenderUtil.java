@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.Direction;
@@ -74,7 +75,6 @@ public class RenderUtil {
             if (bl) {
                 if (itemStack.is(Items.TRIDENT)) model = Minecraft.getInstance().getItemRenderer().getItemModelShaper().getModelManager().getModel(TRIDENT_MODEL);
                 else if (itemStack.is(Items.SPYGLASS)) model = Minecraft.getInstance().getItemRenderer().getItemModelShaper().getModelManager().getModel(SPYGLASS_MODEL);
-
             }
             model.getTransforms().getTransform(displayContext).apply(leftHand, poseStack);
             poseStack.translate(-0.5F, -0.5F, -0.5F);
@@ -97,19 +97,29 @@ public class RenderUtil {
     }
 
     private static void renderHolographicItemEffect(PoseStack poseStack, BakedModel bakedModel, MultiBufferSource buffer, int packedLight) {
+
         var consumer = buffer.getBuffer(RenderType.entityTranslucentCull(InventoryMenu.BLOCK_ATLAS));
         var pose = poseStack.last();
         var random = RandomSource.create();
-        float r = 0.25f, g = 0.85f, b = 1.0f, a = 0.35f;
 
-        for (var direction : Direction.values()) {
+        float r = 0f;
+        float g = 0.25f;
+        float b = 1.0f;
+        float a = 0.75f;
+
+        for (Direction direction : Direction.values()) {
+
             random.setSeed(42L);
-            for (var quad : bakedModel.getQuads(null, direction, random))
+
+            for (BakedQuad quad : bakedModel.getQuads(null, direction, random)) {
                 renderQuadAlpha(consumer, pose, quad, r, g, b, a, packedLight, OverlayTexture.NO_OVERLAY);
+            }
         }
 
         random.setSeed(42L);
-        for (BakedQuad quad : bakedModel.getQuads(null, null, random))
+
+        for (BakedQuad quad : bakedModel.getQuads(null, null, random)) {
             renderQuadAlpha(consumer, pose, quad, r, g, b, a, packedLight, OverlayTexture.NO_OVERLAY);
+        }
     }
 }

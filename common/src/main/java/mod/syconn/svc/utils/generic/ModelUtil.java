@@ -51,17 +51,36 @@ public class ModelUtil {
     }
 
     public static void renderQuadAlpha(VertexConsumer consumer, PoseStack.Pose pose, BakedQuad quad, float red, float green, float blue, float alpha, int light, int overlay) {
-        var vertices = quad.getVertices();
-        var matrix = pose.pose();
-        var normalMatrix = pose.normal();
-        var normal = quad.getDirection().getNormal();
-        float nx = normal.getX(), ny = normal.getY(), nz = normal.getZ();
+        int[] v = quad.getVertices();
+        Matrix4f mat = pose.pose();
+        Matrix3f normalMat = pose.normal();
 
-        for (int vertex = 0; vertex < 4; vertex++) {
-            var offset = vertex * 8;
-            float x = Float.intBitsToFloat(vertices[offset]), y = Float.intBitsToFloat(vertices[offset + 1]), z = Float.intBitsToFloat(vertices[offset + 2]);
-            float u = Float.intBitsToFloat(vertices[offset + 4]), v = Float.intBitsToFloat(vertices[offset + 5]);
-            consumer.vertex(matrix, x, y, z).color((int)(red * 255.0f), (int)(green * 255.0f), (int)(blue * 255.0f), (int)(alpha * 255.0f)).uv(u, v).overlayCoords(overlay).uv2(light).normal(normalMatrix, nx, ny, nz).endVertex();
+        Vec3i n = quad.getDirection().getNormal();
+
+        float nx = n.getX();
+        float ny = n.getY();
+        float nz = n.getZ();
+
+        for (int i = 0; i < 4; i++) {
+
+            int o = i * 8;
+
+            float x = Float.intBitsToFloat(v[o]);
+            float y = Float.intBitsToFloat(v[o + 1]);
+            float z = Float.intBitsToFloat(v[o + 2]);
+
+            float u = Float.intBitsToFloat(v[o + 4]);
+            float vv = Float.intBitsToFloat(v[o + 5]);
+
+            consumer.vertex(mat, x, y, z).color((int)(red * 255),
+                            (int)(green * 255), (int)(blue * 255),
+                            (int)(alpha * 255)
+                    )
+                    .uv(u, vv)
+                    .overlayCoords(overlay)
+                    .uv2(light)
+                    .normal(normalMat, nx, ny, nz)
+                    .endVertex();
         }
     }
 

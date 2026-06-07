@@ -11,7 +11,9 @@
     "client.ItemRendererInvoker",
     "client.ItemRendererMixin",
     "client.LevelRendererMixin",
-    "client.MinecraftAccessor"
+    "client.MinecraftAccessor",
+    "client.SpriteContentsAccessor",
+    "client.TextureAtlasSpriteAccessor"
   ],
   "mixins": [],
   "injectors": {

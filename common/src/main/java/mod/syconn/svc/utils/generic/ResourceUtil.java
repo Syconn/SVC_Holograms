@@ -5,10 +5,14 @@ import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.platform.NativeImage;
 import dev.architectury.utils.GameInstance;
+import mod.syconn.svc.mixin.client.SpriteContentsAccessor;
+import mod.syconn.svc.mixin.client.TextureAtlasSpriteAccessor;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
@@ -21,6 +25,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -34,6 +39,26 @@ public class ResourceUtil {
     private static final Map<String, PlayerInfo> PLAYER_INFO = new ConcurrentHashMap<>();
     private static final Map<String, String> UUID_CACHE = new ConcurrentHashMap<>();
     private static final Map<String, Boolean> MODELS = new ConcurrentHashMap<>();
+    private static final Map<ResourceLocation, ResourceLocation> HOLOGRAM_SPRITE_CACHE = new ConcurrentHashMap<>();
+
+    public static ResourceLocation getHologramSprite(TextureAtlasSprite sprite) {
+        var name = sprite.contents().name();
+
+        return HOLOGRAM_SPRITE_CACHE.computeIfAbsent(name, n -> {
+            var img = ((SpriteContentsAccessor) ((TextureAtlasSpriteAccessor) sprite).getContents()).getOriginalImage();
+            var out = new NativeImage(img.getWidth(), img.getHeight(), true);
+
+            for (int x = 0; x < img.getWidth(); x++) {
+                for (int y = 0; y < img.getHeight(); y++) {
+                    int argb = img.getPixelRGBA(x, y);
+                    out.setPixelRGBA(x, y, ColorUtil.hologramColor(argb));
+                }
+            }
+
+            var dyn = new DynamicTexture(out);
+            return Minecraft.getInstance().getTextureManager().register("svc_holo_" + name.getNamespace() + "_" + name.getPath().replace("/", "_"), dyn);
+        });
+    }
 
     public static Optional<NativeImage> loadSkin(ResourceLocation skinLocation) {
         if (GameInstance.getClient().getResourceManager().getResource(skinLocation).isPresent()) return loadResource(skinLocation);
