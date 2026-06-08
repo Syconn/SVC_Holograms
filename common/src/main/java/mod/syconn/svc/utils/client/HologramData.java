@@ -2,6 +2,7 @@ package mod.syconn.svc.utils.client;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
+import mod.syconn.svc.client.SVCClient;
 import mod.syconn.svc.client.render.entity.HologramRenderer;
 import mod.syconn.svc.utils.Constants;
 import mod.syconn.svc.utils.generic.AnimationUtil;
@@ -17,6 +18,7 @@ import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FastColor;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.phys.Vec3;
 
@@ -164,7 +166,9 @@ public class HologramData {
 
     private int getPixelColor(int x, int y, int rgba) {
         if (FastColor.ARGB32.alpha(rgba) == 0) return rgba;
-        return FastColor.ABGR32.color(scanBar(y) ? 255 : 160, scanBar(y) ? ColorUtil.packArgb(192, 192, 192, 100) : ColorUtil.hologramColor(rgba));
+        final var time = SVCClient.getTickDelta() + (player != null ? player.tickCount : 0);
+        int finalAlpha = scanBar(y) ? 255 : Mth.clamp((int)(160.0f * (0.75f + 0.20f * Mth.sin(time * 0.25f) + 0.05f * Mth.sin(time * 1.37f))), 0, 255);
+        return FastColor.ABGR32.color(finalAlpha, scanBar(y) ? ColorUtil.packArgb(192, 192, 192, 100) : ColorUtil.hologramColor(rgba));
     }
 
     public float getAnimationScale(float partialTicks) {
@@ -219,7 +223,7 @@ public class HologramData {
     }
 
     public boolean shouldRender() {
-        return Constants.RANDOM.nextInt(55) != 0;
+        return Constants.RANDOM.nextInt(30) != 0;
     }
 
     public boolean activeRender() {

@@ -4,14 +4,13 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.mojang.math.MatrixUtil;
 import mod.syconn.svc.mixin.client.ItemRendererAccessor;
+import mod.syconn.svc.utils.client.HologramBufferSource;
 import mod.syconn.svc.utils.interfaces.IItemExtensions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
@@ -25,8 +24,6 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.NotNull;
-
-import static mod.syconn.svc.utils.generic.ModelUtil.renderQuadAlpha;
 
 public class RenderUtil {
 
@@ -52,17 +49,17 @@ public class RenderUtil {
         return true;
     }
 
-    public static void renderStaticHolographicItem(PoseStack poseStack, HumanoidModel<? extends LivingEntity> model, HumanoidArm arm, ItemStack stack, ItemDisplayContext context, BakedModel bakedModel, MultiBufferSource buffer, int packedLight) {
+    public static void renderStaticHolographicItem(PoseStack poseStack, HumanoidModel<? extends LivingEntity> model, HumanoidArm arm, ItemStack stack, ItemDisplayContext context, BakedModel bakedModel, MultiBufferSource buffer, int packedLight, float time) {
         poseStack.pushPose();
         model.translateToHand(arm, poseStack);
         poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
         poseStack.translate((arm == HumanoidArm.LEFT ? -1 : 1) / 16.0F, 0.125F, -0.625F);
-        renderHolographicItem(poseStack, stack, context, bakedModel, arm == HumanoidArm.LEFT, buffer, packedLight);
+        renderHolographicItem(poseStack, stack, context, bakedModel, arm == HumanoidArm.LEFT, buffer, packedLight, time);
         poseStack.popPose();
     }
 
-    private static void renderHolographicItem(PoseStack poseStack, ItemStack itemStack, ItemDisplayContext displayContext, BakedModel model, boolean leftHand, MultiBufferSource buffer, int packedLight) {
+    private static void renderHolographicItem(PoseStack poseStack, ItemStack itemStack, ItemDisplayContext displayContext, BakedModel model, boolean leftHand, MultiBufferSource buffer, int packedLight, float time) {
         if (!itemStack.isEmpty()) {
             poseStack.pushPose();
             final var bl = displayContext == ItemDisplayContext.GUI || displayContext == ItemDisplayContext.GROUND || displayContext == ItemDisplayContext.FIXED;
@@ -80,8 +77,11 @@ public class RenderUtil {
                     else if (displayContext.firstPerson()) MatrixUtil.mulComponentWise(pose.pose(), 0.75F);
                     poseStack.popPose();
                 }
-                renderHolographicItemEffect(poseStack, model, buffer, packedLight);
-            } else ((ItemRendererAccessor) Minecraft.getInstance().getItemRenderer()).getBlockEntityRenderer().renderByItem(itemStack, displayContext, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY); // TODO NEED TO GET IN HERE NOW
+                renderHolographicItemEffect(poseStack, itemStack, model, buffer, packedLight, time);
+            } else {
+                var hologramBuffer = new HologramBufferSource(buffer);
+                ((ItemRendererAccessor) Minecraft.getInstance().getItemRenderer()).getBlockEntityRenderer().renderByItem(itemStack, displayContext, poseStack, hologramBuffer, packedLight, OverlayTexture.NO_OVERLAY); // TODO NEED TO GET IN HERE NOW
+            }
             poseStack.popPose();
         }
     }
@@ -90,18 +90,39 @@ public class RenderUtil {
         return stack.is(ItemTags.COMPASSES) || stack.is(Items.CLOCK);
     }
 
-    private static void renderHolographicItemEffect(PoseStack poseStack, BakedModel bakedModel, MultiBufferSource buffer, int packedLight) {
+    private static void renderHolographicItemEffect(PoseStack poseStack, ItemStack stack, BakedModel bakedModel, MultiBufferSource buffer, int packedLight, float time) {
         var consumer = buffer.getBuffer(RenderType.entityTranslucentCull(InventoryMenu.BLOCK_ATLAS));
         var pose = poseStack.last();
         var random = RandomSource.create();
-        float r = 1.0f, g = 1.0f, b = 1.0f, a = 0.50f;
+        float r = 0.05f, g = 0.2f, b = 0.4f, a = 0.50f;
+        var itemColors = ((ItemRendererAccessor) Minecraft.getInstance().getItemRenderer()).getItemColors();
 
         for (Direction direction : Direction.values()) {
             random.setSeed(42L);
-            for (BakedQuad quad : bakedModel.getQuads(null, direction, random)) renderQuadAlpha(consumer, pose, quad, r, g, b, a, packedLight, OverlayTexture.NO_OVERLAY);
+            for (BakedQuad quad : bakedModel.getQuads(null, direction, random)) {
+                float red = r, green = g, blue = b;
+                if (quad.isTinted()) {
+                    int tint = itemColors.getColor(stack, quad.getTintIndex());
+                    float tintR = ((tint >> 16) & 255) / 255.0f, tintG = ((tint >> 8) & 255) / 255.0f, tintB = (tint & 255) / 255.0f;
+                    red *= tintR;
+                    green *= tintG;
+                    blue *= tintB;
+                }
+                ModelUtil.renderHoloQuadAlpha(consumer, pose, quad, red, green, blue, a, packedLight, OverlayTexture.NO_OVERLAY, time);
+            }
         }
 
         random.setSeed(42L);
-        for (BakedQuad quad : bakedModel.getQuads(null, null, random)) renderQuadAlpha(consumer, pose, quad, r, g, b, a, packedLight, OverlayTexture.NO_OVERLAY);
+        for (BakedQuad quad : bakedModel.getQuads(null, null, random)) {
+            float red = r, green = g, blue = b;
+            if (quad.isTinted()) {
+                int tint = itemColors.getColor(stack, quad.getTintIndex());
+                float tintR = ((tint >> 16) & 255) / 255.0f, tintG = ((tint >> 8) & 255) / 255.0f, tintB = (tint & 255) / 255.0f;
+                red *= tintR;
+                green *= tintG;
+                blue *= tintB;
+            }
+            ModelUtil.renderHoloQuadAlpha(consumer, pose, quad, red, green, blue, a, packedLight, OverlayTexture.NO_OVERLAY, time);
+        }
     }
 }

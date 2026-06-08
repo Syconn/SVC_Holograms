@@ -1,5 +1,6 @@
 package mod.syconn.svc.mixin.client;
 
+import net.minecraft.client.color.item.ItemColors;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -10,4 +11,7 @@ public interface ItemRendererAccessor {
 
     @Accessor("blockEntityRenderer")
     BlockEntityWithoutLevelRenderer getBlockEntityRenderer();
+
+    @Accessor("itemColors")
+    ItemColors getItemColors();
 }
