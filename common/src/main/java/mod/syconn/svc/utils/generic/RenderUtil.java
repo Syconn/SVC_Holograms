@@ -6,6 +6,7 @@ import com.mojang.math.MatrixUtil;
 import mod.syconn.svc.mixin.client.ItemRendererAccessor;
 import mod.syconn.svc.utils.client.HologramBufferSource;
 import mod.syconn.svc.utils.interfaces.IItemExtensions;
+import mod.syconn.svc.utils.interfaces.IModifiedItemRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -49,12 +50,14 @@ public class RenderUtil {
         return true;
     }
 
-    public static void renderStaticHolographicItem(PoseStack poseStack, HumanoidModel<? extends LivingEntity> model, HumanoidArm arm, ItemStack stack, ItemDisplayContext context, BakedModel bakedModel, MultiBufferSource buffer, int packedLight, float time) {
+    public static void renderStaticHolographicItem(PoseStack poseStack, LivingEntity entity, HumanoidModel<? extends LivingEntity> model, HumanoidArm arm, ItemStack stack, ItemDisplayContext context, BakedModel bakedModel, MultiBufferSource buffer, int packedLight, float time) {
+        final IModifiedItemRenderer itemRenderer = IModifiedItemRenderer.INSTANCES.get(stack.getItem().getClass());
         poseStack.pushPose();
         model.translateToHand(arm, poseStack);
         poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
         poseStack.translate((arm == HumanoidArm.LEFT ? -1 : 1) / 16.0F, 0.125F, -0.625F);
+        itemRenderer.render(entity, model, stack, context, arm == HumanoidArm.LEFT, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, bakedModel);
         renderHolographicItem(poseStack, stack, context, bakedModel, arm == HumanoidArm.LEFT, buffer, packedLight, time);
         poseStack.popPose();
     }
