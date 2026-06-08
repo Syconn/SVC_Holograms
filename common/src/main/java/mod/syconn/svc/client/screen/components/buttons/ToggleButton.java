@@ -9,7 +9,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
-public class ToggleButton extends ExpandedButton implements IWidgetComponent { // TODO REMOVE SOUND WHEN CLICKING ON SELF
+public class ToggleButton extends ExpandedButton implements IWidgetComponent {
 
     private static final ResourceLocation WIDGETS = Constants.withId("textures/gui/hologram_screen.png");
     private final Color color;

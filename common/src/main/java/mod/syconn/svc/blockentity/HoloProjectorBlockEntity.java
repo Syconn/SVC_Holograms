@@ -4,6 +4,7 @@ import mod.syconn.svc.client.ClientHooks;
 import mod.syconn.svc.client.SVCClient;
 import mod.syconn.svc.client.sounds.HoloProjectorSoundInstance;
 import mod.syconn.svc.core.ModBlockEntities;
+import mod.syconn.svc.core.ModSounds;
 import mod.syconn.svc.server.savedData.HologramNetwork;
 import mod.syconn.svc.server.savedData.extra.CallData;
 import mod.syconn.svc.utils.client.ParticleEvent;
@@ -15,11 +16,13 @@ import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import oshi.hardware.SoundCard;
 
 import java.util.*;
 
@@ -90,9 +93,11 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
             if (active && !blockEntity.wasActive) {
                 blockEntity.soundInstance = ClientHooks.playerHoloSound(pos, blockEntity::isActive);
                 Minecraft.getInstance().getSoundManager().play(blockEntity.soundInstance);
+                level.playLocalSound(pos, ModSounds.HOLOGRAM_ACTIVATE.get(), SoundSource.BLOCKS, 0.6f, 1.0F, false);
             } else if (!active && blockEntity.wasActive && blockEntity.soundInstance != null) {
                 blockEntity.soundInstance.forceStop();
                 blockEntity.soundInstance = null;
+                level.playLocalSound(pos, ModSounds.HOLOGRAM_DEACTIVATE.get(), SoundSource.BLOCKS, 0.6f, 1.0F, false);
             }
             blockEntity.wasActive = active;
         }

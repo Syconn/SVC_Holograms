@@ -80,7 +80,7 @@ public class RenderUtil {
                 renderHolographicItemEffect(poseStack, itemStack, model, buffer, packedLight, time);
             } else {
                 var hologramBuffer = new HologramBufferSource(buffer);
-                ((ItemRendererAccessor) Minecraft.getInstance().getItemRenderer()).getBlockEntityRenderer().renderByItem(itemStack, displayContext, poseStack, hologramBuffer, packedLight, OverlayTexture.NO_OVERLAY); // TODO NEED TO GET IN HERE NOW
+                ((ItemRendererAccessor) Minecraft.getInstance().getItemRenderer()).getBlockEntityRenderer().renderByItem(itemStack, displayContext, poseStack, hologramBuffer, packedLight, OverlayTexture.NO_OVERLAY);
             }
             poseStack.popPose();
         }

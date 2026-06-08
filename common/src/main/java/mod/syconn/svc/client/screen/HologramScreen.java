@@ -61,7 +61,7 @@ public class HologramScreen extends Screen {
     }
 
     @Override
-    protected void init() { // TODO SOUND PLAYS BEFORE PROJECTOR ENDS ALSO LOW KEY ANNOYINGLY LOUD
+    protected void init() {
         this.singleplayer = Minecraft.getInstance().isSingleplayer();
         var leftPos = (this.width - 236) / 2;
         var buttonSize = 231 / 3 - 9;

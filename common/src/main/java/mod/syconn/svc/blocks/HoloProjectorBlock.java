@@ -46,8 +46,6 @@ import java.util.UUID;
 
 public class HoloProjectorBlock extends FaceAttachedHorizontalDirectionalBlock implements IEntityBlock {
 
-//    private boolean playAudio = true; TODO Find Audio Solution
-
     public HoloProjectorBlock() {
         super(Properties.of().noCollission().strength(0.5F));
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(FACE, AttachFace.WALL));
@@ -87,7 +85,10 @@ public class HoloProjectorBlock extends FaceAttachedHorizontalDirectionalBlock i
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (level instanceof ServerLevel sl && level.getBlockEntity(pos) instanceof HoloProjectorBlockEntity be) HologramNetwork.get(sl).unregisterReceiver(be.getReceiverUUID());
-        else if (level instanceof ClientLevel cl && level.getBlockEntity(pos) instanceof HoloProjectorBlockEntity be && be.getSoundInstance() != null) be.getSoundInstance().forceStop();
+        else if (level instanceof ClientLevel cl && level.getBlockEntity(pos) instanceof HoloProjectorBlockEntity be && be.getSoundInstance() != null) {
+            level.playLocalSound(pos, ModSounds.HOLOGRAM_DEACTIVATE.get(), SoundSource.BLOCKS, 0.6f, 1.0F, false);
+            be.getSoundInstance().forceStop();
+        }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
