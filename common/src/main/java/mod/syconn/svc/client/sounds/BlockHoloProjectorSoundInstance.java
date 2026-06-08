@@ -11,11 +11,11 @@ import net.minecraft.sounds.SoundSource;
 import java.util.function.Supplier;
 
 @Environment(EnvType.CLIENT)
-public class HoloProjectorSoundInstance extends AbstractTickableSoundInstance {
+public class BlockHoloProjectorSoundInstance extends AbstractTickableSoundInstance {
 
     private final Supplier<Boolean> activeCheck;
 
-    public HoloProjectorSoundInstance(BlockPos pos, Supplier<Boolean> activeCheck) {
+    public BlockHoloProjectorSoundInstance(BlockPos pos, Supplier<Boolean> activeCheck) {
         super(ModSounds.HOLOGRAM_STATIC.get(), SoundSource.BLOCKS, SoundInstance.createUnseededRandom());
         this.looping = true;
         this.delay = 0;
