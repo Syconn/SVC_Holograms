@@ -1,7 +1,5 @@
 package mod.syconn.svc.blockentity;
 
-import dev.architectury.utils.Env;
-import dev.architectury.utils.EnvExecutor;
 import mod.syconn.svc.client.ClientHooks;
 import mod.syconn.svc.client.sounds.BlockHoloProjectorSoundInstance;
 import mod.syconn.svc.core.ModBlockEntities;

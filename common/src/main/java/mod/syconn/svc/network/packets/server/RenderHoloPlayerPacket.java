@@ -7,7 +7,6 @@ import mod.syconn.svc.utils.item.HologramTag;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.item.ItemStack;
 
 import java.util.function.Supplier;
 
