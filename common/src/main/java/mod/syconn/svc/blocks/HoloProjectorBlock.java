@@ -6,15 +6,19 @@ import dev.architectury.utils.GameInstance;
 import mod.syconn.svc.blockentity.HoloProjectorBlockEntity;
 import mod.syconn.svc.client.ClientHooks;
 import mod.syconn.svc.core.ModBlockEntities;
+import mod.syconn.svc.core.ModSounds;
 import mod.syconn.svc.server.savedData.HologramNetwork;
 import mod.syconn.svc.utils.Constants;
 import mod.syconn.svc.utils.block.WorldPos;
 import mod.syconn.svc.utils.interfaces.IEntityBlock;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.DustColorTransitionOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
@@ -24,6 +28,7 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.FaceAttachedHorizontalDirectionalBlock;
+import net.minecraft.world.level.block.NetherPortalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -82,6 +87,7 @@ public class HoloProjectorBlock extends FaceAttachedHorizontalDirectionalBlock i
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (level instanceof ServerLevel sl && level.getBlockEntity(pos) instanceof HoloProjectorBlockEntity be) HologramNetwork.get(sl).unregisterReceiver(be.getReceiverUUID());
+        else if (level instanceof ClientLevel cl && level.getBlockEntity(pos) instanceof HoloProjectorBlockEntity be && be.getSoundInstance() != null) be.getSoundInstance().forceStop();
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
@@ -107,39 +113,32 @@ public class HoloProjectorBlock extends FaceAttachedHorizontalDirectionalBlock i
 
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
-        EnvExecutor.runInEnv(Env.CLIENT, () -> () -> {
-            if (level.getGameTime() % 4 == 0 && level.getBlockEntity(pos) instanceof HoloProjectorBlockEntity be && be.isActive()) {
-                double centerX = pos.getX() + 0.5, centerY = pos.getY() + 0.4, centerZ = pos.getZ() + 0.5;
-                var blueParticle = new DustColorTransitionOptions(new Vector3f(0.2f, 0.7f, 1.0f), new Vector3f(1.0f, 1.0f, 1.0f), 1.2f);
+        if (level.getBlockEntity(pos) instanceof HoloProjectorBlockEntity be && be.isActive()) {
+            EnvExecutor.runInEnv(Env.CLIENT, () -> () -> {
+                if (level.getGameTime() % 4 == 0) {
+                    double centerX = pos.getX() + 0.5, centerY = pos.getY() + 0.4, centerZ = pos.getZ() + 0.5;
+                    var blueParticle = new DustColorTransitionOptions(new Vector3f(0.2f, 0.7f, 1.0f), new Vector3f(1.0f, 1.0f, 1.0f), 1.2f);
 
-                for (int i = 0; i < Mth.randomBetweenInclusive(Constants.RANDOM, 1, 8); i++) {
-                    double angle = level.random.nextDouble() * (Math.PI * 2.0), radius = 0.25 + level.random.nextDouble() * 0.35;
-                    double x = centerX + Math.cos(angle) * radius, y = centerY + (level.random.nextDouble() - 0.5) * 0.25, z = centerZ + Math.sin(angle) * radius;
-                    double dx = x - centerX, dy = y - centerY, dz = z - centerZ;
-                    var len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                    for (int i = 0; i < Mth.randomBetweenInclusive(Constants.RANDOM, 1, 8); i++) {
+                        double angle = level.random.nextDouble() * (Math.PI * 2.0), radius = 0.25 + level.random.nextDouble() * 0.35;
+                        double x = centerX + Math.cos(angle) * radius, y = centerY + (level.random.nextDouble() - 0.5) * 0.25, z = centerZ + Math.sin(angle) * radius;
+                        double dx = x - centerX, dy = y - centerY, dz = z - centerZ;
+                        var len = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
-                    if (len > 0.0001) {
-                        dx /= len;
-                        dy /= len;
-                        dz /= len;
+                        if (len > 0.0001) {
+                            dx /= len;
+                            dy /= len;
+                            dz /= len;
+                        }
+
+                        double tangentX = -dz, tangentZ = dx;
+                        var pulse = 0.8f + 0.2f * Mth.sin(level.getGameTime() * 0.1f);
+                        double outwardSpeed = 0.012 * pulse, swirlSpeed = 0.004;
+                        if (level.random.nextFloat() < 0.45f) level.addParticle(ParticleTypes.END_ROD, x, y, z, dx * 0.04 + tangentX * 0.01, 0.01, dz * 0.04 + tangentZ * 0.01);
+                        else level.addParticle(blueParticle, x, y, z, dx * outwardSpeed + tangentX * swirlSpeed, dy * outwardSpeed * 0.3 + 0.003, dz * outwardSpeed + tangentZ * swirlSpeed);
                     }
-
-                    double tangentX = -dz, tangentZ = dx;
-                    var pulse = 0.8f + 0.2f * Mth.sin(level.getGameTime() * 0.1f);
-                    double outwardSpeed = 0.012 * pulse, swirlSpeed = 0.004;
-
-                    if (level.random.nextFloat() < 0.45f) level.addParticle(ParticleTypes.END_ROD, x, y, z, dx * 0.04 + tangentX * 0.01, 0.01, dz * 0.04 + tangentZ * 0.01);
-                    else level.addParticle(blueParticle, x, y, z, dx * outwardSpeed + tangentX * swirlSpeed, dy * outwardSpeed * 0.3 + 0.003, dz * outwardSpeed + tangentZ * swirlSpeed);
                 }
-            }
-
-//            if (level.getBlockEntity(pos) instanceof HoloProjectorBlockEntity blockEntity) { TODO SOUNDS
-//                if (blockEntity.getCallId() == null) this.playAudio = true;
-//                else if (this.playAudio) {
-//                    ClientHooks.playerHoloSound(pos);
-//                    this.playAudio = false;
-//                }
-//            }
-        });
+            });
+        }
     }
 }

@@ -1,11 +1,17 @@
 package mod.syconn.svc.blockentity;
 
+import mod.syconn.svc.client.ClientHooks;
+import mod.syconn.svc.client.SVCClient;
+import mod.syconn.svc.client.sounds.HoloProjectorSoundInstance;
 import mod.syconn.svc.core.ModBlockEntities;
 import mod.syconn.svc.server.savedData.HologramNetwork;
 import mod.syconn.svc.server.savedData.extra.CallData;
 import mod.syconn.svc.utils.client.ParticleEvent;
 import mod.syconn.svc.utils.generic.NBTUtil;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
+import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
@@ -25,6 +31,8 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
     private String soloRender = "";
     private double rotation = 0;
     private UUID receiverUUID;
+    private HoloProjectorSoundInstance soundInstance;
+    private boolean wasActive;
 
     public HoloProjectorBlockEntity(BlockPos pWorldPosition, BlockState pBlockState) {
         super(ModBlockEntities.HOLO_PROJECTOR.get(), pWorldPosition, pBlockState);
@@ -62,15 +70,36 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
                 blockEntity.markDirty();
             }
 
-            if (callData == null || callData.callID == null) {
+            if (!blockEntity.getSoloRender().isEmpty()) {
+                blockEntity.active = true;
+                blockEntity.markDirty();
+            }
+
+            if (blockEntity.getSoloRender().isEmpty() && (callData == null || callData.callID == null)) {
                 blockEntity.active = false;
                 blockEntity.markDirty();
             }
-        } else if (level instanceof ClientLevel && !blockEntity.particleQueue.isEmpty()) {
-            for (var event : blockEntity.particleQueue) level.addParticle(event.type(), event.pos().x, event.pos().y, event.pos().z, event.velocity().x, event.velocity().y, event.velocity().z);
-            blockEntity.particleQueue.clear();
-            blockEntity.markDirty();
+        } else if (level instanceof ClientLevel) {
+            if (!blockEntity.particleQueue.isEmpty()) {
+                for (var event : blockEntity.particleQueue) level.addParticle(event.type(), event.pos().x, event.pos().y, event.pos().z, event.velocity().x, event.velocity().y, event.velocity().z);
+                blockEntity.particleQueue.clear();
+                blockEntity.markDirty();
+            }
+
+            boolean active = blockEntity.isActive();
+            if (active && !blockEntity.wasActive) {
+                blockEntity.soundInstance = ClientHooks.playerHoloSound(pos, blockEntity::isActive);
+                Minecraft.getInstance().getSoundManager().play(blockEntity.soundInstance);
+            } else if (!active && blockEntity.wasActive && blockEntity.soundInstance != null) {
+                blockEntity.soundInstance.forceStop();
+                blockEntity.soundInstance = null;
+            }
+            blockEntity.wasActive = active;
         }
+    }
+
+    public HoloProjectorSoundInstance getSoundInstance() {
+        return soundInstance;
     }
 
     public void addParticleEvent(ParticleEvent event) {
