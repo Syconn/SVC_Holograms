@@ -1,115 +1,176 @@
 package mod.syconn.svc.blockentity;
 
-import dev.architectury.utils.Env;
-import dev.architectury.utils.EnvExecutor;
+import mod.syconn.svc.client.ClientHooks;
+import mod.syconn.svc.client.SVCClient;
+import mod.syconn.svc.client.sounds.HoloProjectorSoundInstance;
 import mod.syconn.svc.core.ModBlockEntities;
 import mod.syconn.svc.core.ModSounds;
 import mod.syconn.svc.server.savedData.HologramNetwork;
-import mod.syconn.svc.utils.block.WorldPos;
+import mod.syconn.svc.server.savedData.extra.CallData;
+import mod.syconn.svc.utils.client.ParticleEvent;
 import mod.syconn.svc.utils.generic.NBTUtil;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
+import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import oshi.hardware.SoundCard;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.*;
 
 public class HoloProjectorBlockEntity extends SyncedBlockEntity {
 
-    @Environment(EnvType.CLIENT)
-    private final Map<UUID, Vec3> deletions = new HashMap<>();
-    private final Map<UUID, Vec3> renderables = new HashMap<>();
-    private UUID callId = null;
+    private List<ParticleEvent> particleQueue = new ArrayList<>();
+    private Map<UUID, Vec3> renderables = new HashMap<>();
+    private boolean active;
+    private String soloRender = "";
+    private double rotation = 0;
+    private UUID receiverUUID;
+    private HoloProjectorSoundInstance soundInstance;
+    private boolean wasActive;
 
     public HoloProjectorBlockEntity(BlockPos pWorldPosition, BlockState pBlockState) {
         super(ModBlockEntities.HOLO_PROJECTOR.get(), pWorldPosition, pBlockState);
     }
 
     public static void tick(Level level, BlockPos pos, BlockState state, HoloProjectorBlockEntity blockEntity) {
-        if (level instanceof ServerLevel serverLevel) {
-            var network = HologramNetwork.get(serverLevel);
-            var networkData = network.getBlockData(blockEntity.callId);
-            var handheld = network.getHandheldPlayer(blockEntity.callId);
-            if (networkData != null && !networkData.isEmpty() || handheld.isPresent()) {
-                if (networkData != null && !networkData.isEmpty()) {
-                    var update = false;
-                    var map = networkData.entrySet().stream().filter(e -> !e.getKey().equals(new WorldPos(level.dimension(), pos))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-                    var entities = map.values().stream().flatMap(Collection::stream).toList();
-                    var removals = Map.copyOf(blockEntity.renderables).keySet().stream().filter(u -> !entities.contains(u)).toList();
-                    if (!removals.isEmpty()) update = true;
-                    removals.forEach(blockEntity.renderables::remove);
-                    for (var entry : map.entrySet()) {
-                        for (var uuid : entry.getValue()) {
-                            if (!blockEntity.renderables.containsKey(uuid) || !blockEntity.renderables.get(uuid).equals(entry.getKey())) {
-                                var player = level.getServer().getLevel(entry.getKey().level()).getPlayerByUUID(uuid);
-                                blockEntity.renderables.put(uuid, player == null ? new Vec3(0, 0, 0) : player.position().subtract(entry.getKey().toVector()));
-                                update = true;
-                            }
-                        }
-                    }
-                    if (update) blockEntity.markDirty();
-                }
-                if (handheld.isPresent() && !blockEntity.renderables.containsKey(handheld.get())) {
-                    blockEntity.renderables.put(handheld.get(), new Vec3(0.5f, 0.12f, 0.5f));
-                    blockEntity.markDirty();
-                }
-            } else if (!blockEntity.renderables.isEmpty()) {
+        if (level instanceof ServerLevel serverLevel && blockEntity.receiverUUID != null) {
+            final var network = HologramNetwork.get(serverLevel);
+            final var callData = network.getBlockReceiver(blockEntity.receiverUUID);
+
+            if (callData != null && callData.callID != null) {
+                blockEntity.active = true;
+                if (!blockEntity.soloRender.isEmpty()) blockEntity.soloRender = "";
+                final var players = level.getEntitiesOfClass(Player.class, new AABB(pos).move(0, 1, 0).inflate(3.5));
+                final var renderMembers = new HashMap<UUID, Vec3>();
+                final var call = network.getCall(callData.callID);
                 blockEntity.renderables.clear();
-                blockEntity.callId = null;
+                if (call.renderMembers.containsKey(blockEntity.getReceiverUUID())) {
+                    for (var entry : call.renderMembers.entrySet())
+                        if (entry.getKey() != blockEntity.receiverUUID)
+                            blockEntity.renderables.putAll(entry.getValue());
+                }
+                for (Player player : players) renderMembers.put(player.getUUID(), player.position().subtract(pos.getCenter()));
+                network.setRenderMembers(callData.callID, blockEntity.getReceiverUUID(), renderMembers);
+
+                for (var entry : call.callers.entrySet()) {
+                    if (entry.getValue().type == CallData.ReceiverType.ITEM) {
+                        blockEntity.renderables.put(entry.getKey(), new Vec3(0, -0.3f, 0));
+                        break;
+                    }
+                }
+                blockEntity.markDirty();
+            } else if (callData != null && !blockEntity.renderables.isEmpty()) {
+                blockEntity.renderables.clear();
                 blockEntity.markDirty();
             }
+
+            if (!blockEntity.getSoloRender().isEmpty()) {
+                blockEntity.active = true;
+                blockEntity.markDirty();
+            }
+
+            if (blockEntity.getSoloRender().isEmpty() && (callData == null || callData.callID == null)) {
+                blockEntity.active = false;
+                blockEntity.markDirty();
+            }
+        } else if (level instanceof ClientLevel) {
+            if (!blockEntity.particleQueue.isEmpty()) {
+                for (var event : blockEntity.particleQueue) level.addParticle(event.type(), event.pos().x, event.pos().y, event.pos().z, event.velocity().x, event.velocity().y, event.velocity().z);
+                blockEntity.particleQueue.clear();
+                blockEntity.markDirty();
+            }
+
+            boolean active = blockEntity.isActive();
+            if (active && !blockEntity.wasActive) {
+                blockEntity.soundInstance = ClientHooks.playerHoloSound(pos, blockEntity::isActive);
+                Minecraft.getInstance().getSoundManager().play(blockEntity.soundInstance);
+                level.playLocalSound(pos, ModSounds.HOLOGRAM_ACTIVATE.get(), SoundSource.BLOCKS, 0.6f, 1.0F, false);
+            } else if (!active && blockEntity.wasActive && blockEntity.soundInstance != null) {
+                blockEntity.soundInstance.forceStop();
+                blockEntity.soundInstance = null;
+                level.playLocalSound(pos, ModSounds.HOLOGRAM_DEACTIVATE.get(), SoundSource.BLOCKS, 0.6f, 1.0F, false);
+            }
+            blockEntity.wasActive = active;
         }
     }
 
-    public UUID getCallId() {
-        return callId;
+    public HoloProjectorSoundInstance getSoundInstance() {
+        return soundInstance;
+    }
+
+    public void addParticleEvent(ParticleEvent event) {
+        particleQueue.add(event);
+        this.markDirty();
+    }
+
+    public boolean isActive() {
+        return active;
     }
 
     public Map<UUID, Vec3> getRenderables() {
         return renderables;
     }
 
-    public Map<UUID, Vec3> getDeletions() {
-        return deletions;
-    }
+    public void setSoloRender(String soloRender, Vec3 pos) {
+        this.soloRender = soloRender;
+        this.active = !soloRender.isEmpty();
 
-    public void removeDeletion(UUID id) {
-        this.deletions.remove(id);
-    }
+        var pos2 = new Vec3(this.worldPosition.getX() + 0.5, 0, this.worldPosition.getZ() + 0.5);
+        double dx = pos.x - pos2.x;
+        double dz = pos.z - pos2.z;
+        this.rotation = Math.toDegrees(Math.atan2(-dx, dz));
 
-    public void addCall(UUID callId) {
-        if (callId == null) this.level.playSound(null, this.worldPosition, ModSounds.HOLOGRAM_DEACTIVATE.get(), SoundSource.BLOCKS, 0.5f, 1.0f);
-
-        this.renderables.clear();
-        if (this.callId != null && callId != null && this.level instanceof ServerLevel serverLevel)
-            HologramNetwork.get(serverLevel).blockRemoved(this.callId, new WorldPos(serverLevel.dimension(), this.worldPosition));
-        this.callId = callId;
         this.markDirty();
+    }
+
+    public void setReceiverUUID(UUID receiverUUID) {
+        this.receiverUUID = receiverUUID;
+        this.markDirty();
+    }
+
+    public UUID getReceiverUUID() {
+        return receiverUUID;
+    }
+
+    public String getSoloRender() {
+        return soloRender;
+    }
+
+    public double getRotation() {
+        return rotation;
     }
 
     @Override
     public void load(CompoundTag tag) {
-        var renderables = NBTUtil.getMap(tag.getCompound("renderables"), NBTUtil::getUUID, NBTUtil::getVec3);
-        EnvExecutor.runInEnv(Env.CLIENT, () -> () -> this.deletions.putAll(this.renderables.entrySet().stream()
-                .filter(v -> !renderables.containsKey(v.getKey())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))));
-
-        this.renderables.clear();
-        this.renderables.putAll(renderables);
-        this.callId = NBTUtil.getNullable(tag.getCompound("call"), NBTUtil::getUUID);
+        this.receiverUUID = NBTUtil.getNullable(tag.getCompound("receiverUUID"), NBTUtil::getUUID);
+        this.soloRender = NBTUtil.getNullable(tag.getCompound("soloRender"), t -> t.getString(""));
+        this.rotation = tag.getDouble("rotation");
+        this.particleQueue = NBTUtil.getList(tag.getCompound("queue"), ParticleEvent::from);
+        this.active = tag.getBoolean("active");
+        if (tag.contains("renderables")) this.renderables = NBTUtil.getMap(tag.getCompound("renderables"), NBTUtil::getUUID, NBTUtil::getVec3);
     }
 
     @Override
     protected void saveAdditional(CompoundTag tag) {
+        tag.put("receiverUUID", NBTUtil.putNullable(this.receiverUUID, NBTUtil::putUUID));
+        tag.put("soloRender", NBTUtil.putNullable(this.soloRender, s -> NBTUtil.convert(t -> t.putString("", s))));
+        tag.putDouble("rotation", this.rotation);
+        tag.put("queue", NBTUtil.putList(this.particleQueue, ParticleEvent::save));
+        tag.putBoolean("active", this.active);
+    }
+
+    @Override
+    protected void saveSyncData(CompoundTag tag) {
+        this.saveAdditional(tag);
         tag.put("renderables", NBTUtil.putMap(this.renderables, NBTUtil::putUUID, NBTUtil::putVec3));
-        tag.put("call", NBTUtil.putNullable(this.callId, NBTUtil::putUUID));
     }
 }

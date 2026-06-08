@@ -1,46 +1,50 @@
 package mod.syconn.svc.client.screen.components;
 
+import mod.syconn.svc.blockentity.HoloProjectorBlockEntity;
 import mod.syconn.svc.client.screen.HologramScreen;
 import mod.syconn.svc.client.screen.components.buttons.CallButton;
+import mod.syconn.svc.client.screen.components.buttons.CheckButton;
 import mod.syconn.svc.client.screen.components.buttons.ToggleButton;
 import mod.syconn.svc.network.Network;
+import mod.syconn.svc.network.packets.server.HoloCallPacket;
+import mod.syconn.svc.network.packets.server.RenderHoloPlayerPacket;
 import mod.syconn.svc.network.packets.server.RequestHologramPacket;
-import mod.syconn.svc.server.savedData.HologramNetwork;
+import mod.syconn.svc.server.savedData.extra.CallData;
 import mod.syconn.svc.utils.generic.ColorUtil;
 import mod.syconn.svc.utils.generic.GraphicsUtil;
-import mod.syconn.svc.utils.generic.ListUtil;
+import mod.syconn.svc.utils.generic.ResourceUtil;
 import mod.syconn.svc.utils.interfaces.IWidgetComponent;
+import mod.syconn.svc.utils.item.HologramTag;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.PlayerFaceRenderer;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 
 public class CallMenuWidget implements IWidgetComponent {
 
     private final List<MenuData> listedCreateCallPlayers = new ArrayList<>();
     private final List<MenuData> listedJoinCallPlayers = new ArrayList<>();
+    private final List<MenuData> listedSearchedPlayer = new ArrayList<>();
     private final List<MenuData> shownCreateCallPlayers = new ArrayList<>();
     private final List<MenuData> shownJoinCallPlayers = new ArrayList<>();
+    private final List<MenuData> shownSearchedPlayer = new ArrayList<>();
     private final ToggleButton[] toggleButtons = new ToggleButton[3];
     private final CallButton[] callButtonsHandheld = new CallButton[3];
     private final PlayerCountWidget[] playerCountWidgets = new PlayerCountWidget[3];
     private final CallButton[] callButtons = new CallButton[6];
+    private final CheckButton[] checkButtons = new CheckButton[6];
     private final Minecraft minecraft = Minecraft.getInstance();
-    private final int color = ColorUtil.packArgb(74, 74, 74, 255);
     private final int height = 32;
     private final HologramScreen screen;
     private final int x, y;
@@ -70,10 +74,12 @@ public class CallMenuWidget implements IWidgetComponent {
             final var v = i;
             var row = this.height * v;
             this.toggleButtons[v] = (ToggleButton) widgets.apply(new ToggleButton(this.x + 180, this.y + 21 + row, false, ToggleButton.Color.GREEN, b -> this.toggled(b, v)));
-            this.callButtonsHandheld[v] = (CallButton) widgets.apply(new CallButton(this.x + 180, this.y + 17 + row, CallButton.Type.START, "Begin Call", b -> this.callHandheldPressed(b, v)));
+            this.callButtonsHandheld[v] = (CallButton) widgets.apply(new CallButton(this.x + 180, this.y + 17 + row, CallButton.Type.START, "Begin Call", b -> this.callHandheldPressed(v)));
             this.playerCountWidgets[v] = (PlayerCountWidget) widgets.apply(new PlayerCountWidget(this.x + 195, this.y + 28 + row));
             this.callButtons[v] = (CallButton) widgets.apply(new CallButton(this.x + 34, this.y + 26 + row, 0.75f, CallButton.Type.START, "Join Call", b -> callPressed((CallButton) b, v)));
             this.callButtons[v + 3] = (CallButton) widgets.apply(new CallButton(this.x + 100, this.y + 26 + row, 0.75f, CallButton.Type.END, "Decline Call", b -> callPressed((CallButton) b, v)));
+            this.checkButtons[v] = (CheckButton) widgets.apply(new CheckButton(this.x + 170, this.y + 22 + row, CheckButton.Type.CROSS, "End Render", b -> checkButton((CheckButton) b, v)));
+            this.checkButtons[v + 3] = (CheckButton) widgets.apply(new CheckButton(this.x + 190, this.y + 21 + row, CheckButton.Type.CHECK, "Render", b -> checkButton((CheckButton) b, v)));
         }
 
         this.scroller = (ScrollerWidget) widgets.apply(new ScrollerWidget(x + 207, y + 11, 91, this.listedCreateCallPlayers.size() - 3, w -> true, this::updateMenu));
@@ -81,43 +87,73 @@ public class CallMenuWidget implements IWidgetComponent {
 
     private void toggled(ToggleButton button, int i) {
         var player = this.shownCreateCallPlayers.get(this.scroll + i);
-        this.shownCreateCallPlayers.set(this.scroll + i, new MenuData(player.info, List.of(), button.isActive(), player.locked));
+        this.shownCreateCallPlayers.set(this.scroll + i, new MenuData(player.info, player.callID, List.of(), !button.active(), player.locked));
     }
 
-    private void callHandheldPressed(Button button, int i) {
-//        var holo = HologramData.HologramTag.getOrCreate(this.stack);
-        var player = this.shownCreateCallPlayers.get(this.scroll + i);
-        this.screen.createCall(ListUtil.append(this.screen.getCaller(), List.of(new HologramNetwork.Caller(player.info.getProfile().getId(), null, null))));
+    private void callHandheldPressed(int i) {
+        var caller = this.screen.getCaller();
+        if (caller != null) {
+            Network.CHANNEL.sendToServer(new HoloCallPacket(HoloCallPacket.Type.CREATE, UUID.randomUUID(), true, false, new BlockPos(0, 0, 0), List.of(caller, new CallData.Callee(this.shownCreateCallPlayers.get(this.scroll + i).info.getProfile().getId()))));
+            Minecraft.getInstance().setScreen(null);
+        }
+    }
+
+    public void searchForPlayer() {
+        if (!Objects.equals(this.screen.searchBox.getValue(), "")) ResourceUtil.getPlayerInfoFromName(this.screen.searchBox.getValue());
+        this.refresh();
     }
 
     private void callPressed(CallButton button, int i) {
-        var uuid = this.shownJoinCallPlayers.get(this.scroll + i).info.getProfile().getId();
+        var uuid = this.shownJoinCallPlayers.get(this.scroll + i).callID;
         if (button.getType() == CallButton.Type.END) this.screen.leaveCall(uuid);
         else this.screen.joinCall(uuid);
 
         refresh();
     }
 
+    private void checkButton(CheckButton button, int i) {
+        var name = this.shownSearchedPlayer.get(this.scroll + i).info.getProfile().getName();
+        var caller = this.screen.getCaller();
+        var pos = this.screen.getHoloPos() == null ? new BlockPos(0, 0, 0) : this.screen.getHoloPos();
+        if (caller != null) Network.CHANNEL.sendToServer(new HoloCallPacket(HoloCallPacket.Type.LEAVE, UUID.randomUUID(), false, true, pos, List.of(caller)));
+        Network.CHANNEL.sendToServer(new RenderHoloPlayerPacket(pos, this.screen.getHoloPos() == null, button.getType() == CheckButton.Type.CHECK ? name : ""));
+        Minecraft.getInstance().setScreen(null);
+    }
+
     private void refreshPlayerList() {
         if (this.minecraft.player != null) {
             this.listedCreateCallPlayers.clear();
+            this.listedSearchedPlayer.clear();
 
             if (this.page == HologramScreen.Page.CREATE_CALL) {
                 var connection = this.minecraft.player.connection;
-                var uuids = connection.getOnlinePlayerIds();
-                uuids.forEach(uuid -> this.listedCreateCallPlayers.add(MenuData.ofCreate(connection.getPlayerInfo(uuid), isPlayerMe(connection.getPlayerInfo(uuid)))));
-            } else Network.CHANNEL.sendToServer(new RequestHologramPacket());
+                connection.getOnlinePlayerIds().forEach(uuid -> this.listedCreateCallPlayers.add(MenuData.ofCreate(connection.getPlayerInfo(uuid), isPlayerMe(connection.getPlayerInfo(uuid)))));
+            } else if (this.page == HologramScreen.Page.JOIN_CALL) Network.CHANNEL.sendToServer(new RequestHologramPacket());
+            else {
+                final var listedNames = new HashSet<>();
+                ResourceUtil.getAllInfo().values().forEach(info -> {
+                    if (listedNames.add(info.getProfile().getName())) this.listedSearchedPlayer.add(MenuData.ofCreate(info, isPlayerMe(info)));
+                });
+                var connection = this.minecraft.player.connection;
+                connection.getOnlinePlayerIds().stream().map(connection::getPlayerInfo).filter(Objects::nonNull).forEach(info -> {
+                    if (listedNames.add(info.getProfile().getName())) this.listedSearchedPlayer.add(MenuData.ofCreate(info, isPlayerMe(info)));
+                });
+            }
         }
     }
 
     private void updateMenu(int scroll) {
         this.scroll = scroll;
-        this.scroller.updateSize(this.shownCreateCallPlayers.size() - 3);
+
+        if (this.page == HologramScreen.Page.CREATE_CALL) this.scroller.updateSize(this.shownCreateCallPlayers.size() - 3);
+        else if (this.page == HologramScreen.Page.JOIN_CALL) this.scroller.updateSize(this.shownJoinCallPlayers.size() - 3);
+        else this.scroller.updateSize(this.listedSearchedPlayer.size() - 3);
 
         Arrays.stream(this.toggleButtons).forEach(b -> b.visible = false);
         Arrays.stream(this.callButtonsHandheld).forEach(b -> b.visible = false);
         Arrays.stream(this.playerCountWidgets).forEach(b -> b.visible = false);
         Arrays.stream(this.callButtons).forEach(b -> b.visible = false);
+        Arrays.stream(this.checkButtons).forEach(b -> b.visible = false);
 
         if (this.page == HologramScreen.Page.CREATE_CALL) {
             for (int i = scroll; i < Math.min(scroll + 3, this.shownCreateCallPlayers.size()); i++) {
@@ -132,49 +168,51 @@ public class CallMenuWidget implements IWidgetComponent {
                     toggle.visible = true;
                 }
             }
-        } else {
+        } else if (this.page == HologramScreen.Page.JOIN_CALL) {
             for (int i = scroll; i < Math.min(scroll + 3, this.shownJoinCallPlayers.size()); i++) {
                 var player = this.shownJoinCallPlayers.get(i);
                 var count = this.playerCountWidgets[i - scroll];
                 count.visible = true;
                 count.setPlayers(player.players);
-                this.callButtons[i].visible = true;
-                this.callButtons[i + 3].visible = true;
+                this.callButtons[i - scroll].visible = true;
+                this.callButtons[i + 3 - scroll].visible = true;
+            }
+        } else {
+            for (int i = scroll; i < Math.min(scroll + 3, this.shownSearchedPlayer.size()); i++) {
+                this.checkButtons[i - scroll].visible = Minecraft.getInstance().level != null && getSoloRenderName().equals(this.shownSearchedPlayer.get(i - scroll).info.getProfile().getName());
+                this.checkButtons[i + 3 - scroll].visible = true;
             }
         }
     }
 
-    public void handleNetworkPacket(HologramNetwork network) {
+    public void handleNetworkPacket(List<CallData.Call> playerCalls) {
         if (this.minecraft.player != null) {
             this.listedJoinCallPlayers.clear();
-
             var connection = this.minecraft.player.connection;
-            var calls = network.getCalls(this.minecraft.player.getUUID());
-            calls.forEach(call -> this.listedJoinCallPlayers.add(MenuData.ofJoin(connection.getPlayerInfo(call.owner().uuid()),
-                    playerNames(ListUtil.add(call.owner(), call.participants().values().stream().toList()), connection::getPlayerInfo))));
+            playerCalls.forEach(call -> this.listedJoinCallPlayers.add(MenuData.ofJoin(connection.getPlayerInfo(call.owner), call.callID, playerNames(call.callers, connection::getPlayerInfo))));
         }
 
         this.search(this.lastSearch);
     }
 
-    private List<Component> playerNames(List<HologramNetwork.Caller> callers, Function<UUID, PlayerInfo> mapper) {
-        return callers.stream().map(caller -> {
-            if (mapper.apply(caller.uuid()) == null) return Component.literal("Offline Player");
-            return  (Component) Component.literal(mapper.apply(caller.uuid()).getProfile().getName());
+    private List<Component> playerNames(Map<UUID, CallData.Callee> callees, Function<UUID, PlayerInfo> mapper) {
+        return callees.values().stream().map(callee -> {
+            if (mapper.apply(callee.playerUUID) == null) return Component.literal("Offline Player");
+            return (Component) Component.literal(mapper.apply(callee.playerUUID).getProfile().getName());
         }).toList();
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         if (this.page == HologramScreen.Page.CREATE_CALL) renderScreen(graphics, this.shownCreateCallPlayers, "Add Players to Call", "No Players Found", "You", "", 0);
-        else renderScreen(graphics, this.shownJoinCallPlayers, "Joinable Holo Calls", "No Calls Found", "My Call", "'s Call", -8);
+        else if (this.page == HologramScreen.Page.JOIN_CALL) renderScreen(graphics, this.shownJoinCallPlayers, "Joinable Holo Calls", "No Calls Found", "My Call", "'s Call", -8);
+        else renderScreen(graphics, this.shownSearchedPlayer, "Find Player Screen", "No Player Found", "My Skin", "", 0);
     }
 
     private void renderScreen(GuiGraphics graphics, List<MenuData> menu, String topMessage, String emptyList, String mePrefix, String suffix, int offset) {
         var width = 220;
 
         graphics.drawCenteredString(this.minecraft.font, Component.literal(topMessage), x + width / 2, y, -1);
-
         var y = this.y + 11;
         if (menu.isEmpty()) graphics.drawCenteredString(this.minecraft.font, Component.literal(emptyList).withStyle(ChatFormatting.BOLD, ChatFormatting.RED), x + width / 2, y + 16, -1);
         for (int i = this.scroll; i < Math.min(this.scroll + 3, menu.size()); i++) {
@@ -184,13 +222,13 @@ public class CallMenuWidget implements IWidgetComponent {
                 var minY = y + this.height * (i - this.scroll);
                 var name = me ? mePrefix : (info.getProfile().getName() + suffix);
 
-                GraphicsUtil.fillRect(graphics, this.x, minY, width, this.height, this.color);
+                GraphicsUtil.fillRect(graphics, this.x, minY, width, this.height, ColorUtil.packArgb(74, 74, 74, 255));
                 PlayerFaceRenderer.draw(graphics, info.getSkinLocation(), this.x + 4, minY + 4, 24);
                 graphics.drawString(this.minecraft.font, Component.literal(name).withStyle(ChatFormatting.BOLD).withStyle(me ? ChatFormatting.GOLD : ChatFormatting.WHITE), this.x + 34, minY + 12 + offset, -1);
             }
         }
     }
-    
+
     private boolean isPlayerMe(@Nullable PlayerInfo info) {
         return this.minecraft.player != null && info != null && info.getProfile().getId().equals(this.minecraft.player.getUUID());
     }
@@ -206,6 +244,7 @@ public class CallMenuWidget implements IWidgetComponent {
         this.lastSearch = search;
         this.searchList(search, this.shownCreateCallPlayers, this.listedCreateCallPlayers);
         this.searchList(search, this.shownJoinCallPlayers, this.listedJoinCallPlayers);
+        this.searchList(search, this.shownSearchedPlayer, this.listedSearchedPlayer);
         this.updateMenu(0);
     }
 
@@ -220,14 +259,22 @@ public class CallMenuWidget implements IWidgetComponent {
         this.search(this.lastSearch);
     }
 
-    @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-        this.scroller.mouseScrolled(mouseX, mouseY, delta);
-        return this.listedCreateCallPlayers.size() > 3;
+    private String getSoloRenderName() {
+        if (this.screen.getHoloPos() != null && Minecraft.getInstance().level != null && Minecraft.getInstance().level.getBlockEntity(this.screen.getHoloPos()) instanceof HoloProjectorBlockEntity be) return be.getSoloRender();
+        return this.screen.getStack() != null ? HologramTag.getOrCreate(this.screen.getStack()).getSoloRender() : "";
     }
 
     @Override
-    public void setFocused(boolean focused) {}
+    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+        this.scroller.mouseScrolled(mouseX, mouseY, delta);
+        if (this.page == HologramScreen.Page.CREATE_CALL) return this.listedCreateCallPlayers.size() > 3;
+        if (this.page == HologramScreen.Page.JOIN_CALL) return this.shownJoinCallPlayers.size() > 3;
+        return this.shownSearchedPlayer.size() > 3;
+    }
+
+    @Override
+    public void setFocused(boolean focused) {
+    }
 
     @Override
     public boolean isFocused() {
@@ -240,20 +287,20 @@ public class CallMenuWidget implements IWidgetComponent {
     }
 
     @Override
-    public void updateNarration(NarrationElementOutput narrationElementOutput) {}
-
-    public List<HologramNetwork.Caller> getCallers() {
-        return this.shownCreateCallPlayers.stream().filter(p -> !isPlayerMe(p.info) && p.added)
-                .map(p -> new HologramNetwork.Caller(p.info.getProfile().getId(), null, null)).toList();
+    public void updateNarration(NarrationElementOutput narrationElementOutput) {
     }
 
-    record MenuData(PlayerInfo info, List<Component> players, boolean added, boolean locked) {
+    public List<CallData.Callee> getCallMembers() {
+        return this.shownCreateCallPlayers.stream().filter(p -> !isPlayerMe(p.info) && p.added).map(p -> new CallData.Callee(p.info.getProfile().getId())).toList();
+    }
+
+    record MenuData(PlayerInfo info, UUID callID, List<Component> players, boolean added, boolean locked) {
         public static MenuData ofCreate(PlayerInfo info, boolean isMe) {
-            return new MenuData(info, List.of(), isMe, isMe);
+            return new MenuData(info, null, List.of(), isMe, isMe);
         }
 
-        public static MenuData ofJoin(PlayerInfo info, List<Component> players) {
-            return new MenuData(info, players, false, false);
+        public static MenuData ofJoin(PlayerInfo info, UUID callID, List<Component> players) {
+            return new MenuData(info, callID, players, false, false);
         }
     }
 }

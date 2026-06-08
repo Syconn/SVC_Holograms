@@ -4,7 +4,8 @@ import dev.architectury.networking.NetworkManager;
 import mod.syconn.svc.network.Network;
 import mod.syconn.svc.network.packets.client.RequestedHologramPacket;
 import mod.syconn.svc.server.savedData.HologramNetwork;
-import net.minecraft.nbt.CompoundTag;
+import mod.syconn.svc.server.savedData.extra.CallData;
+import mod.syconn.svc.utils.generic.NBTUtil;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -20,7 +21,8 @@ public class RequestHologramPacket {
 
     public void apply(Supplier<NetworkManager.PacketContext> context) {
         context.get().queue(() -> {
-            if (context.get().getPlayer() instanceof ServerPlayer sp) Network.CHANNEL.sendToPlayer(sp, new RequestedHologramPacket(HologramNetwork.get(sp.server.overworld()).save(new CompoundTag())));
+            if (context.get().getPlayer() instanceof ServerPlayer sp)
+                Network.CHANNEL.sendToPlayer(sp, new RequestedHologramPacket(NBTUtil.putList(HologramNetwork.get(sp.server.overworld()).getCallsForPlayer(sp.getUUID()), CallData.Call::save)));
         });
     }
 }

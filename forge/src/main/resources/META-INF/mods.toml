@@ -1,6 +1,6 @@
 modLoader = "javafml"
 loaderVersion = "[47,)"
-#issueTrackerURL = ""
+issueTrackerURL = "https://github.com/Syconn/SVC_Holograms/issues"
 license = "All Rights Reserved"
 
 [[mods]]
@@ -9,9 +9,9 @@ version = "${version}"
 displayName = "SVC Holograms"
 authors = "Syconn"
 description = '''
-A mod that add the Holographic Communicators from Syconn's Star Wars Mod.
+A mod that add the Holographic Communicators from Syconn's Star Wars Mod and adds support for Simple Voice Chat Mod.
 '''
-#logoFile = ""
+logoFile = "icon.png"
 
 [[dependencies.svc]]
 modId = "forge"

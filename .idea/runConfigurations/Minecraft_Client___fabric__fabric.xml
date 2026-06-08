@@ -1,12 +1,12 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Minecraft Client (:fabric)" type="Application" factoryName="Application" singleton="false">
-    <option name="MAIN_CLASS_NAME" value="dev.architectury.transformer.TransformerRuntime" />
-    <module name="svc.fabric.main" />
-    <shortenClasspath name="ARGS_FILE" />
-    <option name="VM_PARAMETERS" value="-Dfabric.dli.config=C:\Users\Aidan\IdeaProjects\SVC@@0020Holograms\fabric\.gradle\loom-cache\launch.cfg -Dfabric.dli.env=client -Dfabric.dli.main=net.fabricmc.loader.impl.launch.knot.KnotClient &quot;-Darchitectury.main.class=C:\Users\Aidan\IdeaProjects\SVC Holograms\fabric\.gradle\architectury\.main_class&quot; &quot;-Darchitectury.runtime.transformer=C:\Users\Aidan\IdeaProjects\SVC Holograms\fabric\.gradle\architectury\.transforms&quot; &quot;-Darchitectury.properties=C:\Users\Aidan\IdeaProjects\SVC Holograms\fabric\.gradle\architectury\.properties&quot; -Djdk.attach.allowAttachSelf=true &quot;-javaagent:C:\Users\Aidan\IdeaProjects\SVC Holograms\.gradle\architectury\architectury-transformer-agent.jar&quot;" />
-    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/fabric/run/" />
+  <configuration default="false" factoryName="Application" name="Minecraft Client (:fabric)" singleton="false" type="Application">
+    <option name="MAIN_CLASS_NAME" value="dev.architectury.transformer.TransformerRuntime"/>
+    <module name="svc.fabric.main"/>
+    <shortenClasspath name="ARGS_FILE"/>
+    <option name="VM_PARAMETERS" value="-Dfabric.dli.config=C:\Users\Aidan\IdeaProjects\SVC@@0020Holograms\fabric\.gradle\loom-cache\launch.cfg -Dfabric.dli.env=client -Dfabric.dli.main=net.fabricmc.loader.impl.launch.knot.KnotClient &quot;-Darchitectury.main.class=C:\Users\Aidan\IdeaProjects\SVC Holograms\fabric\.gradle\architectury\.main_class&quot; &quot;-Darchitectury.runtime.transformer=C:\Users\Aidan\IdeaProjects\SVC Holograms\fabric\.gradle\architectury\.transforms&quot; &quot;-Darchitectury.properties=C:\Users\Aidan\IdeaProjects\SVC Holograms\fabric\.gradle\architectury\.properties&quot; -Djdk.attach.allowAttachSelf=true &quot;-javaagent:C:\Users\Aidan\IdeaProjects\SVC Holograms\.gradle\architectury\architectury-transformer-agent.jar&quot;"/>
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/fabric/run/"/>
     <method v="2">
-      <option name="Make" enabled="true" />
+      <option enabled="true" name="Make"/>
     </method>
-  </configuration>
+  <classpathModifications/></configuration>
 </component>

@@ -4,6 +4,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 
 public class Constants {
+    // https://linkie.shedaniel.dev/ for mapping conversions
 
     public static final String MOD = "svc";
     public static final RandomSource RANDOM = RandomSource.createNewThreadLocalInstance();

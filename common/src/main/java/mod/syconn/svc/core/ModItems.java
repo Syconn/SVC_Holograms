@@ -20,5 +20,4 @@ public class ModItems {
 
     public static final RegistrySupplier<CreativeModeTab> TAB = TABS.register("svc", () -> CreativeTabRegistry.create(
             Component.translatable("itemGroup." + Constants.MOD + ".svc"), () -> new ItemStack(HOLO_PROJECTOR.get())));
-
 }

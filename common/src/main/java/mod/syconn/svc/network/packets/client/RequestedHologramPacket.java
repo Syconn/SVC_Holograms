@@ -3,7 +3,8 @@ package mod.syconn.svc.network.packets.client;
 import dev.architectury.networking.NetworkManager;
 import dev.architectury.utils.GameInstance;
 import mod.syconn.svc.client.screen.HologramScreen;
-import mod.syconn.svc.server.savedData.HologramNetwork;
+import mod.syconn.svc.server.savedData.extra.CallData;
+import mod.syconn.svc.utils.generic.NBTUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 
@@ -26,6 +27,6 @@ public class RequestedHologramPacket {
     }
 
     public void apply(Supplier<NetworkManager.PacketContext> context) {
-        context.get().queue(() -> { if (GameInstance.getClient().screen instanceof HologramScreen screen) screen.hologramData(HologramNetwork.load(this.tag)); });
+        context.get().queue(() -> { if (GameInstance.getClient().screen instanceof HologramScreen screen) screen.hologramData(NBTUtil.getList(tag, CallData.Call::from)); });
     }
 }
