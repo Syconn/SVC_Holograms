@@ -32,7 +32,7 @@ public class HoloProjectorItemRenderer implements IModifiedItemRenderer, IModifi
 
     @Override
     public boolean render(LivingEntity entity, HumanoidModel<? extends LivingEntity> playerModel, ItemStack stack, ItemDisplayContext renderMode, boolean leftHanded, PoseStack poseStack, MultiBufferSource bufferSource, int light, int overlay, BakedModel model) {
-        if (playerModel instanceof HologramModel) return true;
+        if (playerModel instanceof HologramModel) return false;
 
         poseStack.pushPose();
         model.getTransforms().getTransform(renderMode).apply(leftHanded, poseStack);
@@ -46,7 +46,7 @@ public class HoloProjectorItemRenderer implements IModifiedItemRenderer, IModifi
         var hologramData = getHologramData(tag);
         if (!tag.getSoloRender().isEmpty()) this.spin += 0.25f;
 
-        if (hologramData.activeRender()) { // TODO ARMOR, Sounds, Screenshots, SVC
+        if (hologramData.activeRender()) { // TODO Sounds, Screenshots, SVC
             poseStack.pushPose();
             poseStack.mulPose(Axis.YN.rotationDegrees(-hologramData.getPlayer().getYRot()));
             poseStack.mulPose(Axis.YN.rotationDegrees(ModelUtil.isLeftHanded(renderMode) ? -45f : 45f));
