@@ -1,6 +1,7 @@
 package mod.syconn.svc.server.savedData.extra;
 
 import dev.architectury.utils.GameInstance;
+import mod.syconn.svc.compat.vc.VoiceChatManager;
 import mod.syconn.svc.core.ModBlockEntities;
 import mod.syconn.svc.network.Network;
 import mod.syconn.svc.network.packets.client.MessagePlayerPacket;
@@ -146,6 +147,7 @@ public class CallData {
         private final Map<UUID, Call> CALLS = new HashMap<>();
         private final Map<UUID, BlockReceiver> BLOCK_RECEIVERS = new HashMap<>();
         private final Map<UUID, ItemReceiver> ITEM_RECEIVERS = new HashMap<>();
+        private VoiceChatManager vc = new VoiceChatManager();
 
         public void createCall(List<Callee> members, boolean secure) {
             if (members.size() <= 1) return;
@@ -166,6 +168,9 @@ public class CallData {
                     rec.callID = callId;
                     return rec;
                 });
+
+                this.vc.createBlockCall(callId);
+                this.vc.joinBlockCall(callId, owner.playerUUID);
             } else if (owner.type == ReceiverType.ITEM) {
                 this.ITEM_RECEIVERS.computeIfPresent(owner.receiverID, (id, rec) -> {
                     rec.callID = callId;
@@ -179,7 +184,6 @@ public class CallData {
             var call = this.CALLS.get(callID);
             if (call == null || callee.type == ReceiverType.NULL) return;
             if (call.secure && !call.callers.containsKey(callee.playerUUID)) return;
-            if (call.callers.containsKey(callee.playerUUID)) this.leaveCall(callID, call.callers.get(callee.playerUUID));
 
             for (var caller : call.callers.entrySet()) if (caller.getValue().type != ReceiverType.NULL) notifyJoinedCall(caller.getKey(), callee.playerUUID);
 
@@ -190,6 +194,8 @@ public class CallData {
                     rec.callID = callID;
                     return rec;
                 });
+
+                this.vc.joinBlockCall(callID, callee.playerUUID);
             } else if (callee.type == ReceiverType.ITEM) {
                 this.ITEM_RECEIVERS.computeIfPresent(callee.receiverID, (id, rec) -> {
                     rec.callID = callID;
@@ -219,7 +225,11 @@ public class CallData {
                 }
             }
 
-            if (call.callers.isEmpty()) this.CALLS.remove(callId);
+            if (call.callers.size() <= 1) {
+                this.CALLS.remove(callId);
+                this.vc.endCall(callId);
+                this.validateReceivers();
+            }
         }
 
         public void playerLeftServer(UUID playerId) {
@@ -245,6 +255,8 @@ public class CallData {
         public void setRenderMembers(UUID callID, UUID receiverID, Map<UUID, Vec3> renderMembers) {
             var call = this.CALLS.get(callID);
             if (call != null) call.renderMembers.put(receiverID, renderMembers);
+
+            for (var member : renderMembers.keySet()) this.vc.joinBlockCall(callID, member);
         }
 
         public void registerBlockReceiver(UUID blockID, WorldPos pos) {
@@ -295,6 +307,7 @@ public class CallData {
             this.CALLS.entrySet().removeIf(entry -> {
                 var call = entry.getValue();
                 call.callers.values().removeIf(v -> players.getPlayer(v.playerUUID) == null);
+                if (call.callers.size() <= 1) this.vc.endCall(entry.getKey());
                 return call.callers.size() <= 1;
             });
         }
@@ -306,6 +319,10 @@ public class CallData {
             var level = server.overworld();
             this.BLOCK_RECEIVERS.entrySet().removeIf(entry -> level.getBlockEntity(entry.getValue().pos.pos(), ModBlockEntities.HOLO_PROJECTOR.get()).isEmpty());
             this.BLOCK_RECEIVERS.forEach((uuid, receiver) -> { if (receiver.callID != null && !this.CALLS.containsKey(receiver.callID)) receiver.callID = null; });
+        }
+
+        public void tick() {
+            this.vc.tick(this);
         }
 
         private void notifyCallInvite(UUID ownerID, UUID targetID) {
@@ -337,6 +354,7 @@ public class CallData {
             tag.put("calls", NBTUtil.putMap(this.CALLS, NBTUtil::putUUID, Call::save));
             tag.put("block_receivers", NBTUtil.putMap(this.BLOCK_RECEIVERS, NBTUtil::putUUID, BlockReceiver::save));
             tag.put("item_receivers", NBTUtil.putMap(this.ITEM_RECEIVERS, NBTUtil::putUUID, ItemReceiver::save));
+            tag.put("vc", this.vc.save());
             return tag;
         }
 
@@ -347,6 +365,7 @@ public class CallData {
             this.CALLS.putAll(NBTUtil.getMap(tag.getCompound("calls"), NBTUtil::getUUID, Call::from));
             this.BLOCK_RECEIVERS.putAll(NBTUtil.getMap(tag.getCompound("block_receivers"), NBTUtil::getUUID, BlockReceiver::from));
             this.ITEM_RECEIVERS.putAll(NBTUtil.getMap(tag.getCompound("item_receivers"), NBTUtil::getUUID, ItemReceiver::from));
+            this.vc = VoiceChatManager.load(tag.getCompound("vc"));
             this.validateCallLog();
             this.validateReceivers();
         }

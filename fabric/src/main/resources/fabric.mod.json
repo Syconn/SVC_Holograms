@@ -19,6 +19,9 @@
     ],
     "client": [
       "mod.syconn.svc.fabric.client.SVCFabricClient"
+    ],
+    "voicechat": [
+      "mod.syconn.svc.compat.vc.VoiceChatPlugin"
     ]
   },
   "mixins": [

@@ -49,27 +49,30 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
             final var callData = network.getBlockReceiver(blockEntity.receiverUUID);
 
             if (callData != null && callData.callID != null) {
-                blockEntity.active = true;
-                if (!blockEntity.soloRender.isEmpty()) blockEntity.soloRender = "";
-                final var players = level.getEntitiesOfClass(Player.class, new AABB(pos).move(0, 1, 0).inflate(3.5));
-                final var renderMembers = new HashMap<UUID, Vec3>();
                 final var call = network.getCall(callData.callID);
-                blockEntity.renderables.clear();
-                if (call.renderMembers.containsKey(blockEntity.getReceiverUUID())) {
-                    for (var entry : call.renderMembers.entrySet())
-                        if (entry.getKey() != blockEntity.receiverUUID)
-                            blockEntity.renderables.putAll(entry.getValue());
-                }
-                for (Player player : players) renderMembers.put(player.getUUID(), player.position().subtract(pos.getCenter()));
-                network.setRenderMembers(callData.callID, blockEntity.getReceiverUUID(), renderMembers);
 
-                for (var entry : call.callers.entrySet()) {
-                    if (entry.getValue().type == CallData.ReceiverType.ITEM) {
-                        blockEntity.renderables.put(entry.getKey(), new Vec3(0, -0.3f, 0));
-                        break;
+                if (call != null) {
+                    blockEntity.active = true;
+                    if (!blockEntity.soloRender.isEmpty()) blockEntity.soloRender = "";
+                    final var players = level.getEntitiesOfClass(Player.class, new AABB(pos).move(0, 1, 0).inflate(3.5));
+                    final var renderMembers = new HashMap<UUID, Vec3>();
+                    blockEntity.renderables.clear();
+                    if (call.renderMembers.containsKey(blockEntity.getReceiverUUID())) {
+                        for (var entry : call.renderMembers.entrySet())
+                            if (entry.getKey() != blockEntity.receiverUUID)
+                                blockEntity.renderables.putAll(entry.getValue());
                     }
+                    for (Player player : players) renderMembers.put(player.getUUID(), player.position().subtract(pos.getCenter()));
+                    network.setRenderMembers(callData.callID, blockEntity.getReceiverUUID(), renderMembers);
+
+                    for (var entry : call.callers.entrySet()) {
+                        if (entry.getValue().type == CallData.ReceiverType.ITEM) {
+                            blockEntity.renderables.put(entry.getKey(), new Vec3(0, -0.3f, 0));
+                            break;
+                        }
+                    }
+                    blockEntity.markDirty();
                 }
-                blockEntity.markDirty();
             } else if (callData != null && !blockEntity.renderables.isEmpty()) {
                 blockEntity.renderables.clear();
                 blockEntity.markDirty();

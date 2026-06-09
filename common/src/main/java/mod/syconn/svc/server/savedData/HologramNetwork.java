@@ -20,7 +20,7 @@ import static mod.syconn.svc.server.savedData.extra.CallData.CallManager;
 
 public class HologramNetwork extends SavedData {
 
-    private static final String tagID = "hologram_network";
+    private static final String tagID = "svc_hologram_network";
     private final CallManager manager = new CallManager();
 
     public HologramNetwork() { }
@@ -83,6 +83,10 @@ public class HologramNetwork extends SavedData {
 
     public List<CallData.BlockReceiver> getDebugData() {
         return this.manager.getDebugData();
+    }
+
+    public void serverTick() {
+        this.manager.tick();
     }
 
     @Override

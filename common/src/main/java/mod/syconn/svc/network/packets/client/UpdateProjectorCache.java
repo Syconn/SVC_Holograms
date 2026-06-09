@@ -9,13 +9,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public class UpdateProjectorCache {
-
-    public List<CallData.BlockReceiver> data;
-
-    public UpdateProjectorCache(List<CallData.BlockReceiver> data) {
-        this.data = data;
-    }
+public record UpdateProjectorCache(List<CallData.BlockReceiver> data) {
 
     public UpdateProjectorCache(FriendlyByteBuf buf) {
         this(NBTUtil.getList(Objects.requireNonNull(buf.readNbt()), CallData.BlockReceiver::from));
