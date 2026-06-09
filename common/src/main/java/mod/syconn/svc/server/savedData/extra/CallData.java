@@ -169,7 +169,8 @@ public class CallData {
                     return rec;
                 });
 
-                vc.createBlockCall(callId);
+                this.vc.createBlockCall(callId);
+                this.vc.joinBlockCall(callId, owner);
             } else if (owner.type == ReceiverType.ITEM) {
                 this.ITEM_RECEIVERS.computeIfPresent(owner.receiverID, (id, rec) -> {
                     rec.callID = callId;
@@ -183,7 +184,6 @@ public class CallData {
             var call = this.CALLS.get(callID);
             if (call == null || callee.type == ReceiverType.NULL) return;
             if (call.secure && !call.callers.containsKey(callee.playerUUID)) return;
-            if (call.callers.containsKey(callee.playerUUID)) this.leaveCall(callID, call.callers.get(callee.playerUUID));
 
             for (var caller : call.callers.entrySet()) if (caller.getValue().type != ReceiverType.NULL) notifyJoinedCall(caller.getKey(), callee.playerUUID);
 
@@ -194,6 +194,8 @@ public class CallData {
                     rec.callID = callID;
                     return rec;
                 });
+
+                this.vc.joinBlockCall(callID, callee);
             } else if (callee.type == ReceiverType.ITEM) {
                 this.ITEM_RECEIVERS.computeIfPresent(callee.receiverID, (id, rec) -> {
                     rec.callID = callID;
@@ -215,6 +217,8 @@ public class CallData {
             if (removed.type == ReceiverType.BLOCK && removed.receiverID != null) {
                 var receiver = this.BLOCK_RECEIVERS.get(removed.receiverID);
                 if (receiver != null && receiver.callID != null && receiver.callID.equals(callId)) receiver.callID = null;
+
+                this.vc.leaveBlockCall(callee);
             } else if (removed.type == ReceiverType.ITEM && removed.receiverID != null) {
                 var receiver = this.ITEM_RECEIVERS.get(removed.receiverID);
                 if (receiver != null && receiver.callID != null && receiver.callID.equals(callId)) {
@@ -225,6 +229,7 @@ public class CallData {
 
             if (call.callers.size() <= 1) {
                 this.CALLS.remove(callId);
+                for (var caller : call.callers.values()) this.vc.leaveBlockCall(caller);
                 this.vc.removeBlockCall(callId);
             }
         }
@@ -302,7 +307,10 @@ public class CallData {
             this.CALLS.entrySet().removeIf(entry -> {
                 var call = entry.getValue();
                 call.callers.values().removeIf(v -> players.getPlayer(v.playerUUID) == null);
-                if (call.callers.size() <= 1) this.vc.removeBlockCall(entry.getKey());
+                if (call.callers.size() <= 1) {
+                    for (var caller : call.callers.values()) this.vc.leaveBlockCall(caller);
+                    this.vc.removeBlockCall(entry.getKey());
+                }
                 return call.callers.size() <= 1;
             });
         }
