@@ -10,6 +10,8 @@ import java.util.*;
 
 public class VoiceChatManager {
     // TODO Use LocationalAudioChannel to play player audio at points, Test check forge
+    // TODO Implement Item Mode ****
+    // TODO Player Animation don't work if player is out of range
 
     private final Map<UUID, UUID> PERSISTENT_GROUPS = new HashMap<>();
     private final Map<UUID, List<UUID>> GROUP_MEMBERS = new HashMap<>();
@@ -33,7 +35,12 @@ public class VoiceChatManager {
 
         var connection = VoiceChatPlugin.SERVER_API.getConnectionOf(callee);
         var group = VoiceChatPlugin.SERVER_API.getGroup(this.PERSISTENT_GROUPS.get(callId));
-        if (connection == null || (connection.getGroup() != null && connection.getGroup().getId() == this.PERSISTENT_GROUPS.get(callId))) return;
+        if (group == null) {
+            System.out.println("Missing VC group for call " + callId);
+            return;
+        }
+
+        if (connection == null || (connection.getGroup() != null && connection.getGroup().getId().equals(this.PERSISTENT_GROUPS.get(callId)))) return;
         connection.setGroup(group);
         GROUP_MEMBERS.computeIfAbsent(callId, id -> new ArrayList<>()).add(callee);
     }
