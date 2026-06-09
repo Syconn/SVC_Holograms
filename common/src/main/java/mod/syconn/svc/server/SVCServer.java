@@ -1,31 +1,39 @@
 package mod.syconn.svc.server;
 
 import dev.architectury.event.events.common.PlayerEvent;
+import dev.architectury.event.events.common.TickEvent;
 import mod.syconn.svc.client.render.debug.HoloProjectorDebugRenderer;
 import mod.syconn.svc.network.Network;
 import mod.syconn.svc.server.savedData.HologramNetwork;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 
 public class SVCServer {
 
     public static void init() {
+        TickEvent.SERVER_PRE.register(SVCServer::serverTickEvent);
         PlayerEvent.PLAYER_QUIT.register(SVCServer::playerLeftServer);
         PlayerEvent.PLAYER_JOIN.register(SVCServer::playerJoinedServer);
         PlayerEvent.CHANGE_DIMENSION.register(SVCServer::playerChangedDimension);
     }
 
-    public static void playerLeftServer(ServerPlayer player) {
+    private static void serverTickEvent(MinecraftServer server) {
+        HologramNetwork.get(server.overworld()).serverTick();
+    }
+
+    private static void playerLeftServer(ServerPlayer player) {
         HologramNetwork.get(player.server.overworld()).playerLeftServer(player.getUUID());
         Network.CHANNEL.sendToPlayer(player, HoloProjectorDebugRenderer.playerLeftServer());
     }
 
-    public static void playerJoinedServer(ServerPlayer player) {
+    private static void playerJoinedServer(ServerPlayer player) {
         Network.CHANNEL.sendToPlayer(player, HoloProjectorDebugRenderer.playerJoinedServer(player));
     }
 
-    public static void playerChangedDimension(ServerPlayer player, ResourceKey<Level> oldLevel, ResourceKey<Level> newLevel) {
+    private static void playerChangedDimension(ServerPlayer player, ResourceKey<Level> oldLevel, ResourceKey<Level> newLevel) {
         Network.CHANNEL.sendToPlayer(player, HoloProjectorDebugRenderer.playerChangedDimension(player));
     }
 }

@@ -1,6 +1,7 @@
 package mod.syconn.svc.server.savedData.extra;
 
 import dev.architectury.utils.GameInstance;
+import mod.syconn.svc.compat.vc.VoiceChatManager;
 import mod.syconn.svc.core.ModBlockEntities;
 import mod.syconn.svc.network.Network;
 import mod.syconn.svc.network.packets.client.MessagePlayerPacket;
@@ -146,6 +147,7 @@ public class CallData {
         private final Map<UUID, Call> CALLS = new HashMap<>();
         private final Map<UUID, BlockReceiver> BLOCK_RECEIVERS = new HashMap<>();
         private final Map<UUID, ItemReceiver> ITEM_RECEIVERS = new HashMap<>();
+        private VoiceChatManager vc = new VoiceChatManager();
 
         public void createCall(List<Callee> members, boolean secure) {
             if (members.size() <= 1) return;
@@ -166,6 +168,8 @@ public class CallData {
                     rec.callID = callId;
                     return rec;
                 });
+
+                vc.createBlockCall(callId);
             } else if (owner.type == ReceiverType.ITEM) {
                 this.ITEM_RECEIVERS.computeIfPresent(owner.receiverID, (id, rec) -> {
                     rec.callID = callId;
@@ -219,7 +223,10 @@ public class CallData {
                 }
             }
 
-            if (call.callers.isEmpty()) this.CALLS.remove(callId);
+            if (call.callers.size() <= 1) {
+                this.CALLS.remove(callId);
+                this.vc.removeBlockCall(callId);
+            }
         }
 
         public void playerLeftServer(UUID playerId) {
@@ -295,6 +302,7 @@ public class CallData {
             this.CALLS.entrySet().removeIf(entry -> {
                 var call = entry.getValue();
                 call.callers.values().removeIf(v -> players.getPlayer(v.playerUUID) == null);
+                if (call.callers.size() <= 1) this.vc.removeBlockCall(entry.getKey());
                 return call.callers.size() <= 1;
             });
         }
@@ -337,6 +345,7 @@ public class CallData {
             tag.put("calls", NBTUtil.putMap(this.CALLS, NBTUtil::putUUID, Call::save));
             tag.put("block_receivers", NBTUtil.putMap(this.BLOCK_RECEIVERS, NBTUtil::putUUID, BlockReceiver::save));
             tag.put("item_receivers", NBTUtil.putMap(this.ITEM_RECEIVERS, NBTUtil::putUUID, ItemReceiver::save));
+            tag.put("vc", this.vc.save());
             return tag;
         }
 
@@ -347,6 +356,7 @@ public class CallData {
             this.CALLS.putAll(NBTUtil.getMap(tag.getCompound("calls"), NBTUtil::getUUID, Call::from));
             this.BLOCK_RECEIVERS.putAll(NBTUtil.getMap(tag.getCompound("block_receivers"), NBTUtil::getUUID, BlockReceiver::from));
             this.ITEM_RECEIVERS.putAll(NBTUtil.getMap(tag.getCompound("item_receivers"), NBTUtil::getUUID, ItemReceiver::from));
+            this.vc = VoiceChatManager.load(tag.getCompound("vc"));
             this.validateCallLog();
             this.validateReceivers();
         }
