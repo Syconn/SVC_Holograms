@@ -1,19 +1,17 @@
 package mod.syconn.svc.compat.vc;
 
 import de.maxhenkel.voicechat.api.Group;
-import de.maxhenkel.voicechat.api.audiochannel.LocationalAudioChannel;
 import mod.syconn.svc.server.savedData.extra.CallData;
 import mod.syconn.svc.utils.generic.NBTUtil;
 import net.minecraft.nbt.CompoundTag;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class VoiceChatManager {
     // TODO Use LocationalAudioChannel to play player audio at points
 
     private final Map<UUID, UUID> PERSISTENT_GROUPS = new HashMap<>();
+    private final Map<UUID, List<UUID>> GROUP_MEMBERS = new HashMap<>();
 
     public void createBlockCall(UUID callId) {
         if (VoiceChatPlugin.SERVER_API == null) return;
@@ -36,6 +34,7 @@ public class VoiceChatManager {
         var group = VoiceChatPlugin.SERVER_API.getGroup(this.PERSISTENT_GROUPS.get(callId));
         if (connection == null) return;
         connection.setGroup(group);
+        GROUP_MEMBERS.computeIfAbsent(callId, id -> new ArrayList<>()).add(callee.playerUUID);
     }
 
     public void leaveBlockCall(CallData.Callee callee) {
@@ -49,12 +48,14 @@ public class VoiceChatManager {
     public CompoundTag save() {
         var tag = new CompoundTag();
         tag.put("persistent", NBTUtil.putMap(this.PERSISTENT_GROUPS, NBTUtil::putUUID, NBTUtil::putUUID));
+        tag.put("group", NBTUtil.putMap(this.GROUP_MEMBERS, NBTUtil::putUUID, l -> NBTUtil.putList(l, NBTUtil::putUUID)));
         return tag;
     }
 
     public static VoiceChatManager load(CompoundTag tag) {
         var manager = new VoiceChatManager();
         manager.PERSISTENT_GROUPS.putAll(NBTUtil.getMap(tag.getCompound("persistent"), NBTUtil::getUUID, NBTUtil::getUUID));
+        manager.GROUP_MEMBERS.putAll(NBTUtil.getMap(tag.getCompound("group"), NBTUtil::getUUID, t -> NBTUtil.getList(t, NBTUtil::getUUID)));
         return manager;
     }
 }
