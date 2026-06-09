@@ -11,7 +11,7 @@ import mod.syconn.svc.utils.Constants;
 
 public class Network {
 
-    public static NetworkChannel CHANNEL = NetworkChannel.create(Constants.withId("network"));
+    public static final NetworkChannel CHANNEL = NetworkChannel.create(Constants.withId("network"));
 
     public static void init() {
         CHANNEL.register(HoloCallPacket.class, HoloCallPacket::encode, HoloCallPacket::new, HoloCallPacket::apply);

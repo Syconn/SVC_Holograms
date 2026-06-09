@@ -42,6 +42,7 @@ import org.joml.Vector3f;
 
 import java.util.UUID;
 
+@SuppressWarnings("deprecation")
 public class HoloProjectorBlock extends FaceAttachedHorizontalDirectionalBlock implements IEntityBlock {
 
     public HoloProjectorBlock() {
