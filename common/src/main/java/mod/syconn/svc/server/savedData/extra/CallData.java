@@ -170,7 +170,7 @@ public class CallData {
                 });
 
                 this.vc.createBlockCall(callId);
-                this.vc.joinBlockCall(callId, owner);
+                this.vc.joinBlockCall(callId, owner.playerUUID);
             } else if (owner.type == ReceiverType.ITEM) {
                 this.ITEM_RECEIVERS.computeIfPresent(owner.receiverID, (id, rec) -> {
                     rec.callID = callId;
@@ -195,7 +195,7 @@ public class CallData {
                     return rec;
                 });
 
-                this.vc.joinBlockCall(callID, callee);
+                this.vc.joinBlockCall(callID, callee.playerUUID);
             } else if (callee.type == ReceiverType.ITEM) {
                 this.ITEM_RECEIVERS.computeIfPresent(callee.receiverID, (id, rec) -> {
                     rec.callID = callID;
@@ -217,8 +217,6 @@ public class CallData {
             if (removed.type == ReceiverType.BLOCK && removed.receiverID != null) {
                 var receiver = this.BLOCK_RECEIVERS.get(removed.receiverID);
                 if (receiver != null && receiver.callID != null && receiver.callID.equals(callId)) receiver.callID = null;
-
-                this.vc.leaveBlockCall(callee);
             } else if (removed.type == ReceiverType.ITEM && removed.receiverID != null) {
                 var receiver = this.ITEM_RECEIVERS.get(removed.receiverID);
                 if (receiver != null && receiver.callID != null && receiver.callID.equals(callId)) {
@@ -229,8 +227,8 @@ public class CallData {
 
             if (call.callers.size() <= 1) {
                 this.CALLS.remove(callId);
-                for (var caller : call.callers.values()) this.vc.leaveBlockCall(caller);
-                this.vc.removeBlockCall(callId);
+                this.vc.endCall(callId);
+                this.validateReceivers();
             }
         }
 
@@ -257,6 +255,8 @@ public class CallData {
         public void setRenderMembers(UUID callID, UUID receiverID, Map<UUID, Vec3> renderMembers) {
             var call = this.CALLS.get(callID);
             if (call != null) call.renderMembers.put(receiverID, renderMembers);
+
+            for (var member : renderMembers.keySet()) this.vc.joinBlockCall(callID, member);
         }
 
         public void registerBlockReceiver(UUID blockID, WorldPos pos) {
@@ -307,10 +307,7 @@ public class CallData {
             this.CALLS.entrySet().removeIf(entry -> {
                 var call = entry.getValue();
                 call.callers.values().removeIf(v -> players.getPlayer(v.playerUUID) == null);
-                if (call.callers.size() <= 1) {
-                    for (var caller : call.callers.values()) this.vc.leaveBlockCall(caller);
-                    this.vc.removeBlockCall(entry.getKey());
-                }
+                if (call.callers.size() <= 1) this.vc.endCall(entry.getKey());
                 return call.callers.size() <= 1;
             });
         }
@@ -322,6 +319,10 @@ public class CallData {
             var level = server.overworld();
             this.BLOCK_RECEIVERS.entrySet().removeIf(entry -> level.getBlockEntity(entry.getValue().pos.pos(), ModBlockEntities.HOLO_PROJECTOR.get()).isEmpty());
             this.BLOCK_RECEIVERS.forEach((uuid, receiver) -> { if (receiver.callID != null && !this.CALLS.containsKey(receiver.callID)) receiver.callID = null; });
+        }
+
+        public void tick() {
+            this.vc.tick(this);
         }
 
         private void notifyCallInvite(UUID ownerID, UUID targetID) {

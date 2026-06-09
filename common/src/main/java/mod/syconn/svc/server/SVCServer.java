@@ -7,7 +7,6 @@ import mod.syconn.svc.network.Network;
 import mod.syconn.svc.server.savedData.HologramNetwork;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 

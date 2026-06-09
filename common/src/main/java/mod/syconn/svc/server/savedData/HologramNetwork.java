@@ -1,7 +1,6 @@
 package mod.syconn.svc.server.savedData;
 
 import dev.architectury.utils.GameInstance;
-import mod.syconn.svc.compat.vc.VoiceChatPlugin;
 import mod.syconn.svc.network.Network;
 import mod.syconn.svc.network.packets.client.UpdateProjectorCache;
 import mod.syconn.svc.server.savedData.extra.CallData;
@@ -86,8 +85,8 @@ public class HologramNetwork extends SavedData {
         return this.manager.getDebugData();
     }
 
-    public void serverTick() { // TODO TEMP TEST
-
+    public void serverTick() {
+        this.manager.tick();
     }
 
     @Override
