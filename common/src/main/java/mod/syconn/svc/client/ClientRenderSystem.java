@@ -1,6 +1,7 @@
 package mod.syconn.svc.client;
 
 import com.mojang.authlib.GameProfile;
+import mod.syconn.svc.utils.entity.HologramPlayer;
 import mod.syconn.svc.utils.entity.RenderTargetInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -25,10 +26,10 @@ public class ClientRenderSystem {
         this.targets.get(info.getUUID()).update(info, this);
     }
 
-    public RemotePlayer getPlayer(UUID uuid) {
+    public HologramPlayer getPlayer(UUID uuid) {
         var info = this.targets.get(uuid);
         if (info == null) return null;
-        return (RemotePlayer) info.getFakeEntity(this);
+        return (HologramPlayer) info.getFakeEntity(this);
     }
 
     public void tick() {
@@ -47,7 +48,7 @@ public class ClientRenderSystem {
         var level = Minecraft.getInstance().level;
         if (level == null) return null;
         var profile = new GameProfile(info.getUUID(), info.getName());
-        var player = new RemotePlayer(level, profile);
+        var player = new HologramPlayer(level, profile);
         if (info.getExtraInfo() != null) info.getExtraInfo().setupEntityOnCreate(player);
         return player;
     }

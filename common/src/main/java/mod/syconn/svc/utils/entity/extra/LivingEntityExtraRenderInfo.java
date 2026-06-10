@@ -35,6 +35,7 @@ public class LivingEntityExtraRenderInfo implements IExtraRenderInfo { // TODO N
         if (!(entity instanceof LivingEntity living)) return;
         if (fallFlying) ((LivingEntityAccess)living).setFallFlyTicks(living.getFallFlyingTicks() + 1);
         else ((LivingEntityAccess)living).setFallFlyTicks(0);
+        living.calculateEntityAnimation(false);
     }
 
     @Override
@@ -66,8 +67,8 @@ public class LivingEntityExtraRenderInfo implements IExtraRenderInfo { // TODO N
         this.pose = living.getPose();
         this.yBodyRot = living.yBodyRot;
         this.yHeadRot = living.yHeadRot;
-        this.swinging = living.swinging;
-        this.swingTime = living.swingTime;
+//        this.swinging = living.swinging;
+//        this.swingTime = living.swingTime;
         this.swingingArm = living.swingingArm;
         this.isShiftKeyDown = living.isShiftKeyDown();
     }

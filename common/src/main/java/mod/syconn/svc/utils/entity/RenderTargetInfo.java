@@ -2,7 +2,6 @@ package mod.syconn.svc.utils.entity;
 
 import mod.syconn.svc.client.ClientRenderSystem;
 import mod.syconn.svc.utils.interfaces.IExtraRenderInfo;
-import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -59,22 +58,28 @@ public class RenderTargetInfo {
     }
 
     public void tickFakeEntity(@NotNull Entity entity) {
-        if (age > 0) entity.setOldPosAndRot();
         entity.setPos(entity.position().add(getMove()));
         if (extraInfo != null) extraInfo.tickFakeEntity(entity);
-        if (entity instanceof RemotePlayer rp) rp.aiStep();
+        if (entity instanceof HologramPlayer hp) hp.animationTick();
         ++age;
+        if (age > 0) entity.setOldPosAndRot();
     }
 
     public void updateFakeEntity(@NotNull Entity entity) {
         if (age > 0) entity.setOldPosAndRot();
+
+//        Vec3 current = entity.position();
+//        Vec3 target = this.getPos();
+//
+//        Vec3 newPos = current.add(target.subtract(current).scale(0.2));
+//        entity.setPos(newPos);
         entity.setPos(getPos());
         entity.setXRot(getXRot());
         entity.setYRot(getYRot());
-        entity.setDeltaMovement(getMove());
-        entity.setOldPosAndRot();
+//        entity.setDeltaMovement(getMove());
+//        entity.setOldPosAndRot();
         if (extraInfo != null) extraInfo.updateFakeEntity(entity);
-//        if (age == 0) entity.setOldPosAndRot();
+        if (age == 0) entity.setOldPosAndRot();
     }
 
     @Nullable
