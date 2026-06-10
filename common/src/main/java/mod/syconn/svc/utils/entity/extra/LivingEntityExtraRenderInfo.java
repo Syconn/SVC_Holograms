@@ -48,7 +48,7 @@ public class LivingEntityExtraRenderInfo implements IExtraRenderInfo { // TODO N
         living.yHeadRot = this.yHeadRot;
         living.yHeadRotO = this.yHeadRot;
         living.swinging = this.swinging;
-        living.swingTime = this.swingTime;
+//        living.swingTime = this.swingTime;
         living.swingingArm = this.swingingArm;
         ((EntityAccess)entity).invokeSetSharedFlag(1, this.isShiftKeyDown);
         ((EntityAccess)entity).invokeSetSharedFlag(7, this.fallFlying);
@@ -67,7 +67,7 @@ public class LivingEntityExtraRenderInfo implements IExtraRenderInfo { // TODO N
         this.pose = living.getPose();
         this.yBodyRot = living.yBodyRot;
         this.yHeadRot = living.yHeadRot;
-//        this.swinging = living.swinging;
+        this.swinging = living.swinging;
 //        this.swingTime = living.swingTime;
         this.swingingArm = living.swingingArm;
         this.isShiftKeyDown = living.isShiftKeyDown();
@@ -81,8 +81,14 @@ public class LivingEntityExtraRenderInfo implements IExtraRenderInfo { // TODO N
         this.pose = buffer.readEnum(Pose.class);
         this.yBodyRot = buffer.readFloat();
         this.yHeadRot = buffer.readFloat();
+
+        boolean wasSwinging = this.swinging;
         this.swinging = buffer.readBoolean();
-        this.swingTime = buffer.readInt();
+        if (this.swinging && !wasSwinging) {
+            this.swingTime = 0;
+        }
+
+//        this.swingTime = buffer.readInt();
         this.swingingArm = buffer.readEnum(InteractionHand.class);
         this.isShiftKeyDown = buffer.readBoolean();
     }
@@ -96,7 +102,7 @@ public class LivingEntityExtraRenderInfo implements IExtraRenderInfo { // TODO N
         buffer.writeFloat(this.yBodyRot);
         buffer.writeFloat(this.yHeadRot);
         buffer.writeBoolean(this.swinging);
-        buffer.writeInt(this.swingTime);
+//        buffer.writeInt(this.swingTime);
         buffer.writeEnum(this.swingingArm);
         buffer.writeBoolean(this.isShiftKeyDown);
     }
