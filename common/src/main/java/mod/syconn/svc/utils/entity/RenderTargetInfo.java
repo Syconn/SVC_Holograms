@@ -2,6 +2,7 @@ package mod.syconn.svc.utils.entity;
 
 import mod.syconn.svc.client.ClientRenderSystem;
 import mod.syconn.svc.utils.interfaces.IExtraRenderInfo;
+import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -61,6 +62,7 @@ public class RenderTargetInfo {
         if (age > 0) entity.setOldPosAndRot();
         entity.setPos(entity.position().add(getMove()));
         if (extraInfo != null) extraInfo.tickFakeEntity(entity);
+        if (entity instanceof RemotePlayer rp) rp.aiStep();
         ++age;
     }
 
@@ -70,8 +72,9 @@ public class RenderTargetInfo {
         entity.setXRot(getXRot());
         entity.setYRot(getYRot());
         entity.setDeltaMovement(getMove());
+        entity.setOldPosAndRot();
         if (extraInfo != null) extraInfo.updateFakeEntity(entity);
-        if (age == 0) entity.setOldPosAndRot();
+//        if (age == 0) entity.setOldPosAndRot();
     }
 
     @Nullable

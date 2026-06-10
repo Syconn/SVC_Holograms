@@ -125,6 +125,8 @@ public class HologramRenderer extends LivingEntityRenderer<AbstractClientPlayer,
             if (k > 1.0F) k = 1.0F;
         }
 
+//        System.out.println(k);
+
         this.model.prepareMobModel(player, l, k, partialTicks);
         this.model.setupAnim(player, l, k, ix, h, j);
         var minecraft = Minecraft.getInstance();

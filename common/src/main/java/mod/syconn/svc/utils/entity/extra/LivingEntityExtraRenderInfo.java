@@ -11,7 +11,7 @@ import net.minecraft.world.entity.Pose;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
-public class LivingEntityExtraRenderInfo implements IExtraRenderInfo {
+public class LivingEntityExtraRenderInfo implements IExtraRenderInfo { // TODO NO SHIFT ANIMIATION, OR WALK
 
     @NotNull
     private ItemStack mainHand = ItemStack.EMPTY;
@@ -28,12 +28,11 @@ public class LivingEntityExtraRenderInfo implements IExtraRenderInfo {
     private int swingTime;
     private InteractionHand swingingArm;
     private boolean fallFlying;
+    private boolean isShiftKeyDown;
 
     @Override
     public void tickFakeEntity(@NotNull Entity entity) {
         if (!(entity instanceof LivingEntity living)) return;
-        living.calculateEntityAnimation(fallFlying);
-//        living.tick();
         if (fallFlying) ((LivingEntityAccess)living).setFallFlyTicks(living.getFallFlyingTicks() + 1);
         else ((LivingEntityAccess)living).setFallFlyTicks(0);
     }
@@ -50,6 +49,7 @@ public class LivingEntityExtraRenderInfo implements IExtraRenderInfo {
         living.swinging = this.swinging;
         living.swingTime = this.swingTime;
         living.swingingArm = this.swingingArm;
+        ((EntityAccess)entity).invokeSetSharedFlag(1, this.isShiftKeyDown);
         ((EntityAccess)entity).invokeSetSharedFlag(7, this.fallFlying);
         living.setPose(this.pose);
     }
@@ -69,6 +69,7 @@ public class LivingEntityExtraRenderInfo implements IExtraRenderInfo {
         this.swinging = living.swinging;
         this.swingTime = living.swingTime;
         this.swingingArm = living.swingingArm;
+        this.isShiftKeyDown = living.isShiftKeyDown();
     }
 
     @Override
@@ -82,6 +83,7 @@ public class LivingEntityExtraRenderInfo implements IExtraRenderInfo {
         this.swinging = buffer.readBoolean();
         this.swingTime = buffer.readInt();
         this.swingingArm = buffer.readEnum(InteractionHand.class);
+        this.isShiftKeyDown = buffer.readBoolean();
     }
 
     @Override
@@ -95,5 +97,6 @@ public class LivingEntityExtraRenderInfo implements IExtraRenderInfo {
         buffer.writeBoolean(this.swinging);
         buffer.writeInt(this.swingTime);
         buffer.writeEnum(this.swingingArm);
+        buffer.writeBoolean(this.isShiftKeyDown);
     }
 }

@@ -30,8 +30,6 @@ public class ServerRenderSystem {
     }
 
     public void tick(MinecraftServer server) {
-//        int posUpdateRate = 4; // TODO MAY NEED CHANGES
-//        if (server.getTickCount() % posUpdateRate == 0)
         sendPayloads(server);
     }
 
