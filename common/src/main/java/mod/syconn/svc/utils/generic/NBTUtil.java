@@ -26,6 +26,20 @@ public class NBTUtil {
         return tag;
     }
 
+    public static <T> Set<T> getSet(CompoundTag tag, Function<CompoundTag, T> function) {
+        var set = new HashSet<T>();
+        for (int i = 0; i < tag.getInt("len"); i++) set.add(function.apply(tag.getCompound(String.valueOf(i))));
+        return set;
+    }
+
+    public static <T> CompoundTag putSet(Set<T> elements, Function<T, CompoundTag> function) {
+        var tag = new CompoundTag();
+        var index = 0;
+        for (var element : elements) tag.put(Integer.toString(index++), function.apply(element));
+        tag.putInt("len", index);
+        return tag;
+    }
+
     public static <K, V> Map<K, V> getMap(CompoundTag tag, Function<CompoundTag, K> keyFunction, Function<CompoundTag, V> valFunction) {
         var map = new HashMap<K, V>();
         tag.getList("map", Tag.TAG_COMPOUND).forEach(nbt -> {

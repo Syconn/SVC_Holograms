@@ -13,10 +13,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+
+import java.util.*;
 
 public class CallData {
 
@@ -148,6 +146,8 @@ public class CallData {
         private final Map<UUID, BlockReceiver> BLOCK_RECEIVERS = new HashMap<>();
         private final Map<UUID, ItemReceiver> ITEM_RECEIVERS = new HashMap<>();
         private VoiceChatManager vc = new VoiceChatManager();
+        private final Set<UUID> RENDER_CACHE = new HashSet<>();
+        private boolean dirty = true;
 
         public void createCall(List<Callee> members, boolean secure) {
             if (members.size() <= 1) return;
@@ -230,6 +230,8 @@ public class CallData {
                 this.vc.endCall(callId);
                 this.validateReceivers();
             }
+
+            this.dirty = true;
         }
 
         public void playerLeftServer(UUID playerId) {
@@ -250,11 +252,19 @@ public class CallData {
                 }
                 if (call.callers.isEmpty()) iterator.remove();
             }
+
+            this.dirty = true;
         }
 
         public void setRenderMembers(UUID callID, UUID receiverID, Map<UUID, Vec3> renderMembers) {
             var call = this.CALLS.get(callID);
-            if (call != null) call.renderMembers.put(receiverID, renderMembers);
+            if (call == null) return;
+
+            var previous = call.renderMembers.get(receiverID);
+            if (!renderMembers.equals(previous)) {
+                call.renderMembers.put(receiverID, new HashMap<>(renderMembers));
+                this.dirty = true;
+            }
 
             for (var member : renderMembers.keySet()) this.vc.joinBlockCall(callID, member);
         }
@@ -297,6 +307,23 @@ public class CallData {
 
         public List<BlockReceiver> getDebugData() {
             return BLOCK_RECEIVERS.values().stream().toList();
+        }
+
+        public Set<UUID> getRenderCache() {
+            if (dirty) rebuildCache();
+            return RENDER_CACHE;
+        }
+
+        public void rebuildCache() {
+            RENDER_CACHE.clear();
+            for (var call : CALLS.values()) {
+                for (var players : call.renderMembers.values()) {
+                    for (var playerID : players.keySet()) {
+                        if (playerID != null) RENDER_CACHE.add(playerID);
+                    }
+                }
+            }
+            dirty = false;
         }
 
         public void validateCallLog() {
@@ -355,6 +382,8 @@ public class CallData {
             tag.put("block_receivers", NBTUtil.putMap(this.BLOCK_RECEIVERS, NBTUtil::putUUID, BlockReceiver::save));
             tag.put("item_receivers", NBTUtil.putMap(this.ITEM_RECEIVERS, NBTUtil::putUUID, ItemReceiver::save));
             tag.put("vc", this.vc.save());
+            tag.put("cache", NBTUtil.putSet(this.RENDER_CACHE, NBTUtil::putUUID));
+            tag.putBoolean("dirty", this.dirty);
             return tag;
         }
 
@@ -362,10 +391,13 @@ public class CallData {
             this.CALLS.clear();
             this.BLOCK_RECEIVERS.clear();
             this.ITEM_RECEIVERS.clear();
+            this.RENDER_CACHE.clear();
             this.CALLS.putAll(NBTUtil.getMap(tag.getCompound("calls"), NBTUtil::getUUID, Call::from));
             this.BLOCK_RECEIVERS.putAll(NBTUtil.getMap(tag.getCompound("block_receivers"), NBTUtil::getUUID, BlockReceiver::from));
             this.ITEM_RECEIVERS.putAll(NBTUtil.getMap(tag.getCompound("item_receivers"), NBTUtil::getUUID, ItemReceiver::from));
             this.vc = VoiceChatManager.load(tag.getCompound("vc"));
+            this.RENDER_CACHE.addAll(NBTUtil.getSet(tag.getCompound("cache"), NBTUtil::getUUID));
+            this.dirty = tag.getBoolean("dirty");
             this.validateCallLog();
             this.validateReceivers();
         }

@@ -15,7 +15,10 @@
     "client.LevelRendererMixin",
     "client.MinecraftAccessor"
   ],
-  "mixins": [],
+  "mixins": [
+    "EntityAccess",
+    "LivingEntityAccess"
+  ],
   "injectors": {
     "defaultRequire": 1
   }
