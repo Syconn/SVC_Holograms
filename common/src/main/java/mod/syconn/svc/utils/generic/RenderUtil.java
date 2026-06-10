@@ -57,7 +57,7 @@ public class RenderUtil {
         poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
         poseStack.translate((arm == HumanoidArm.LEFT ? -1 : 1) / 16.0F, 0.125F, -0.625F);
-        itemRenderer.render(entity, model, stack, context, arm == HumanoidArm.LEFT, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, bakedModel);
+        if (itemRenderer != null) itemRenderer.render(entity, model, stack, context, arm == HumanoidArm.LEFT, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, bakedModel);
         renderHolographicItem(poseStack, stack, context, bakedModel, arm == HumanoidArm.LEFT, buffer, packedLight, time);
         poseStack.popPose();
     }
