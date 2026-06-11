@@ -197,6 +197,7 @@ public class CallData {
 
                 this.vc.joinBlockCall(callID, callee.playerUUID);
             } else if (callee.type == ReceiverType.ITEM) {
+                this.dirty = true;
                 this.ITEM_RECEIVERS.computeIfPresent(callee.receiverID, (id, rec) -> {
                     rec.callID = callID;
                     rec.userID = callee.playerUUID;
@@ -320,6 +321,11 @@ public class CallData {
                 for (var players : call.renderMembers.values()) {
                     for (var playerID : players.keySet()) {
                         if (playerID != null) RENDER_CACHE.add(playerID);
+                    }
+                }
+                for (var entry : call.callers.entrySet()) {
+                    if (entry.getValue().type == CallData.ReceiverType.ITEM) {
+                        if (entry.getKey() != null) RENDER_CACHE.add(entry.getKey());
                     }
                 }
             }

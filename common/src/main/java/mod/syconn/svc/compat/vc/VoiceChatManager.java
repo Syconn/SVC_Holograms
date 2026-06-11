@@ -10,7 +10,7 @@ import java.util.*;
 
 public class VoiceChatManager {
     // TODO Use LocationalAudioChannel to play player audio at points, Test check forge
-    // TODO Implement Item Mode ****
+    // TODO Implement Item Mode **** || TEST INDEPENDENT SERVER
 
     private final Map<UUID, UUID> PERSISTENT_GROUPS = new HashMap<>();
     private final Map<UUID, List<UUID>> GROUP_MEMBERS = new HashMap<>();

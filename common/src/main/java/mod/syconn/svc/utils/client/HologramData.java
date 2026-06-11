@@ -36,7 +36,7 @@ public class HologramData {
     private final int textureHeight = 64;
     private long lastUpdateTime = System.currentTimeMillis();
     private boolean activeRender;
-    private HologramPlayer player;
+    private AbstractClientPlayer player;
     private String renderName = "";
     private UUID playerID;
     private boolean staticRender;
@@ -70,22 +70,22 @@ public class HologramData {
         this.transition = TRANSITION_TICKS;
     }
 
-    public HologramData(UUID uuid) { // TODO RE ADD
-//        final var minecraft = Minecraft.getInstance();
-//        final var playerInfo = getPlayerInfo(uuid);
-//        final var texture = ResourceUtil.loadSkin(playerInfo.getSkinLocation()).map(DynamicTexture::new);
-//        texture.ifPresent(dynamicTexture -> ResourceUtil.modifyTexture(dynamicTexture, this::getPixelColor));
-//
-//        this.skinPath = playerInfo.getSkinLocation();
-//        this.currentPosition = new Vec3(0, 0, 0);
-//        this.previousPosition = new Vec3(0, 0, 0);
-//        this.activeRender = true;
-//        this.playerID = uuid;
-//        this.renderName = playerInfo.getProfile().getName();
-//        this.renderer = new HologramRenderer(this, playerInfo.getModelName().equals("slim"));
-//        this.player = minecraft.level == null ? null : (AbstractClientPlayer) minecraft.level.getPlayerByUUID(playerInfo.getProfile().getId());
-//        this.skin = texture.map(dynamicTexture -> ResourceUtil.registerOrGet(playerInfo.getProfile().getName(), dynamicTexture)).orElse(this.skinPath);
-//        this.transition = TRANSITION_TICKS;
+    public HologramData(UUID uuid) {
+        final var minecraft = Minecraft.getInstance();
+        final var playerInfo = getPlayerInfo(uuid);
+        final var texture = ResourceUtil.loadSkin(playerInfo.getSkinLocation()).map(DynamicTexture::new);
+        texture.ifPresent(dynamicTexture -> ResourceUtil.modifyTexture(dynamicTexture, this::getPixelColor));
+
+        this.skinPath = playerInfo.getSkinLocation();
+        this.currentPosition = new Vec3(0, 0, 0);
+        this.previousPosition = new Vec3(0, 0, 0);
+        this.activeRender = true;
+        this.playerID = uuid;
+        this.renderName = playerInfo.getProfile().getName();
+        this.renderer = new HologramRenderer(this, playerInfo.getModelName().equals("slim"));
+        this.player = minecraft.level == null ? null : ClientRenderSystem.get().getPlayer(uuid);
+        this.skin = texture.map(dynamicTexture -> ResourceUtil.registerOrGet(playerInfo.getProfile().getName(), dynamicTexture)).orElse(this.skinPath);
+        this.transition = TRANSITION_TICKS;
     }
 
     public HologramData(String name) {
@@ -100,16 +100,19 @@ public class HologramData {
 
         final var level = Minecraft.getInstance().level;
         final var playerInfo = getPlayerInfoFromName(name);
-        this.playerID = playerInfo.getProfile().getId();
+        this.playerID = null;
         this.renderName = name;
         this.staticRender = true;
         this.renderer = new HologramRenderer(this, ResourceUtil.getModel(name));
-        this.player = level == null ? null : new HologramPlayer(level, playerInfo.getProfile()) {};
+        this.player = level == null ? null : new AbstractClientPlayer(level, playerInfo.getProfile()) {};
         this.skin = DefaultPlayerSkin.getDefaultSkin();
         this.skinPath = this.skin;
         this.transition = TRANSITION_TICKS;
         this.activeRender = true;
-        SkullBlockEntity.updateGameprofile(new GameProfile(null, name), this::loadSkinAsync);
+        final var texture = ResourceUtil.loadSkin(this.skinPath).map(DynamicTexture::new);
+        texture.ifPresent(dynamicTexture -> ResourceUtil.modifyTexture(dynamicTexture, this::getPixelColor));
+        this.skin = texture.map(dynamicTexture -> ResourceUtil.registerOrGet(name, dynamicTexture)).orElse(this.skinPath);
+        SkullBlockEntity.updateGameprofile(new GameProfile(UUID.randomUUID(), name), this::loadSkinAsync);
         return this;
     }
 
@@ -229,7 +232,7 @@ public class HologramData {
     }
 
     public boolean activeRender() {
-        this.player = ClientRenderSystem.get().getPlayer(this.playerID);
+        if (playerID != null) this.player = ClientRenderSystem.get().getPlayer(this.playerID);
         return this.player != null && this.skinPath != null && activeRender;
     }
 
