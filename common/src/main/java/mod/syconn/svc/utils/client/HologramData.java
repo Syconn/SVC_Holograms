@@ -113,7 +113,7 @@ public class HologramData {
         return this;
     }
 
-    private PlayerInfo getPlayerInfo(UUID uuid) { // TODO IF OUT OF CHUNKS PROBABLY NO WORK
+    private PlayerInfo getPlayerInfo(UUID uuid) {
         final var playerInfo = Objects.requireNonNull(Minecraft.getInstance().player).connection.getPlayerInfo(uuid);
         if (playerInfo == null) return new PlayerInfo(new GameProfile(uuid, "Offline-Player"), false);
         return playerInfo;

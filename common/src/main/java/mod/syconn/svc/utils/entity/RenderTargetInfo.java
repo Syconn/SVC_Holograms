@@ -18,7 +18,6 @@ public class RenderTargetInfo {
     private final String entityTypeId;
     private String name;
     private Vec3 pos;
-    private Vec3 move;
     private float xRot, yRot;
     private long lastUpdateTime = System.currentTimeMillis();
     @Nullable private Entity entity;
@@ -31,8 +30,6 @@ public class RenderTargetInfo {
         name = target.getScoreboardName();
         entityTypeId = EntityType.getKey(target.getType()).toString();
         pos = target.position();
-        move = target.getDeltaMovement();
-        if (target.onGround() && move.y < 0) move = move.multiply(1, 0, 1);
         xRot = target.getXRot();
         yRot = target.getYRot();
         updateExtraInfo();
@@ -46,10 +43,6 @@ public class RenderTargetInfo {
         var py = buffer.readFloat();
         var pz = buffer.readFloat();
         pos = new Vec3(px, py, pz);
-        var mx = buffer.readFloat();
-        var my = buffer.readFloat();
-        var mz = buffer.readFloat();
-        move = new Vec3(mx, my, mz);
         xRot = buffer.readFloat();
         yRot = buffer.readFloat();
         entityTypeId = buffer.readUtf();
@@ -58,26 +51,17 @@ public class RenderTargetInfo {
     }
 
     public void tickFakeEntity(@NotNull Entity entity) {
-        entity.setPos(entity.position().add(getMove()));
         if (extraInfo != null) extraInfo.tickFakeEntity(entity);
         if (entity instanceof HologramPlayer hp) hp.animationTick();
         ++age;
         if (age > 0) entity.setOldPosAndRot();
     }
 
-    public void updateFakeEntity(@NotNull Entity entity) {
+    public void updateFakeEntity(@NotNull Entity entity) { // TODO REMOVE DELTA MOVE
         if (age > 0) entity.setOldPosAndRot();
-
-//        Vec3 current = entity.position();
-//        Vec3 target = this.getPos();
-//
-//        Vec3 newPos = current.add(target.subtract(current).scale(0.2));
-//        entity.setPos(newPos);
         entity.setPos(getPos());
         entity.setXRot(getXRot());
         entity.setYRot(getYRot());
-//        entity.setDeltaMovement(getMove());
-//        entity.setOldPosAndRot();
         if (extraInfo != null) extraInfo.updateFakeEntity(entity);
         if (age == 0) entity.setOldPosAndRot();
     }
@@ -101,7 +85,6 @@ public class RenderTargetInfo {
         lastUpdateTime = System.currentTimeMillis();
         name = newest.name;
         pos = newest.pos;
-        move = newest.move;
         xRot = newest.xRot;
         yRot = newest.yRot;
         extraInfo = newest.extraInfo;
@@ -123,9 +106,6 @@ public class RenderTargetInfo {
         buffer.writeFloat((float)pos.x);
         buffer.writeFloat((float)pos.y);
         buffer.writeFloat((float)pos.z);
-        buffer.writeFloat((float)move.x);
-        buffer.writeFloat((float)move.y);
-        buffer.writeFloat((float)move.z);
         buffer.writeFloat(xRot);
         buffer.writeFloat(yRot);
         buffer.writeUtf(entityTypeId);
@@ -134,10 +114,6 @@ public class RenderTargetInfo {
 
     public long getLastUpdateTime(){
         return lastUpdateTime;
-    }
-
-    public Vec3 getMove() {
-        return move;
     }
 
     public Vec3 getPos() {

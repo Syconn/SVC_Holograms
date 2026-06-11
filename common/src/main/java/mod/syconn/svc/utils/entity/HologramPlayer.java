@@ -3,13 +3,21 @@ package mod.syconn.svc.utils.entity;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.RemotePlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffectUtil;
 import net.minecraft.world.effect.MobEffects;
 
 public class HologramPlayer extends RemotePlayer {
 
+    private boolean lastNetworkSwinging;
+
     public HologramPlayer(ClientLevel clientLevel, GameProfile gameProfile) {
         super(clientLevel, gameProfile);
+    }
+
+    public void handleNetworkSwing(boolean swinging, InteractionHand hand) {
+        if (swinging && !lastNetworkSwinging) this.swing(hand);
+        lastNetworkSwinging = swinging;
     }
 
     public void animationTick() {
@@ -18,6 +26,7 @@ public class HologramPlayer extends RemotePlayer {
     }
 
     private void updateSwinging() {
+        this.oAttackAnim = this.attackAnim;
         int i = this.getCurrentSwingDuration();
         if (this.swinging) {
             this.swingTime++;
@@ -25,9 +34,9 @@ public class HologramPlayer extends RemotePlayer {
                 this.swingTime = 0;
                 this.swinging = false;
             }
-        } else {
-            this.swingTime = 0;
-        }
+        } else this.swingTime = 0;
+
+        this.attackAnim = (float) swingTime / i;
     }
 
     private int getCurrentSwingDuration() {
