@@ -9,7 +9,6 @@ import net.minecraft.world.phys.Vec3;
 import java.util.*;
 
 public class VoiceChatManager {
-    // TODO Use LocationalAudioChannel to play player audio at points, Test check forge
 
     private final Map<UUID, UUID> PERSISTENT_GROUPS = new HashMap<>();
     private final Map<UUID, List<UUID>> GROUP_MEMBERS = new HashMap<>();
