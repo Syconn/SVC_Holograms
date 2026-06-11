@@ -20,7 +20,7 @@ public class SVCServer {
     }
 
     private static void serverTickEvent(MinecraftServer server) {
-        HologramNetwork.get(server.overworld()).serverTick();
+        HologramNetwork.get(server.overworld()).serverTick(server);
         ServerRenderSystem.get().tick(server);
     }
 

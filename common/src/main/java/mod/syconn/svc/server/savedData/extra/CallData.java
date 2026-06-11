@@ -10,6 +10,7 @@ import mod.syconn.svc.utils.generic.NBTUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -175,8 +176,8 @@ public class CallData {
                     return rec;
                 });
             }
-            this.vc.createCall(callId);
-            this.vc.joinCall(callId, owner.playerUUID);
+//            this.vc.createCall(callId); TODO FIX
+//            this.vc.joinCall(callId, owner.playerUUID);
         }
 
         public void connectToCall(UUID callID, Callee callee) {
@@ -352,8 +353,8 @@ public class CallData {
             this.BLOCK_RECEIVERS.forEach((uuid, receiver) -> { if (receiver.callID != null && !this.CALLS.containsKey(receiver.callID)) receiver.callID = null; });
         }
 
-        public void tick() {
-            this.vc.tick(this);
+        public void tick(MinecraftServer server) {
+            this.vc.tick(server, this);
         }
 
         private void notifyCallInvite(UUID ownerID, UUID targetID) {

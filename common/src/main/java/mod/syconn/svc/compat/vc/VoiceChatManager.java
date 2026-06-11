@@ -1,99 +1,99 @@
 package mod.syconn.svc.compat.vc;
 
-import de.maxhenkel.voicechat.api.Group;
+import de.maxhenkel.voicechat.api.Position;
+import de.maxhenkel.voicechat.api.audiochannel.LocationalAudioChannel;
 import mod.syconn.svc.server.savedData.extra.CallData;
+import mod.syconn.svc.utils.generic.MathUtil;
 import mod.syconn.svc.utils.generic.NBTUtil;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
 
 public class VoiceChatManager {
-    // TODO Use LocationalAudioChannel to play player audio at points, Test check forge
+    // TODO Use LocationalAudioChannel to play player audio at points, Remove
+    // TODO TEST DIMENSION RENDERING
 
-    private final Map<UUID, UUID> PERSISTENT_GROUPS = new HashMap<>();
-    private final Map<UUID, List<UUID>> GROUP_MEMBERS = new HashMap<>();
-
-    public void createCall(UUID callId) {
-        if (VoiceChatPlugin.SERVER_API == null) return;
-
-        var group = VoiceChatPlugin.SERVER_API.groupBuilder().setPersistent(true).setName("HoloCall:" + callId).setHidden(true).setPassword(callId.toString()).setType(Group.Type.OPEN).build();
-        this.PERSISTENT_GROUPS.put(callId, group.getId());
-    }
-
-    public void removeCall(UUID callId) {
-        if (VoiceChatPlugin.SERVER_API == null || !this.PERSISTENT_GROUPS.containsKey(callId)) return;
-
-        VoiceChatPlugin.SERVER_API.removeGroup(this.PERSISTENT_GROUPS.get(callId));
-        this.PERSISTENT_GROUPS.remove(callId);
-    }
+    private static final Map<UUID, Map<UUID, LocationalAudioChannel>> AUDIO_SOURCES = new HashMap<>();  // Map<CallID, Map<audioID, channel> TODO DOES THIS HAVE TO BE STATIC
+    private final Map<UUID, List<UUID>> GROUP_MEMBERS = new HashMap<>(); // TODO UPDATE POSITIONS USING THIS
 
     public void joinCall(UUID callId, UUID callee) {
-        if (VoiceChatPlugin.SERVER_API == null || !this.PERSISTENT_GROUPS.containsKey(callId)) return;
-
-        var connection = VoiceChatPlugin.SERVER_API.getConnectionOf(callee);
-        var group = VoiceChatPlugin.SERVER_API.getGroup(this.PERSISTENT_GROUPS.get(callId));
-        if (group == null) {
-            System.out.println("Missing VC group for call " + callId);
-            return;
-        }
-
-        if (connection == null || (connection.getGroup() != null && connection.getGroup().getId().equals(this.PERSISTENT_GROUPS.get(callId)))) return;
-        connection.setGroup(group);
+        if (VoiceChatPlugin.SERVER_API == null) return;
         GROUP_MEMBERS.computeIfAbsent(callId, id -> new ArrayList<>()).add(callee);
     }
 
-    public void endCall(UUID callId) {
-        var members = GROUP_MEMBERS.remove(callId);
-        if (members != null) for (UUID member : members) leaveCallSafe(member);
-
-        removeCall(callId);
+    public void endCall(UUID callId) { // MICROPHONEPACKETEVENT
+        GROUP_MEMBERS.remove(callId);
+        AUDIO_SOURCES.remove(callId);
     }
 
-    public void tick(CallData.CallManager manager) {
+    public void tick(MinecraftServer server, CallData.CallManager manager) {
+        if (VoiceChatPlugin.SERVER_API == null) return;
+
+
+
         for (var entry : GROUP_MEMBERS.entrySet()) {
             var callId = entry.getKey();
             var call = manager.getCall(callId);
             if (call == null) continue;
-            for (Iterator<UUID> it = entry.getValue().iterator(); it.hasNext(); ) {
-                var callee = it.next();
-                if (!isInAnyRenderGroup(call.renderMembers, callee) && !isHandheldCaller(call.callers, callee)) {
-                    it.remove();
-                    leaveCallSafe(callee);
-                }
-            }
+            entry.getValue().removeIf(uuid -> !shouldHaveSoundDevice(server, manager, call, uuid));
         }
     }
 
-    private boolean isInAnyRenderGroup(Map<UUID, Map<UUID, Vec3>> renderMembers, UUID callee) {
-        for (var group : renderMembers.values())
-            if (group.containsKey(callee)) return true;
-        return false;
+    private boolean shouldHaveSoundDevice(MinecraftServer server, CallData.CallManager manager, CallData.Call call, UUID callee) {
+        var found = false;
+        for (var group : call.renderMembers.values()) {
+            if (group.containsKey(callee)) {
+                found = true;
+//                var receiverID = call.callers.get(callee).receiverID;
+//                var worldPos = manager.getBlockReceiver(receiverID).pos;
+//                createOrUpdateSource(server.getLevel(worldPos.level()), call.callID, callee, worldPos.toVector().add(group.get(callee)));
+            }
+        }
+        for (var caller : call.callers.values()) {
+            if (caller.type == CallData.ReceiverType.ITEM && caller.playerUUID == callee) {
+                found = true;
+//                var receiverID = call.callers.get(callee).receiverID;
+//                var worldPos = manager.getBlockReceiver(receiverID).pos;
+//                createOrUpdateSource(server.getLevel(worldPos.level()), call.callID, callee, worldPos.toVector().add(group.get(callee)));
+            }
+        }
+        return found;
     }
 
-    private boolean isHandheldCaller(Map<UUID, CallData.Callee> callers, UUID callee) {
-        for (var caller : callers.values())
-            if (caller.type == CallData.ReceiverType.ITEM && caller.playerUUID == callee) return true;
-        return false;
+    private void createOrUpdateSource(ServerLevel serverLevel, UUID callId, UUID callee, Vec3 pos) {
+        var api = VoiceChatPlugin.SERVER_API;
+        if (api == null) return;
+
+        var map = AUDIO_SOURCES.computeIfAbsent(callId, k -> new HashMap<>());
+        var position = api.createPosition(pos.x, pos.y, pos.z);
+        var existing = map.putIfAbsent(callee, createAudioChannel(serverLevel, callId, callee, position));
+        if (existing != null) existing.updateLocation(position);
     }
 
-    private void leaveCallSafe(UUID callee) {
-        if (VoiceChatPlugin.SERVER_API == null) return;
+    private LocationalAudioChannel createAudioChannel(ServerLevel serverLevel, UUID callId, UUID callee, Position pos) {
+        var api = VoiceChatPlugin.SERVER_API;
+        if (api == null) return null;
 
-        var connection = VoiceChatPlugin.SERVER_API.getConnectionOf(callee);
-        if (connection != null && connection.getGroup() != null) connection.setGroup(null);
+        var audioID = MathUtil.combineUUID(callId, callee);
+        var channel = api.createLocationalAudioChannel(audioID, api.fromServerLevel(serverLevel), pos);
+        if (channel == null) return null;
+
+//        channel.setCategory(category); // TODO: DO I NEED?
+        channel.setDistance(4);
+        return channel;
     }
 
     public CompoundTag save() {
         var tag = new CompoundTag();
-        tag.put("persistent", NBTUtil.putMap(this.PERSISTENT_GROUPS, NBTUtil::putUUID, NBTUtil::putUUID));
         tag.put("group", NBTUtil.putMap(this.GROUP_MEMBERS, NBTUtil::putUUID, l -> NBTUtil.putList(l, NBTUtil::putUUID)));
         return tag;
     }
 
     public static VoiceChatManager load(CompoundTag tag) {
         var manager = new VoiceChatManager();
-        manager.PERSISTENT_GROUPS.putAll(NBTUtil.getMap(tag.getCompound("persistent"), NBTUtil::getUUID, NBTUtil::getUUID));
         manager.GROUP_MEMBERS.putAll(NBTUtil.getMap(tag.getCompound("group"), NBTUtil::getUUID, t -> NBTUtil.getList(t, NBTUtil::getUUID)));
         return manager;
     }

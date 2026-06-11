@@ -6,6 +6,7 @@ import mod.syconn.svc.network.packets.client.UpdateProjectorCachePacket;
 import mod.syconn.svc.server.savedData.extra.CallData;
 import mod.syconn.svc.utils.block.WorldPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.saveddata.SavedData;
@@ -92,8 +93,8 @@ public class HologramNetwork extends SavedData {
         return this.manager.getDebugData();
     }
 
-    public void serverTick() {
-        this.manager.tick();
+    public void serverTick(MinecraftServer server) {
+        this.manager.tick(server);
     }
 
     public void playerJoinedServer() {
