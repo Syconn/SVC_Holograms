@@ -19,10 +19,8 @@ public class HttpTextureMixin {
     @Shadow
     private File file;
 
-    @Inject(method = "loadCallback", at = @At(value = "TAIL"))
+    @Inject(method = "loadCallback", at = @At(value = "HEAD"), order = 200)
     private void loadCallbackInject(NativeImage image, CallbackInfo ci) { // TODO Essentials Kills this
-        if (file == null) return;
-
         NativeImage copy = image.mappedCopy(op -> op);
         ResourceUtil.registerSkin(file.getName(), copy);
     }

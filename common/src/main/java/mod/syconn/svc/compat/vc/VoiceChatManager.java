@@ -10,26 +10,25 @@ import java.util.*;
 
 public class VoiceChatManager {
     // TODO Use LocationalAudioChannel to play player audio at points, Test check forge
-    // TODO Implement Item Mode ****
 
     private final Map<UUID, UUID> PERSISTENT_GROUPS = new HashMap<>();
     private final Map<UUID, List<UUID>> GROUP_MEMBERS = new HashMap<>();
 
-    public void createBlockCall(UUID callId) {
+    public void createCall(UUID callId) {
         if (VoiceChatPlugin.SERVER_API == null) return;
 
         var group = VoiceChatPlugin.SERVER_API.groupBuilder().setPersistent(true).setName("HoloCall:" + callId).setHidden(true).setPassword(callId.toString()).setType(Group.Type.OPEN).build();
         this.PERSISTENT_GROUPS.put(callId, group.getId());
     }
 
-    public void removeBlockCall(UUID callId) {
+    public void removeCall(UUID callId) {
         if (VoiceChatPlugin.SERVER_API == null || !this.PERSISTENT_GROUPS.containsKey(callId)) return;
 
         VoiceChatPlugin.SERVER_API.removeGroup(this.PERSISTENT_GROUPS.get(callId));
         this.PERSISTENT_GROUPS.remove(callId);
     }
 
-    public void joinBlockCall(UUID callId, UUID callee) {
+    public void joinCall(UUID callId, UUID callee) {
         if (VoiceChatPlugin.SERVER_API == null || !this.PERSISTENT_GROUPS.containsKey(callId)) return;
 
         var connection = VoiceChatPlugin.SERVER_API.getConnectionOf(callee);
@@ -46,9 +45,9 @@ public class VoiceChatManager {
 
     public void endCall(UUID callId) {
         var members = GROUP_MEMBERS.remove(callId);
-        if (members != null) for (UUID member : members) leaveSafe(member);
+        if (members != null) for (UUID member : members) leaveCallSafe(member);
 
-        removeBlockCall(callId);
+        removeCall(callId);
     }
 
     public void tick(CallData.CallManager manager) {
@@ -56,14 +55,11 @@ public class VoiceChatManager {
             var callId = entry.getKey();
             var call = manager.getCall(callId);
             if (call == null) continue;
-
-            var renderGroups = call.renderMembers;
-            var members = entry.getValue();
-            for (Iterator<UUID> it = members.iterator(); it.hasNext(); ) {
+            for (Iterator<UUID> it = entry.getValue().iterator(); it.hasNext(); ) {
                 var callee = it.next();
-                if (!isInAnyRenderGroup(renderGroups, callee)) {
+                if (!isInAnyRenderGroup(call.renderMembers, callee) && !isHandheldCaller(call.callers, callee)) {
                     it.remove();
-                    leaveSafe(callee);
+                    leaveCallSafe(callee);
                 }
             }
         }
@@ -75,7 +71,13 @@ public class VoiceChatManager {
         return false;
     }
 
-    private void leaveSafe(UUID callee) {
+    private boolean isHandheldCaller(Map<UUID, CallData.Callee> callers, UUID callee) {
+        for (var caller : callers.values())
+            if (caller.type == CallData.ReceiverType.ITEM && caller.playerUUID == callee) return true;
+        return false;
+    }
+
+    private void leaveCallSafe(UUID callee) {
         if (VoiceChatPlugin.SERVER_API == null) return;
 
         var connection = VoiceChatPlugin.SERVER_API.getConnectionOf(callee);

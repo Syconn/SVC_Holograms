@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import dev.architectury.utils.GameInstance;
 import mod.syconn.svc.blockentity.HoloProjectorBlockEntity;
+import mod.syconn.svc.client.ClientRenderSystem;
 import mod.syconn.svc.utils.Constants;
 import mod.syconn.svc.utils.client.HologramData;
 import mod.syconn.svc.utils.client.ParticleEvent;
@@ -37,7 +38,7 @@ public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<Hol
     @Override
     public void render(HoloProjectorBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         blockEntity.getRenderables().forEach((uuid, pos) -> this.createMultiplayerRenderer(blockEntity.getReceiverUUID(), uuid, pos));
-        boolean renderSolo = true;
+        var renderSolo = true;
 
         if (blockEntity.getLevel() != null && blockEntity.isActive()) {
             float time = blockEntity.getLevel().getGameTime() + partialTick;

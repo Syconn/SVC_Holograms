@@ -168,9 +168,6 @@ public class CallData {
                     rec.callID = callId;
                     return rec;
                 });
-
-                this.vc.createBlockCall(callId);
-                this.vc.joinBlockCall(callId, owner.playerUUID);
             } else if (owner.type == ReceiverType.ITEM) {
                 this.ITEM_RECEIVERS.computeIfPresent(owner.receiverID, (id, rec) -> {
                     rec.callID = callId;
@@ -178,6 +175,8 @@ public class CallData {
                     return rec;
                 });
             }
+            this.vc.createCall(callId);
+            this.vc.joinCall(callId, owner.playerUUID);
         }
 
         public void connectToCall(UUID callID, Callee callee) {
@@ -194,15 +193,15 @@ public class CallData {
                     rec.callID = callID;
                     return rec;
                 });
-
-                this.vc.joinBlockCall(callID, callee.playerUUID);
             } else if (callee.type == ReceiverType.ITEM) {
+                this.dirty = true;
                 this.ITEM_RECEIVERS.computeIfPresent(callee.receiverID, (id, rec) -> {
                     rec.callID = callID;
                     rec.userID = callee.playerUUID;
                     return rec;
                 });
             }
+            this.vc.joinCall(callID, callee.playerUUID);
         }
 
         public void leaveCall(UUID callId, Callee callee) {
@@ -266,7 +265,7 @@ public class CallData {
                 this.dirty = true;
             }
 
-            for (var member : renderMembers.keySet()) this.vc.joinBlockCall(callID, member);
+            for (var member : renderMembers.keySet()) this.vc.joinCall(callID, member);
         }
 
         public void registerBlockReceiver(UUID blockID, WorldPos pos) {
@@ -320,6 +319,11 @@ public class CallData {
                 for (var players : call.renderMembers.values()) {
                     for (var playerID : players.keySet()) {
                         if (playerID != null) RENDER_CACHE.add(playerID);
+                    }
+                }
+                for (var entry : call.callers.entrySet()) {
+                    if (entry.getValue().type == CallData.ReceiverType.ITEM) {
+                        if (entry.getKey() != null) RENDER_CACHE.add(entry.getKey());
                     }
                 }
             }

@@ -65,7 +65,7 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
                     for (Player player : players) renderMembers.put(player.getUUID(), player.position().subtract(pos.getCenter()));
                     network.setRenderMembers(callData.callID, blockEntity.getReceiverUUID(), renderMembers);
 
-                    for (var entry : call.callers.entrySet()) {
+                    for (var entry : call.callers.entrySet()) { // TODO MULTIPLE MOBILE CALLS DONT SHOW!! MAYBE PREVENT JOIN?
                         if (entry.getValue().type == CallData.ReceiverType.ITEM) {
                             blockEntity.renderables.put(entry.getKey(), new Vec3(0, -0.3f, 0));
                             break;

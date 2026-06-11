@@ -20,8 +20,6 @@ public class ClientRenderSystem {
     private final Map<UUID, RenderTargetInfo> targets = new HashMap<>();
 
     public void handleRenderPlayerPacket(RenderTargetInfo info) {
-        var m = Minecraft.getInstance();
-        if (m.level == null) return;
         if (!this.targets.containsKey(info.getUUID())) this.targets.put(info.getUUID(), info);
         this.targets.get(info.getUUID()).update(info, this);
     }
@@ -33,8 +31,6 @@ public class ClientRenderSystem {
     }
 
     public void tick() {
-        var m = Minecraft.getInstance();
-        if (m.level == null) return;
         var currentTime = System.currentTimeMillis();
         this.targets.entrySet().removeIf(entry -> (currentTime - entry.getValue().getLastUpdateTime()) > MAX_TARGET_AGE);
         this.targets.forEach((id, info) -> {
