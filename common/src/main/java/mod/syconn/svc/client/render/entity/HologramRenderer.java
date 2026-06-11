@@ -126,7 +126,6 @@ public class HologramRenderer extends LivingEntityRenderer<AbstractClientPlayer,
         ItemStack itemStack = player.getItemInHand(hand);
         if (itemStack.isEmpty()) return HumanoidModel.ArmPose.EMPTY;
         else {
-            System.out.println(player.getUsedItemHand() == hand);
             if (player.getUsedItemHand() == hand && player.getUseItemRemainingTicks() > 0) {
                 UseAnim useAnim = itemStack.getUseAnimation();
                 if (useAnim == UseAnim.BLOCK) return HumanoidModel.ArmPose.BLOCK;

@@ -29,6 +29,8 @@ public class LivingEntityExtraRenderInfo implements IExtraRenderInfo {
     private InteractionHand swingingArm;
     private boolean fallFlying;
     private boolean isShiftKeyDown;
+    private boolean usingItem;
+    private InteractionHand usingHand;
 
     @Override
     public void tickFakeEntity(@NotNull Entity entity) {
@@ -51,6 +53,8 @@ public class LivingEntityExtraRenderInfo implements IExtraRenderInfo {
         ((EntityAccess)entity).invokeSetSharedFlag(1, this.isShiftKeyDown);
         ((EntityAccess)entity).invokeSetSharedFlag(7, this.fallFlying);
         living.setPose(this.pose);
+        if (this.usingItem && !living.isUsingItem()) living.startUsingItem(this.usingHand);
+        else if (!this.usingItem) living.stopUsingItem();
     }
 
     @Override
@@ -68,6 +72,8 @@ public class LivingEntityExtraRenderInfo implements IExtraRenderInfo {
         this.swinging = living.swinging;
         this.swingingArm = living.swingingArm;
         this.isShiftKeyDown = living.isShiftKeyDown();
+        this.usingItem = living.isUsingItem();
+        this.usingHand = living.getUsedItemHand();
     }
 
     @Override
@@ -82,6 +88,8 @@ public class LivingEntityExtraRenderInfo implements IExtraRenderInfo {
         if (this.swinging) this.swingingArm = buffer.readEnum(InteractionHand.class);
         else this.swingingArm = null;
         this.isShiftKeyDown = buffer.readBoolean();
+        this.usingItem = buffer.readBoolean();
+        this.usingHand = buffer.readEnum(InteractionHand.class);
     }
 
     @Override
@@ -95,5 +103,7 @@ public class LivingEntityExtraRenderInfo implements IExtraRenderInfo {
         buffer.writeBoolean(this.swinging);
         if (this.swinging) buffer.writeEnum(this.swingingArm);
         buffer.writeBoolean(this.isShiftKeyDown);
+        buffer.writeBoolean(this.usingItem);
+        buffer.writeEnum(this.usingHand);
     }
 }
