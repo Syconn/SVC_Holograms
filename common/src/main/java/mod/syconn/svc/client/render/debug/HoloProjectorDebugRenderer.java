@@ -2,7 +2,7 @@ package mod.syconn.svc.client.render.debug;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import mod.syconn.svc.network.packets.client.UpdateProjectorCache;
+import mod.syconn.svc.network.packets.client.UpdateProjectorCachePacket;
 import mod.syconn.svc.server.savedData.HologramNetwork;
 import mod.syconn.svc.server.savedData.extra.CallData;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -17,16 +17,16 @@ public class HoloProjectorDebugRenderer {
 
     public static List<CallData.BlockReceiver> PROJECTORS = new ArrayList<>();
 
-    public static UpdateProjectorCache playerJoinedServer(ServerPlayer player) {
-        return new UpdateProjectorCache(HologramNetwork.get(player.serverLevel()).getDebugData());
+    public static UpdateProjectorCachePacket playerJoinedServer(ServerPlayer player) {
+        return new UpdateProjectorCachePacket(HologramNetwork.get(player.serverLevel()).getDebugData());
     }
 
-    public static UpdateProjectorCache playerLeftServer() {
-        return new UpdateProjectorCache(new ArrayList<>());
+    public static UpdateProjectorCachePacket playerLeftServer() {
+        return new UpdateProjectorCachePacket(new ArrayList<>());
     }
 
-    public static UpdateProjectorCache playerChangedDimension(ServerPlayer player) {
-        return new UpdateProjectorCache(HologramNetwork.get(player.serverLevel()).getDebugData());
+    public static UpdateProjectorCachePacket playerChangedDimension(ServerPlayer player) {
+        return new UpdateProjectorCachePacket(HologramNetwork.get(player.serverLevel()).getDebugData());
     }
 
     public static void renderBlockOutline(PoseStack poseStack, MultiBufferSource buffer, double camX, double camY, double camZ) {

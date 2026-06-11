@@ -2,7 +2,7 @@ package mod.syconn.svc.server.savedData;
 
 import dev.architectury.utils.GameInstance;
 import mod.syconn.svc.network.Network;
-import mod.syconn.svc.network.packets.client.UpdateProjectorCache;
+import mod.syconn.svc.network.packets.client.UpdateProjectorCachePacket;
 import mod.syconn.svc.server.savedData.extra.CallData;
 import mod.syconn.svc.utils.block.WorldPos;
 import net.minecraft.nbt.CompoundTag;
@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static mod.syconn.svc.server.savedData.extra.CallData.CallManager;
@@ -65,6 +66,12 @@ public class HologramNetwork extends SavedData {
         this.setDirty();
     }
 
+    public Set<UUID> getRenderCache() {
+        var cache = this.manager.getRenderCache();
+        this.setDirty();
+        return cache;
+    }
+
     public CallData.Call getCall(UUID callID) {
         return this.manager.getCall(callID);
     }
@@ -89,12 +96,16 @@ public class HologramNetwork extends SavedData {
         this.manager.tick();
     }
 
+    public void playerJoinedServer() {
+        this.manager.rebuildCache();
+    }
+
     @Override
     public void setDirty() {
         this.manager.validateCallLog();
         this.manager.validateReceivers();
         var server = GameInstance.getServer();
-        if (server != null) server.overworld().getPlayers(LivingEntity::isAlive).forEach(serverPlayer -> Network.CHANNEL.sendToPlayer(serverPlayer, new UpdateProjectorCache(this.getDebugData())));
+        if (server != null) server.overworld().getPlayers(LivingEntity::isAlive).forEach(serverPlayer -> Network.CHANNEL.sendToPlayer(serverPlayer, new UpdateProjectorCachePacket(this.getDebugData())));
         super.setDirty();
     }
 

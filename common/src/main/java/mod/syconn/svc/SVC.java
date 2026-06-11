@@ -10,6 +10,7 @@ import mod.syconn.svc.core.ModItems;
 import mod.syconn.svc.core.ModSounds;
 import mod.syconn.svc.network.Network;
 import mod.syconn.svc.server.SVCServer;
+import mod.syconn.svc.utils.entity.ExtraRenderInfoManager;
 
 public final class SVC {
 
@@ -21,6 +22,7 @@ public final class SVC {
         ModBlockEntities.BLOCK_ENTITIES.register();
 
         Network.init();
+        ExtraRenderInfoManager.register();
 
         EnvExecutor.runInEnv(Env.CLIENT, () -> SVCClient::init);
         LifecycleEvent.SETUP.register(SVCServer::init);

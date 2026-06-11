@@ -9,6 +9,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidArmorModel;
+import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -21,7 +22,14 @@ import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.PlayerModelPart;
+import net.minecraft.world.item.CrossbowItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +69,7 @@ public class HologramRenderer extends LivingEntityRenderer<AbstractClientPlayer,
             poseStack.pushPose();
             var scale = this.data.getAnimationScale(partialTicks);
             poseStack.scale(scale, scale, scale);
-            if (this.data.isStaticRender()) this.setModelProperties(player);
+            this.setModelProperties(player);
             this.render(player, partialTicks, poseStack, buffer, packedLight);
             poseStack.popPose();
         }
@@ -75,16 +83,61 @@ public class HologramRenderer extends LivingEntityRenderer<AbstractClientPlayer,
     @Override
     protected void renderNameTag(AbstractClientPlayer entity, Component displayName, PoseStack poseStack, MultiBufferSource buffer, int packedLight) { }
 
-    private void setModelProperties(AbstractClientPlayer pClientPlayer) {
-        HologramModel hologramModel = (HologramModel) this.getModel();
-        hologramModel.setAllVisible(true);
-        hologramModel.rightPants.visible = true;
-        hologramModel.leftPants.visible = true;
-        hologramModel.leftSleeve.visible = true;
-        hologramModel.rightSleeve.visible = true;
-        hologramModel.jacket.visible = true;
-        hologramModel.hat.visible = true;
-        pClientPlayer.setYHeadRot(0);
+    private void setModelProperties(AbstractClientPlayer clientPlayer) {
+        PlayerModel<AbstractClientPlayer> playerModel = this.getModel();
+        if (this.data.isStaticRender()) {
+            HologramModel hologramModel = (HologramModel) this.getModel();
+            hologramModel.setAllVisible(true);
+            hologramModel.rightPants.visible = true;
+            hologramModel.leftPants.visible = true;
+            hologramModel.leftSleeve.visible = true;
+            hologramModel.rightSleeve.visible = true;
+            hologramModel.jacket.visible = true;
+            hologramModel.hat.visible = true;
+            clientPlayer.setYHeadRot(0);
+        } else if (clientPlayer.isSpectator()) {
+            playerModel.setAllVisible(false);
+            playerModel.head.visible = true;
+            playerModel.hat.visible = true;
+        } else {
+            playerModel.setAllVisible(true);
+            playerModel.hat.visible = clientPlayer.isModelPartShown(PlayerModelPart.HAT);
+            playerModel.jacket.visible = clientPlayer.isModelPartShown(PlayerModelPart.JACKET);
+            playerModel.leftPants.visible = clientPlayer.isModelPartShown(PlayerModelPart.LEFT_PANTS_LEG);
+            playerModel.rightPants.visible = clientPlayer.isModelPartShown(PlayerModelPart.RIGHT_PANTS_LEG);
+            playerModel.leftSleeve.visible = clientPlayer.isModelPartShown(PlayerModelPart.LEFT_SLEEVE);
+            playerModel.rightSleeve.visible = clientPlayer.isModelPartShown(PlayerModelPart.RIGHT_SLEEVE);
+            playerModel.crouching = clientPlayer.isCrouching();
+            HumanoidModel.ArmPose armPose = getArmPose(clientPlayer, InteractionHand.MAIN_HAND);
+            HumanoidModel.ArmPose armPose2 = getArmPose(clientPlayer, InteractionHand.OFF_HAND);
+            if (armPose.isTwoHanded()) armPose2 = clientPlayer.getOffhandItem().isEmpty() ? HumanoidModel.ArmPose.EMPTY : HumanoidModel.ArmPose.ITEM;
+
+            if (clientPlayer.getMainArm() == HumanoidArm.RIGHT) {
+                playerModel.rightArmPose = armPose;
+                playerModel.leftArmPose = armPose2;
+            } else {
+                playerModel.rightArmPose = armPose2;
+                playerModel.leftArmPose = armPose;
+            }
+        }
+    }
+
+    private static HumanoidModel.ArmPose getArmPose(AbstractClientPlayer player, InteractionHand hand) {
+        ItemStack itemStack = player.getItemInHand(hand);
+        if (itemStack.isEmpty()) return HumanoidModel.ArmPose.EMPTY;
+        else {
+            if (player.getUsedItemHand() == hand && player.getUseItemRemainingTicks() > 0) {
+                UseAnim useAnim = itemStack.getUseAnimation();
+                if (useAnim == UseAnim.BLOCK) return HumanoidModel.ArmPose.BLOCK;
+                else if (useAnim == UseAnim.BOW) return HumanoidModel.ArmPose.BOW_AND_ARROW;
+                else if (useAnim == UseAnim.SPEAR) return HumanoidModel.ArmPose.THROW_SPEAR;
+                else if (useAnim == UseAnim.CROSSBOW && hand == player.getUsedItemHand()) return HumanoidModel.ArmPose.CROSSBOW_CHARGE;
+                else if (useAnim == UseAnim.SPYGLASS) return HumanoidModel.ArmPose.SPYGLASS;
+                else if (useAnim == UseAnim.TOOT_HORN) return HumanoidModel.ArmPose.TOOT_HORN;
+                else if (useAnim == UseAnim.BRUSH) return HumanoidModel.ArmPose.BRUSH;
+            } else if (!player.swinging && itemStack.is(Items.CROSSBOW) && CrossbowItem.isCharged(itemStack)) return HumanoidModel.ArmPose.CROSSBOW_HOLD;
+            return HumanoidModel.ArmPose.ITEM;
+        }
     }
 
     public void render(AbstractClientPlayer player, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
@@ -124,6 +177,8 @@ public class HologramRenderer extends LivingEntityRenderer<AbstractClientPlayer,
             l = player.walkAnimation.position(partialTicks);
             if (k > 1.0F) k = 1.0F;
         }
+
+//        System.out.println(k);
 
         this.model.prepareMobModel(player, l, k, partialTicks);
         this.model.setupAnim(player, l, k, ix, h, j);

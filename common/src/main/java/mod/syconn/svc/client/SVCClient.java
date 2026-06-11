@@ -37,6 +37,8 @@ public class SVCClient {
     }
 
     public static void playerTickEvent(Minecraft minecraft) {
+        ClientRenderSystem.get().tick();
+
         var level = minecraft.level;
 
         if (level == null) {

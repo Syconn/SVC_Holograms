@@ -21,6 +21,7 @@ public class SVCServer {
 
     private static void serverTickEvent(MinecraftServer server) {
         HologramNetwork.get(server.overworld()).serverTick();
+        ServerRenderSystem.get().tick(server);
     }
 
     private static void playerLeftServer(ServerPlayer player) {
@@ -29,6 +30,7 @@ public class SVCServer {
     }
 
     private static void playerJoinedServer(ServerPlayer player) {
+        HologramNetwork.get(player.server.overworld()).playerJoinedServer();
         Network.CHANNEL.sendToPlayer(player, HoloProjectorDebugRenderer.playerJoinedServer(player));
     }
 
