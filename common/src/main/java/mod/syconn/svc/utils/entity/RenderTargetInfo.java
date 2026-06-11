@@ -57,7 +57,7 @@ public class RenderTargetInfo {
         if (age > 0) entity.setOldPosAndRot();
     }
 
-    public void updateFakeEntity(@NotNull Entity entity) { // TODO REMOVE DELTA MOVE
+    public void updateFakeEntity(@NotNull Entity entity) {
         if (age > 0) entity.setOldPosAndRot();
         entity.setPos(getPos());
         entity.setXRot(getXRot());
