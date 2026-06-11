@@ -347,8 +347,11 @@ public class CallData {
             var server = GameInstance.getServer();
             if (server == null) return;
 
-            var level = server.overworld();
-            this.BLOCK_RECEIVERS.entrySet().removeIf(entry -> level.getBlockEntity(entry.getValue().pos.pos(), ModBlockEntities.HOLO_PROJECTOR.get()).isEmpty());
+            this.BLOCK_RECEIVERS.entrySet().removeIf(entry -> {
+                var level = server.getLevel(entry.getValue().pos.level());
+                if (level == null) return true;
+                return level.getBlockEntity(entry.getValue().pos.pos(), ModBlockEntities.HOLO_PROJECTOR.get()).isEmpty();
+            });
             this.BLOCK_RECEIVERS.forEach((uuid, receiver) -> { if (receiver.callID != null && !this.CALLS.containsKey(receiver.callID)) receiver.callID = null; });
         }
 

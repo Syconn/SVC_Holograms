@@ -127,6 +127,8 @@ public class HologramData {
         if (map.containsKey(MinecraftProfileTexture.Type.SKIN)) this.skin = Minecraft.getInstance().getSkinManager().registerTexture(map.get(MinecraftProfileTexture.Type.SKIN), MinecraftProfileTexture.Type.SKIN);
         this.skinPath = this.skin;
 
+        System.out.println(profile);
+
         final var texture = ResourceUtil.loadSkin(this.skinPath).map(DynamicTexture::new);
         texture.ifPresent(dynamicTexture -> ResourceUtil.modifyTexture(dynamicTexture, this::getPixelColor));
         this.skin = texture.map(dynamicTexture -> ResourceUtil.registerOrGet(profile.getName(), dynamicTexture)).orElse(this.skinPath);
