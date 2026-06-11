@@ -1,3 +1,4 @@
 Update to 1.21.1
 API and Multi Entity
 Support Other Mods that break it: Essentials, Figura
+- Idea Essential Work around pull texture from SkullBlock Anyway?
