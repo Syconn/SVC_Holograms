@@ -1,6 +1,8 @@
 package mod.syconn.svc.server.savedData.extra;
 
 import dev.architectury.utils.GameInstance;
+import mod.syconn.svc.compat.CompatManager;
+import mod.syconn.svc.compat.vc.IVoiceChatManager;
 import mod.syconn.svc.compat.vc.VoiceChatManager;
 import mod.syconn.svc.core.ModBlockEntities;
 import mod.syconn.svc.network.Network;
@@ -145,7 +147,7 @@ public class CallData {
         private final Map<UUID, Call> CALLS = new HashMap<>();
         private final Map<UUID, BlockReceiver> BLOCK_RECEIVERS = new HashMap<>();
         private final Map<UUID, ItemReceiver> ITEM_RECEIVERS = new HashMap<>();
-        private VoiceChatManager vc = new VoiceChatManager();
+        @Nullable private IVoiceChatManager vc = null;
         private final Set<UUID> RENDER_CACHE = new HashSet<>();
         private boolean dirty = true;
 
@@ -175,8 +177,10 @@ public class CallData {
                     return rec;
                 });
             }
-            this.vc.createCall(callId);
-            this.vc.joinCall(callId, owner.playerUUID);
+            if (this.vc != null) {
+                this.vc.createCall(callId);
+                this.vc.joinCall(callId, owner.playerUUID);
+            }
         }
 
         public void connectToCall(UUID callID, Callee callee) {
@@ -201,7 +205,7 @@ public class CallData {
                     return rec;
                 });
             }
-            this.vc.joinCall(callID, callee.playerUUID);
+            if (this.vc != null) this.vc.joinCall(callID, callee.playerUUID);
         }
 
         public void leaveCall(UUID callId, Callee callee) {
@@ -226,7 +230,7 @@ public class CallData {
 
             if (call.callers.size() <= 1) {
                 this.CALLS.remove(callId);
-                this.vc.endCall(callId);
+                if (this.vc != null) this.vc.endCall(callId);
                 this.validateReceivers();
             }
 
@@ -265,7 +269,7 @@ public class CallData {
                 this.dirty = true;
             }
 
-            for (var member : renderMembers.keySet()) this.vc.joinCall(callID, member);
+            if (this.vc != null) for (var member : renderMembers.keySet()) this.vc.joinCall(callID, member);
         }
 
         public void registerBlockReceiver(UUID blockID, WorldPos pos) {
@@ -338,7 +342,7 @@ public class CallData {
             this.CALLS.entrySet().removeIf(entry -> {
                 var call = entry.getValue();
                 call.callers.values().removeIf(v -> players.getPlayer(v.playerUUID) == null);
-                if (call.callers.size() <= 1) this.vc.endCall(entry.getKey());
+                if (call.callers.size() <= 1 && this.vc != null) this.vc.endCall(entry.getKey());
                 return call.callers.size() <= 1;
             });
         }
@@ -356,7 +360,7 @@ public class CallData {
         }
 
         public void tick() {
-            this.vc.tick(this);
+            if (this.vc != null) this.vc.tick(this);
         }
 
         private void notifyCallInvite(UUID ownerID, UUID targetID) {
@@ -388,7 +392,7 @@ public class CallData {
             tag.put("calls", NBTUtil.putMap(this.CALLS, NBTUtil::putUUID, Call::save));
             tag.put("block_receivers", NBTUtil.putMap(this.BLOCK_RECEIVERS, NBTUtil::putUUID, BlockReceiver::save));
             tag.put("item_receivers", NBTUtil.putMap(this.ITEM_RECEIVERS, NBTUtil::putUUID, ItemReceiver::save));
-            tag.put("vc", this.vc.save());
+            if (vc != null) tag.put("vc", this.vc.save());
             tag.put("cache", NBTUtil.putSet(this.RENDER_CACHE, NBTUtil::putUUID));
             tag.putBoolean("dirty", this.dirty);
             return tag;
@@ -402,7 +406,8 @@ public class CallData {
             this.CALLS.putAll(NBTUtil.getMap(tag.getCompound("calls"), NBTUtil::getUUID, Call::from));
             this.BLOCK_RECEIVERS.putAll(NBTUtil.getMap(tag.getCompound("block_receivers"), NBTUtil::getUUID, BlockReceiver::from));
             this.ITEM_RECEIVERS.putAll(NBTUtil.getMap(tag.getCompound("item_receivers"), NBTUtil::getUUID, ItemReceiver::from));
-            this.vc = VoiceChatManager.load(tag.getCompound("vc"));
+            if (tag.contains("vc") && CompatManager.hasSVC()) this.vc = VoiceChatManager.load(tag.getCompound("vc"));
+            else if (CompatManager.hasSVC()) this.vc = new VoiceChatManager();
             this.RENDER_CACHE.addAll(NBTUtil.getSet(tag.getCompound("cache"), NBTUtil::getUUID));
             this.dirty = tag.getBoolean("dirty");
             this.validateCallLog();

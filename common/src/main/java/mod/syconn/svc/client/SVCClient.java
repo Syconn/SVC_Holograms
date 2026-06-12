@@ -1,7 +1,9 @@
 package mod.syconn.svc.client;
 
 import dev.architectury.event.events.client.ClientLifecycleEvent;
+import dev.architectury.event.events.client.ClientPlayerEvent;
 import dev.architectury.event.events.client.ClientTickEvent;
+import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.registry.client.rendering.BlockEntityRendererRegistry;
 import mod.syconn.svc.client.render.blockentity.HoloProjectorBlockEntityRenderer;
 import mod.syconn.svc.client.render.item.HoloProjectorItemRenderer;
@@ -14,6 +16,7 @@ import mod.syconn.svc.utils.interfaces.IModifiedItemRenderer;
 import mod.syconn.svc.utils.interfaces.IModifiedPoseRenderer;
 import mod.syconn.svc.utils.item.HologramTag;
 import net.minecraft.client.Minecraft;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
@@ -32,11 +35,11 @@ public class SVCClient {
         ClientTickEvent.CLIENT_PRE.register(SVCClient::playerTickEvent);
     }
 
-    public static void setupEvent(Minecraft minecraft) {
+    private static void setupEvent(Minecraft minecraft) {
         BlockEntityRendererRegistry.register(ModBlockEntities.HOLO_PROJECTOR.get(), HoloProjectorBlockEntityRenderer::new);
     }
 
-    public static void playerTickEvent(Minecraft minecraft) {
+    private static void playerTickEvent(Minecraft minecraft) {
         ClientRenderSystem.get().tick();
 
         var level = minecraft.level;

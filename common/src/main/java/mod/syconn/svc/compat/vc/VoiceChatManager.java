@@ -1,6 +1,5 @@
 package mod.syconn.svc.compat.vc;
 
-import de.maxhenkel.voicechat.api.Group;
 import mod.syconn.svc.server.savedData.extra.CallData;
 import mod.syconn.svc.utils.generic.NBTUtil;
 import net.minecraft.nbt.CompoundTag;
@@ -8,7 +7,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
 
-public class VoiceChatManager {
+public class VoiceChatManager implements IVoiceChatManager {
 
     private final Map<UUID, UUID> PERSISTENT_GROUPS = new HashMap<>();
     private final Map<UUID, List<UUID>> GROUP_MEMBERS = new HashMap<>();
@@ -16,7 +15,8 @@ public class VoiceChatManager {
     public void createCall(UUID callId) {
         if (VoiceChatPlugin.SERVER_API == null) return;
 
-        var group = VoiceChatPlugin.SERVER_API.groupBuilder().setPersistent(true).setName("HoloCall:" + callId).setHidden(true).setPassword(callId.toString()).setType(Group.Type.OPEN).build();
+        var group = VoiceChatPlugin.creeteGroup(callId);
+        if (group == null) return;
         this.PERSISTENT_GROUPS.put(callId, group.getId());
     }
 
