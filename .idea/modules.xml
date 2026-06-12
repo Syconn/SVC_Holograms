@@ -7,8 +7,8 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/common/svc.common.test.iml" filepath="$PROJECT_DIR$/.idea/modules/common/svc.common.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/fabric/svc.fabric.main.iml" filepath="$PROJECT_DIR$/.idea/modules/fabric/svc.fabric.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/fabric/svc.fabric.test.iml" filepath="$PROJECT_DIR$/.idea/modules/fabric/svc.fabric.test.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/forge/svc.forge.main.iml" filepath="$PROJECT_DIR$/.idea/modules/forge/svc.forge.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/forge/svc.forge.test.iml" filepath="$PROJECT_DIR$/.idea/modules/forge/svc.forge.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/neoforge/svc.neoforge.main.iml" filepath="$PROJECT_DIR$/.idea/modules/neoforge/svc.neoforge.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/neoforge/svc.neoforge.test.iml" filepath="$PROJECT_DIR$/.idea/modules/neoforge/svc.neoforge.test.iml" />
     </modules>
   </component>
 </project>

@@ -1,4 +1,3 @@
-Issue if SVC isnt installed
 Update to 1.21.1
 API and Multi Entity
 Support Other Mods that break it: Essentials, Figura
