@@ -40,10 +40,10 @@ public class ScrollerWidget extends AbstractWidget implements IWidgetComponent {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         if (!this.canScroll.apply(this)) return false;
         else {
-            this.scrollOffs = this.subtractInputFromScroll(this.scrollOffs, delta);
+            this.scrollOffs = this.subtractInputFromScroll(this.scrollOffs, scrollY);
             this.scrollTo.accept(getRowIndexForScroll(this.scrollOffs));
             return true;
         }

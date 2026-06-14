@@ -1,5 +1,6 @@
 package mod.syconn.svc.server.savedData.extra;
 
+import dev.architectury.networking.NetworkManager;
 import dev.architectury.utils.GameInstance;
 import mod.syconn.svc.compat.CompatManager;
 import mod.syconn.svc.compat.vc.IVoiceChatManager;
@@ -10,8 +11,12 @@ import mod.syconn.svc.network.packets.client.MessagePlayerPacket;
 import mod.syconn.svc.utils.block.WorldPos;
 import mod.syconn.svc.utils.generic.NBTUtil;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +28,9 @@ public class CallData {
     public enum ReceiverType { BLOCK, ITEM, NULL }
 
     public static class BlockReceiver {
+        public static final StreamCodec<RegistryFriendlyByteBuf, BlockReceiver> STREAM_CODEC = StreamCodec.composite(UUIDUtil.STREAM_CODEC, r -> r.blockID, WorldPos.STREAM_CODEC, r -> r.pos,
+                ByteBufCodecs.optional(UUIDUtil.STREAM_CODEC), r -> Optional.ofNullable(r.callID), (blockID, pos, callID) -> new BlockReceiver(blockID, pos, callID.orElse(null)));
+
         public UUID blockID;
         public WorldPos pos;
         public @Nullable UUID callID;
@@ -71,6 +79,10 @@ public class CallData {
     }
 
     public static class Callee {
+        public static final StreamCodec<RegistryFriendlyByteBuf, Callee> STREAM_CODEC = StreamCodec.composite(UUIDUtil.STREAM_CODEC, c -> c.playerUUID, ByteBufCodecs.BOOL, c -> c.owner,
+                ByteBufCodecs.STRING_UTF8.map(ReceiverType::valueOf, ReceiverType::name), c -> c.type, ByteBufCodecs.optional(UUIDUtil.STREAM_CODEC), c -> Optional.ofNullable(c.receiverID),
+                (playerUUID, owner, type, receiverIDOpt) -> new Callee(playerUUID, owner, type, receiverIDOpt.orElse(null)));
+
         public UUID playerUUID;
         public boolean owner;
         public ReceiverType type;
@@ -367,7 +379,7 @@ public class CallData {
             if (GameInstance.getServer() != null) {
                 var owner = GameInstance.getServer().getPlayerList().getPlayer(ownerID);
                 var serverPlayer = GameInstance.getServer().getPlayerList().getPlayer(targetID);
-                if (serverPlayer != null && owner != null) Network.CHANNEL.sendToPlayer(serverPlayer, new MessagePlayerPacket(Component.literal("Incoming HoloCommunication from " + owner.getName().getString()).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)));
+                if (serverPlayer != null && owner != null) NetworkManager.sendToPlayer(serverPlayer, new MessagePlayerPacket(Component.literal("Incoming HoloCommunication from " + owner.getName().getString()).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)));
             }
         }
 
@@ -375,7 +387,7 @@ public class CallData {
             if (GameInstance.getServer() != null) {
                 var owner = GameInstance.getServer().getPlayerList().getPlayer(ownerID);
                 var joinedPlayer = GameInstance.getServer().getPlayerList().getPlayer(joinerID);
-                if (joinedPlayer != null && owner != null) Network.CHANNEL.sendToPlayer(owner, new MessagePlayerPacket(Component.literal(joinedPlayer.getName().getString() + " has joined the HoloCommunication").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)));
+                if (joinedPlayer != null && owner != null) NetworkManager.sendToPlayer(owner, new MessagePlayerPacket(Component.literal(joinedPlayer.getName().getString() + " has joined the HoloCommunication").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)));
             }
         }
 
@@ -383,7 +395,7 @@ public class CallData {
             if (GameInstance.getServer() != null) {
                 var owner = GameInstance.getServer().getPlayerList().getPlayer(ownerID);
                 var leftPlayer = GameInstance.getServer().getPlayerList().getPlayer(leftID);
-                if (leftPlayer != null && owner != null) Network.CHANNEL.sendToPlayer(owner, new MessagePlayerPacket(Component.literal(leftPlayer.getName().getString() + " has left the HoloCommunication").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)));
+                if (leftPlayer != null && owner != null) NetworkManager.sendToPlayer(owner, new MessagePlayerPacket(Component.literal(leftPlayer.getName().getString() + " has left the HoloCommunication").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)));
             }
         }
 

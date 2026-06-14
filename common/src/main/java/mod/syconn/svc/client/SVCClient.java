@@ -1,9 +1,7 @@
 package mod.syconn.svc.client;
 
 import dev.architectury.event.events.client.ClientLifecycleEvent;
-import dev.architectury.event.events.client.ClientPlayerEvent;
 import dev.architectury.event.events.client.ClientTickEvent;
-import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.registry.client.rendering.BlockEntityRendererRegistry;
 import mod.syconn.svc.client.render.blockentity.HoloProjectorBlockEntityRenderer;
 import mod.syconn.svc.client.render.item.HoloProjectorItemRenderer;
@@ -14,9 +12,8 @@ import mod.syconn.svc.item.HoloProjectorItem;
 import mod.syconn.svc.mixin.client.MinecraftAccessor;
 import mod.syconn.svc.utils.interfaces.IModifiedItemRenderer;
 import mod.syconn.svc.utils.interfaces.IModifiedPoseRenderer;
-import mod.syconn.svc.utils.item.HologramTag;
+import mod.syconn.svc.utils.item.HologramComponent;
 import net.minecraft.client.Minecraft;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
@@ -77,8 +74,8 @@ public class SVCClient {
     private static boolean activeSound(Player player) {
         for (var type : InteractionHand.values()) {
             if (player.getItemInHand(type).getItem() instanceof HoloProjectorItem) {
-                var tag = HologramTag.getOrCreate(player.getItemInHand(type));
-                if ((!tag.getSoloRender().isEmpty() || tag.getRenderTarget() != null)) return true;
+                var tag = HologramComponent.getOrCreate(player.getItemInHand(type));
+                if ((!tag.soloRender().isEmpty() || tag.renderTarget() != null)) return true;
             }
         }
         return false;
@@ -87,6 +84,6 @@ public class SVCClient {
     public static float getTickDelta() {
         var mc = Minecraft.getInstance();
         if (mc.isPaused()) return ((MinecraftAccessor)mc).getPausedTickDelta();
-        return mc.getFrameTime();
+        return mc.getFrameTimeNs();
     }
 }

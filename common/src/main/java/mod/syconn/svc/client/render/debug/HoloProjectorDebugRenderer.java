@@ -41,26 +41,26 @@ public class HoloProjectorDebugRenderer {
             long mostSigBits = receiver.callID.getMostSignificantBits();
             int r = (int) ((mostSigBits >> 32) & 0xFF), g = (int) ((mostSigBits >> 16) & 0xFF), b = (int) (mostSigBits & 0xFF), a = 255;
 
-            vc.vertex(mat, x, y + s, z).color(r,g,b,a).endVertex();
-            vc.vertex(mat, x + s, y + s, z).color(r,g,b,a).endVertex();
-            vc.vertex(mat, x + s, y + s, z + s).color(r,g,b,a).endVertex();
-            vc.vertex(mat, x, y + s, z + s).color(r,g,b,a).endVertex();
-            vc.vertex(mat, x, y + s, z).color(r,g,b,a).endVertex();
+            vc.addVertex(mat, x, y + s, z).setColor(r,g,b,a);
+            vc.addVertex(mat, x + s, y + s, z).setColor(r,g,b,a);
+            vc.addVertex(mat, x + s, y + s, z + s).setColor(r,g,b,a);
+            vc.addVertex(mat, x, y + s, z + s).setColor(r,g,b,a);
+            vc.addVertex(mat, x, y + s, z).setColor(r,g,b,a);
 
-            vc.vertex(mat, x, y, z).color(r,g,b,a).endVertex();
-            vc.vertex(mat, x + s, y, z).color(r,g,b,a).endVertex();
-            vc.vertex(mat, x + s, y, z + s).color(r,g,b,a).endVertex();
-            vc.vertex(mat, x, y, z + s).color(r,g,b,a).endVertex();
-            vc.vertex(mat, x, y, z).color(r,g,b,a).endVertex();
+            vc.addVertex(mat, x, y, z).setColor(r,g,b,a);
+            vc.addVertex(mat, x + s, y, z).setColor(r,g,b,a);
+            vc.addVertex(mat, x + s, y, z + s).setColor(r,g,b,a);
+            vc.addVertex(mat, x, y, z + s).setColor(r,g,b,a);
+            vc.addVertex(mat, x, y, z).setColor(r,g,b,a);
 
-            vc.vertex(mat, x, y, z).color(r,g,b,a).endVertex();
-            vc.vertex(mat, x, y + s, z).color(r,g,b,a).endVertex();
-            vc.vertex(mat, x + s, y, z).color(r,g,b,a).endVertex();
-            vc.vertex(mat, x + s, y + s, z).color(r,g,b,a).endVertex();
-            vc.vertex(mat, x + s, y, z + s).color(r,g,b,a).endVertex();
-            vc.vertex(mat, x + s, y + s, z + s).color(r,g,b,a).endVertex();
-            vc.vertex(mat, x, y, z + s).color(r,g,b,a).endVertex();
-            vc.vertex(mat, x, y + s, z + s).color(r,g,b,a).endVertex();
+            vc.addVertex(mat, x, y, z).setColor(r,g,b,a);
+            vc.addVertex(mat, x, y + s, z).setColor(r,g,b,a);
+            vc.addVertex(mat, x + s, y, z).setColor(r,g,b,a);
+            vc.addVertex(mat, x + s, y + s, z).setColor(r,g,b,a);
+            vc.addVertex(mat, x + s, y, z + s).setColor(r,g,b,a);
+            vc.addVertex(mat, x + s, y + s, z + s).setColor(r,g,b,a);
+            vc.addVertex(mat, x, y, z + s).setColor(r,g,b,a);
+            vc.addVertex(mat, x, y + s, z + s).setColor(r,g,b,a);
         }
     }
 }

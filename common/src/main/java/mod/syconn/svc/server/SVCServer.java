@@ -2,6 +2,7 @@ package mod.syconn.svc.server;
 
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.TickEvent;
+import dev.architectury.networking.NetworkManager;
 import mod.syconn.svc.client.render.debug.HoloProjectorDebugRenderer;
 import mod.syconn.svc.network.Network;
 import mod.syconn.svc.server.savedData.HologramNetwork;
@@ -26,15 +27,15 @@ public class SVCServer {
 
     private static void playerLeftServer(ServerPlayer player) {
         HologramNetwork.get(player.server.overworld()).playerLeftServer(player.getUUID());
-        Network.CHANNEL.sendToPlayer(player, HoloProjectorDebugRenderer.playerLeftServer());
+        NetworkManager.sendToPlayer(player, HoloProjectorDebugRenderer.playerLeftServer());
     }
 
     private static void playerJoinedServer(ServerPlayer player) {
         HologramNetwork.get(player.server.overworld()).playerJoinedServer();
-        Network.CHANNEL.sendToPlayer(player, HoloProjectorDebugRenderer.playerJoinedServer(player));
+        NetworkManager.sendToPlayer(player, HoloProjectorDebugRenderer.playerJoinedServer(player));
     }
 
     private static void playerChangedDimension(ServerPlayer player, ResourceKey<Level> oldLevel, ResourceKey<Level> newLevel) {
-        Network.CHANNEL.sendToPlayer(player, HoloProjectorDebugRenderer.playerChangedDimension(player));
+        NetworkManager.sendToPlayer(player, HoloProjectorDebugRenderer.playerChangedDimension(player));
     }
 }

@@ -1,28 +1,28 @@
 package mod.syconn.svc.network.packets.client;
 
 import dev.architectury.networking.NetworkManager;
+import mod.syconn.svc.utils.Constants;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
 import java.util.function.Supplier;
 
-public class MessagePlayerPacket {
+public record MessagePlayerPacket(Component msg) implements CustomPacketPayload {
 
-    private final Component msg;
+    public static final CustomPacketPayload.Type<MessagePlayerPacket> TYPE = new CustomPacketPayload.Type<>(Constants.withId("message_player_packet"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, MessagePlayerPacket> STREAM_CODEC = StreamCodec.composite(ComponentSerialization.TRUSTED_STREAM_CODEC, MessagePlayerPacket::msg, MessagePlayerPacket::new);
 
-    public MessagePlayerPacket(Component msg) {
-        this.msg = msg;
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 
-    public MessagePlayerPacket(FriendlyByteBuf buf) {
-        this.msg = buf.readComponent();
-    }
-
-    public void encode(FriendlyByteBuf buf) {
-        buf.writeComponent(this.msg);
-    }
-
-    public void apply(Supplier<NetworkManager.PacketContext> context) {
-        context.get().queue(() -> context.get().getPlayer().sendSystemMessage(this.msg));
+    public static void handle(MessagePlayerPacket packet, NetworkManager.PacketContext context) {
+        context.queue(() -> context.getPlayer().sendSystemMessage(packet.msg));
     }
 }

@@ -4,71 +4,45 @@ import dev.architectury.networking.NetworkManager;
 import mod.syconn.svc.blockentity.HoloProjectorBlockEntity;
 import mod.syconn.svc.server.savedData.HologramNetwork;
 import mod.syconn.svc.server.savedData.extra.CallData;
-import mod.syconn.svc.utils.generic.NBTUtil;
+import mod.syconn.svc.utils.Constants;
+import mod.syconn.svc.utils.generic.StreamCodecUtil;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Supplier;
 
-public class HoloCallPacket {
+public record HoloCallPacket(PacketCallType callType, UUID id, boolean secure, boolean unknownID, BlockPos pos, List<CallData.Callee> callees) implements CustomPacketPayload {
 
-    private final Type type;
-    private final UUID id;
-    private final boolean secure;
-    private final boolean unknownID;
-    private final BlockPos pos;
-    private final List<CallData.Callee> callees;
+    public static final CustomPacketPayload.Type<HoloCallPacket> TYPE = new CustomPacketPayload.Type<>(Constants.withId("holo_call_packet"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, HoloCallPacket> STREAM_CODEC = StreamCodec.composite(StreamCodecUtil.enumCodec(PacketCallType.class), HoloCallPacket::callType, UUIDUtil.STREAM_CODEC, HoloCallPacket::id,
+            ByteBufCodecs.BOOL, HoloCallPacket::secure, ByteBufCodecs.BOOL, HoloCallPacket::unknownID, BlockPos.STREAM_CODEC, HoloCallPacket::pos, ByteBufCodecs.collection(ArrayList::new, CallData.Callee.STREAM_CODEC),
+            HoloCallPacket::callees, HoloCallPacket::new);
 
-    public HoloCallPacket(Type type, UUID id, boolean secure, boolean unknownID, BlockPos pos, List<CallData.Callee> callees) {
-        this.type = type;
-        this.id = id;
-        this.secure = secure;
-        this.unknownID = unknownID;
-        this.pos = pos;
-        this.callees = callees;
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 
-    public HoloCallPacket(FriendlyByteBuf buf) {
-        this.type = buf.readEnum(Type.class);
-        this.id = buf.readUUID();
-        this.secure = buf.readBoolean();
-        this.unknownID = buf.readBoolean();
-        this.pos = buf.readBlockPos();
-        var nbt = buf.readNbt();
-        this.callees = NBTUtil.getList(nbt != null ? nbt : new CompoundTag(), CallData.Callee::from);
-    }
-
-    public void encode(FriendlyByteBuf buf) {
-        buf.writeEnum(this.type);
-        buf.writeUUID(this.id);
-        buf.writeBoolean(this.secure);
-        buf.writeBoolean(this.unknownID);
-        buf.writeBlockPos(this.pos);
-        buf.writeNbt(NBTUtil.putList(this.callees, CallData.Callee::save));
-    }
-
-    public void apply(Supplier<NetworkManager.PacketContext> context) {
-        context.get().queue(() -> {
-            if (context.get().getPlayer() instanceof ServerPlayer sp) {
+    public static void handle(HoloCallPacket packet, NetworkManager.PacketContext context) {
+        context.queue(() -> {
+            if (context.getPlayer() instanceof ServerPlayer sp) {
                 var network = HologramNetwork.get(sp.server.overworld());
-                var caller = this.callees.get(0);
-                if (this.type == Type.CREATE) network.createCall(this.callees, this.secure);
-                else if (this.type == Type.CONNECT) network.connect(this.id, caller);
-                else if (this.unknownID && sp.level().getBlockEntity(this.pos) instanceof HoloProjectorBlockEntity be) {
+                var caller = packet.callees.getFirst();
+                if (packet.callType == PacketCallType.CREATE) network.createCall(packet.callees, packet.secure);
+                else if (packet.callType == PacketCallType.CONNECT) network.connect(packet.id, caller);
+                else if (packet.unknownID && sp.level().getBlockEntity(packet.pos) instanceof HoloProjectorBlockEntity be) {
                     var uuid = be.getReceiverUUID();
                     if (network.getBlockReceiver(uuid) != null) network.leaveCall(network.getBlockReceiver(uuid).callID, caller);
-                } else network.leaveCall(this.id, caller);
+                } else network.leaveCall(packet.id, caller);
             }
         });
     }
-
-    public enum Type {
-        CREATE,
-        CONNECT,
-        LEAVE
-    }
 }
+

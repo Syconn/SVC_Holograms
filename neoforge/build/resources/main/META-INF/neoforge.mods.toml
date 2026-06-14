@@ -5,7 +5,7 @@ license = "All Rights Reserved"
 
 [[mods]]
 modId = "svc"
-version = "${version}"
+version = "1.6"
 displayName = "SVC Holograms"
 authors = "Syconn"
 description = '''

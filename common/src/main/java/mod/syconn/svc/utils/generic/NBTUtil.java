@@ -94,7 +94,7 @@ public class NBTUtil {
     }
 
     public static ResourceLocation getResourceLocation(CompoundTag tag) {
-        return new ResourceLocation(tag.getString("resourceLocation"));
+        return ResourceLocation.parse(tag.getString("resourceLocation"));
     }
 
     public static CompoundTag putResourceLocation(ResourceLocation location) {

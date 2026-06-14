@@ -18,9 +18,11 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.layers.*;
+import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
@@ -77,11 +79,13 @@ public class HologramRenderer extends LivingEntityRenderer<AbstractClientPlayer,
 
     @Override
     protected @Nullable RenderType getRenderType(AbstractClientPlayer livingEntity, boolean bodyVisible, boolean translucent, boolean glowing) {
-        return RenderType.entityTranslucent(this.data.getSkin() == null ? DefaultPlayerSkin.getDefaultSkin() : this.data.getSkin());
+        return RenderType.entityTranslucent(this.data.getSkin() == null ? DefaultPlayerSkin.getDefaultTexture() : this.data.getSkin());
     }
 
     @Override
-    protected void renderNameTag(AbstractClientPlayer entity, Component displayName, PoseStack poseStack, MultiBufferSource buffer, int packedLight) { }
+    protected void renderNameTag(AbstractClientPlayer entity, Component displayName, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, float partialTick) {
+
+    }
 
     private void setModelProperties(AbstractClientPlayer clientPlayer) {
         PlayerModel<AbstractClientPlayer> playerModel = this.getModel();
@@ -165,23 +169,24 @@ public class HologramRenderer extends LivingEntityRenderer<AbstractClientPlayer,
             h *= -1.0F;
         }
 
-        var ix = this.getBob(player, partialTicks);
-        this.setupRotations(player, poseStack, ix, f, partialTicks);
+        float ix = player.getScale();
+        poseStack.scale(ix, ix, ix);
+        float k = this.getBob(player, partialTicks);
+        this.setupRotations(player, poseStack, k, f, partialTicks, ix);
         poseStack.scale(-1.0F, -1.0F, 1.0F);
         this.scale(player, poseStack, partialTicks);
         poseStack.translate(0.0F, -1.501F, 0.0F);
-        var k = 0.0F;
-        var l = 0.0F;
+        float l = 0.0F;
+        float m = 0.0F;
         if (!player.isPassenger() && player.isAlive()) {
-            k = player.walkAnimation.speed(partialTicks);
-            l = player.walkAnimation.position(partialTicks);
-            if (k > 1.0F) k = 1.0F;
+            l = player.walkAnimation.speed(partialTicks);
+            m = player.walkAnimation.position(partialTicks);
+            if (player.isBaby()) m *= 3.0F;
+            if (l > 1.0F) l = 1.0F;
         }
 
-//        System.out.println(k);
-
-        this.model.prepareMobModel(player, l, k, partialTicks);
-        this.model.setupAnim(player, l, k, ix, h, j);
+        this.model.prepareMobModel(player, m, l, partialTicks);
+        this.model.setupAnim(player, m, l, k, h, j);
         var minecraft = Minecraft.getInstance();
         var bl = this.isBodyVisible(player);
         var bl2 = !bl && !player.isInvisibleTo(minecraft.player);
@@ -190,11 +195,11 @@ public class HologramRenderer extends LivingEntityRenderer<AbstractClientPlayer,
 
         if (renderType != null) {
             var vertexConsumer = buffer.getBuffer(renderType);
-            int m = getOverlayCoords(player, this.getWhiteOverlayProgress(player, partialTicks));
-            this.model.renderToBuffer(poseStack, vertexConsumer, packedLight, m, 1.0F, 1.0F, 1.0F, bl2 ? 0.15F : 1.0F);
+            int n = getOverlayCoords(player, this.getWhiteOverlayProgress(player, partialTicks));
+            this.model.renderToBuffer(poseStack, vertexConsumer, packedLight, n, FastColor.ARGB32.colorFromFloat(1.0F, 1.0F, 1.0F, bl2 ? 0.15F : 1.0F));
         }
 
-        if (!player.isSpectator()) for (var renderLayer : this.layers) renderLayer.render(poseStack, buffer, packedLight, player, l, k, partialTicks, ix, h, j);
+        if (!player.isSpectator()) for (var renderLayer : this.layers) renderLayer.render(poseStack, buffer, packedLight, player, m, l, partialTicks, k, h, j);
         poseStack.popPose();
     }
 
@@ -202,18 +207,18 @@ public class HologramRenderer extends LivingEntityRenderer<AbstractClientPlayer,
         return entity.isCrouching() ? new Vec3(0.0, -0.125, 0.0) : super.getRenderOffset(entity, partialTicks);
     }
 
-    protected void setupRotations(AbstractClientPlayer entityLiving, PoseStack poseStack, float ageInTicks, float rotationYaw, float partialTicks) {
-        float f = entityLiving.getSwimAmount(partialTicks);
-        if (entityLiving.isFallFlying()) {
-            super.setupRotations(entityLiving, poseStack, ageInTicks, rotationYaw, partialTicks);
-            float g = entityLiving.getFallFlyingTicks() + partialTicks;
+    protected void setupRotations(AbstractClientPlayer entity, PoseStack poseStack, float bob, float yBodyRot, float partialTick, float scale) {
+        float f = entity.getSwimAmount(partialTick);
+        if (entity.isFallFlying()) {
+            super.setupRotations(entity, poseStack, bob, yBodyRot, partialTick, scale);
+            float g = entity.getFallFlyingTicks() + partialTick;
             float h = Mth.clamp(g * g / 100.0F, 0.0F, 1.0F);
-            if (!entityLiving.isAutoSpinAttack()) {
-                poseStack.mulPose(Axis.XP.rotationDegrees(h * (-90.0F - entityLiving.getXRot())));
+            if (!entity.isAutoSpinAttack()) {
+                poseStack.mulPose(Axis.XP.rotationDegrees(h * (-90.0F - entity.getXRot())));
             }
 
-            Vec3 vec3 = entityLiving.getViewVector(partialTicks);
-            Vec3 vec32 = entityLiving.getDeltaMovementLerped(partialTicks);
+            Vec3 vec3 = entity.getViewVector(partialTick);
+            Vec3 vec32 = entity.getDeltaMovementLerped(partialTick);
             double d = vec32.horizontalDistanceSqr();
             double e = vec3.horizontalDistanceSqr();
             if (d > 0.0 && e > 0.0) {
@@ -222,20 +227,18 @@ public class HologramRenderer extends LivingEntityRenderer<AbstractClientPlayer,
                 poseStack.mulPose(Axis.YP.rotation((float)(Math.signum(j) * Math.acos(i))));
             }
         } else if (f > 0.0F) {
-            super.setupRotations(entityLiving, poseStack, ageInTicks, rotationYaw, partialTicks);
-            float gx = entityLiving.isInWater() ? -90.0F - entityLiving.getXRot() : -90.0F;
+            super.setupRotations(entity, poseStack, bob, yBodyRot, partialTick, scale);
+            float gx = entity.isInWater() ? -90.0F - entity.getXRot() : -90.0F;
             float hx = Mth.lerp(f, 0.0F, gx);
             poseStack.mulPose(Axis.XP.rotationDegrees(hx));
-            if (entityLiving.isVisuallySwimming()) {
+            if (entity.isVisuallySwimming()) {
                 poseStack.translate(0.0F, -1.0F, 0.3F);
             }
-        } else {
-            super.setupRotations(entityLiving, poseStack, ageInTicks, rotationYaw, partialTicks);
-        }
+        } else super.setupRotations(entity, poseStack, bob, yBodyRot, partialTick, scale);
     }
 
     @Override
     public @NotNull ResourceLocation getTextureLocation(AbstractClientPlayer entity) {
-        return entity.getSkinTextureLocation();
+        return entity.getSkin().texture();
     }
 }

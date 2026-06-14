@@ -12,6 +12,7 @@ import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
@@ -91,7 +92,7 @@ public class RenderUtil {
 
     private static boolean hasAnimatedTexture(ItemStack stack) {
         return stack.is(ItemTags.COMPASSES) || stack.is(Items.CLOCK);
-    }
+    } ItemRenderer
 
     private static void renderHolographicItemEffect(PoseStack poseStack, ItemStack stack, BakedModel bakedModel, MultiBufferSource buffer, int packedLight, float time) {
         var consumer = buffer.getBuffer(RenderType.entityTranslucentCull(InventoryMenu.BLOCK_ATLAS));

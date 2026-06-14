@@ -23,8 +23,8 @@ public class HologramBufferSource implements MultiBufferSource {
     }
 
     private RenderType convertRenderType(RenderType renderType) {
-        Matcher matcher = Pattern.compile("Optional\\[(.*?)\\]").matcher(renderType.toString());
-        if (matcher.find()) return RenderType.entityTranslucentCull(new ResourceLocation(matcher.group(1)));
+        var matcher = Pattern.compile("Optional\\[(.*?)\\]").matcher(renderType.toString());
+        if (matcher.find()) return RenderType.entityTranslucentCull(ResourceLocation.parse(matcher.group(1)));
         else return renderType;
     }
 }

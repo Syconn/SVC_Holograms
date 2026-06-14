@@ -1,26 +1,35 @@
 package mod.syconn.svc.network;
 
-import dev.architectury.networking.NetworkChannel;
+import dev.architectury.networking.NetworkManager;
+import dev.architectury.platform.Platform;
+import dev.architectury.utils.Env;
 import mod.syconn.svc.network.packets.client.MessagePlayerPacket;
 import mod.syconn.svc.network.packets.client.RenderTargetPacket;
 import mod.syconn.svc.network.packets.client.RequestedHologramPacket;
 import mod.syconn.svc.network.packets.client.UpdateProjectorCachePacket;
 import mod.syconn.svc.network.packets.server.HoloCallPacket;
-import mod.syconn.svc.network.packets.server.RenderHoloPlayerPacket;
 import mod.syconn.svc.network.packets.server.RequestHologramPacket;
-import mod.syconn.svc.utils.Constants;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
-public class Network {
-
-    public static final NetworkChannel CHANNEL = NetworkChannel.create(Constants.withId("network"));
+public class Network { // TODO LET HELL BREAK LOSE
 
     public static void init() {
-        CHANNEL.register(HoloCallPacket.class, HoloCallPacket::encode, HoloCallPacket::new, HoloCallPacket::apply);
-        CHANNEL.register(RequestedHologramPacket.class, RequestedHologramPacket::encode, RequestedHologramPacket::new, RequestedHologramPacket::apply);
-        CHANNEL.register(RequestHologramPacket.class, RequestHologramPacket::encode, RequestHologramPacket::new, RequestHologramPacket::apply);
-        CHANNEL.register(MessagePlayerPacket.class, MessagePlayerPacket::encode, MessagePlayerPacket::new, MessagePlayerPacket::apply);
-        CHANNEL.register(UpdateProjectorCachePacket.class, UpdateProjectorCachePacket::encode, UpdateProjectorCachePacket::new, UpdateProjectorCachePacket::apply);
-        CHANNEL.register(RenderHoloPlayerPacket.class, RenderHoloPlayerPacket::encode, RenderHoloPlayerPacket::new, RenderHoloPlayerPacket::apply);
-        CHANNEL.register(RenderTargetPacket.class, RenderTargetPacket::encode, RenderTargetPacket::new, RenderTargetPacket::apply);
+        // C2S Packets
+        NetworkManager.registerReceiver(NetworkManager.c2s(), RequestedHologramPacket.TYPE, RequestedHologramPacket.STREAM_CODEC, RequestedHologramPacket::handle);
+        NetworkManager.registerReceiver(NetworkManager.c2s(), MessagePlayerPacket.TYPE, MessagePlayerPacket.STREAM_CODEC, MessagePlayerPacket::handle);
+        NetworkManager.registerReceiver(NetworkManager.c2s(), RenderTargetPacket.TYPE, RenderTargetPacket.STREAM_CODEC, RenderTargetPacket::handle);
+        NetworkManager.registerReceiver(NetworkManager.c2s(), UpdateProjectorCachePacket.TYPE, UpdateProjectorCachePacket.STREAM_CODEC, UpdateProjectorCachePacket::handle);
+
+        // S2C Packets
+        registerS2CPacket(RequestHologramPacket.TYPE, RequestHologramPacket.STREAM_CODEC, RequestHologramPacket::handle);
+        registerS2CPacket(HoloCallPacket.TYPE, HoloCallPacket.STREAM_CODEC, HoloCallPacket::handle);
+        registerS2CPacket(HoloCallPacket.TYPE, HoloCallPacket.STREAM_CODEC, HoloCallPacket::handle);
+    }
+
+    private static <T extends CustomPacketPayload> void registerS2CPacket(CustomPacketPayload.Type<T> id, StreamCodec<? super RegistryFriendlyByteBuf, T> codec, NetworkManager.NetworkReceiver<T> receiver) {
+        if (Platform.getEnvironment() == Env.CLIENT) NetworkManager.registerReceiver(NetworkManager.s2c(), id, codec, receiver);
+        else NetworkManager.registerS2CPayloadType(id, codec);
     }
 }

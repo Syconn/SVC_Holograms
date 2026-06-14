@@ -2,30 +2,23 @@ package mod.syconn.svc.network.packets.client;
 
 import dev.architectury.networking.NetworkManager;
 import mod.syconn.svc.client.ClientRenderSystem;
+import mod.syconn.svc.utils.Constants;
 import mod.syconn.svc.utils.entity.RenderTargetInfo;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.Entity;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
-import java.util.function.Supplier;
+public record RenderTargetPacket(RenderTargetInfo info) implements CustomPacketPayload {
 
-public class RenderTargetPacket {
+    public static final CustomPacketPayload.Type<RenderTargetPacket> TYPE = new CustomPacketPayload.Type<>(Constants.withId("render_target_packet"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, RenderTargetPacket> STREAM_CODEC = StreamCodec.composite(RenderTargetInfo.STREAM_CODEC, RenderTargetPacket::info, RenderTargetPacket::new);
 
-    private final RenderTargetInfo info;
-
-    public RenderTargetPacket(@NotNull Entity target) {
-        info = new RenderTargetInfo(target);
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 
-    public RenderTargetPacket(FriendlyByteBuf buffer) {
-        info = new RenderTargetInfo(buffer);
-    }
-
-    public void encode(FriendlyByteBuf buffer) {
-        info.encode(buffer);
-    }
-
-    public void apply(Supplier<NetworkManager.PacketContext> context) {
-        context.get().queue(() -> ClientRenderSystem.get().handleRenderPlayerPacket(info));
+    public static void handle(RenderTargetPacket packet, NetworkManager.PacketContext context) {
+        context.queue(() -> ClientRenderSystem.get().handleRenderPlayerPacket(packet.info));
     }
 }

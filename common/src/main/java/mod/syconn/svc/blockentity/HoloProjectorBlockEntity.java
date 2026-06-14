@@ -13,6 +13,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
@@ -161,27 +162,27 @@ public class HoloProjectorBlockEntity extends SyncedBlockEntity {
     }
 
     @Override
-    public void load(CompoundTag tag) {
+    public void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         this.receiverUUID = NBTUtil.getNullable(tag.getCompound("receiverUUID"), NBTUtil::getUUID);
         this.soloRender = NBTUtil.getNullable(tag.getCompound("soloRender"), t -> t.getString(""));
         this.rotation = tag.getDouble("rotation");
-        this.particleQueue = NBTUtil.getList(tag.getCompound("queue"), ParticleEvent::from);
+        this.particleQueue = NBTUtil.getList(tag.getCompound("queue"), t -> ParticleEvent.from(t, registries));
         this.active = tag.getBoolean("active");
         if (tag.contains("renderables")) this.renderables = NBTUtil.getMap(tag.getCompound("renderables"), NBTUtil::getUUID, NBTUtil::getVec3);
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag) {
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         tag.put("receiverUUID", NBTUtil.putNullable(this.receiverUUID, NBTUtil::putUUID));
         tag.put("soloRender", NBTUtil.putNullable(this.soloRender, s -> NBTUtil.convert(t -> t.putString("", s))));
         tag.putDouble("rotation", this.rotation);
-        tag.put("queue", NBTUtil.putList(this.particleQueue, ParticleEvent::save));
+        tag.put("queue", NBTUtil.putList(this.particleQueue, p -> p.save(registries)));
         tag.putBoolean("active", this.active);
     }
 
     @Override
-    protected void saveSyncData(CompoundTag tag) {
-        this.saveAdditional(tag);
+    protected void saveSyncData(CompoundTag tag, HolderLookup.Provider registries) {
+        this.saveAdditional(tag, registries);
         tag.put("renderables", NBTUtil.putMap(this.renderables, NBTUtil::putUUID, NBTUtil::putVec3));
     }
 }

@@ -38,14 +38,13 @@ public class ModelUtil {
     public static void renderHoloQuadAlpha(VertexConsumer consumer, PoseStack.Pose pose, BakedQuad quad, float red, float green, float blue, float alpha, int light, int overlay, float time) {
         var vertices = quad.getVertices();
         var matrix = pose.pose();
-        var normalMatrix = pose.normal();
         var normal = quad.getDirection().getNormal();
         float nx = normal.getX(), ny = normal.getY(), nz = normal.getZ();
         var finalAlpha = alpha * (0.80f + 0.20f * Mth.sin(time * 0.25f));
         for (int vertex = 0; vertex < 4; vertex++) {
             var offset = vertex * 8;
             float x = Float.intBitsToFloat(vertices[offset]), y = Float.intBitsToFloat(vertices[offset + 1]), z = Float.intBitsToFloat(vertices[offset + 2]), u = Float.intBitsToFloat(vertices[offset + 4]), v = Float.intBitsToFloat(vertices[offset + 5]);
-            consumer.vertex(matrix, x, y, z).color((int)(red * 255.0f), (int)(green * 255.0f), (int)(blue * 255.0f), (int)(finalAlpha * 255.0f)).uv(u, v).overlayCoords(overlay).uv2(light).normal(normalMatrix, nx, ny, nz).endVertex();
+            consumer.addVertex(matrix, x, y, z).setColor((int)(red * 255.0f), (int)(green * 255.0f), (int)(blue * 255.0f), (int)(finalAlpha * 255.0f)).setUv(u, v).setOverlay(overlay).setLight(light).setNormal(nx, ny, nz);
         }
     }
 

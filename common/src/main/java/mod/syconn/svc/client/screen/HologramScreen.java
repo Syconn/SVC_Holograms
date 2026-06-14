@@ -1,15 +1,16 @@
 package mod.syconn.svc.client.screen;
 
+import dev.architectury.networking.NetworkManager;
 import mod.syconn.svc.client.screen.components.CallMenuWidget;
 import mod.syconn.svc.client.screen.components.ErrorWidget;
 import mod.syconn.svc.client.screen.components.buttons.*;
 import mod.syconn.svc.core.ModBlockEntities;
-import mod.syconn.svc.network.Network;
 import mod.syconn.svc.network.packets.server.HoloCallPacket;
+import mod.syconn.svc.network.packets.server.PacketCallType;
 import mod.syconn.svc.server.savedData.extra.CallData;
 import mod.syconn.svc.utils.Constants;
 import mod.syconn.svc.utils.generic.ListUtil;
-import mod.syconn.svc.utils.item.HologramTag;
+import mod.syconn.svc.utils.item.HologramComponent;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -30,6 +31,7 @@ import java.util.UUID;
 
 public class HologramScreen extends Screen {
 
+    private static final ResourceLocation HOLOGRAM_SPRITE = Constants.withId("hologram_screen.png");
     private static final ResourceLocation HOLOGRAM_SCREEN = Constants.withId("textures/gui/hologram_screen.png");
     private final @Nullable BlockPos holoPos;
     private final @Nullable ItemStack stack;
@@ -57,7 +59,7 @@ public class HologramScreen extends Screen {
     @Override
     public void tick() {
         super.tick();
-        this.searchBox.tick();
+//        this.searchBox.tick(); TODO MAYBE REMOVED?
     }
 
     @Override
@@ -123,11 +125,11 @@ public class HologramScreen extends Screen {
     }
 
     @Override
-    public void renderBackground(GuiGraphics guiGraphics) {
-        super.renderBackground(guiGraphics);
+    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) { // TODO SocialInteractionsScreen
+        super.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
 
         var m = this.marginX() + 3;
-        guiGraphics.blitNineSliced(HOLOGRAM_SCREEN, m, 64, 236, 143, 8, 236, 34, 1, 1);
+        guiGraphics.blitSprite(HOLOGRAM_SPRITE, m, 64, 236, 143);
         guiGraphics.blit(HOLOGRAM_SCREEN, m, 35, 0, 78, 236, 33);
         guiGraphics.blit(HOLOGRAM_SCREEN, m + 11, 76, 244, 2, 12, 12);
     }
@@ -137,7 +139,7 @@ public class HologramScreen extends Screen {
         if (this.minecraft == null) return;
 
         var leftPos = (this.width - 236) / 2;
-        this.renderBackground(guiGraphics);
+        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         guiGraphics.drawCenteredString(this.minecraft.font, this.pageTitle, leftPos + 119, 40, DyeColor.WHITE.getTextColor());
         this.searchBox.render(guiGraphics, mouseX, mouseY, partialTick);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
@@ -149,8 +151,8 @@ public class HologramScreen extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-        return this.callData.mouseScrolled(mouseX, mouseY, delta) || super.mouseScrolled(mouseX, mouseY, delta);
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        return this.callData.mouseScrolled(mouseX, mouseY, scrollX, scrollY) || super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
 
     public void hologramData(List<CallData.Call> playerCalls) {
@@ -178,7 +180,8 @@ public class HologramScreen extends Screen {
         if (!this.callData.getCallMembers().isEmpty()) {
             var caller = this.getCaller();
             if (caller != null) {
-                Network.CHANNEL.sendToServer(new HoloCallPacket(HoloCallPacket.Type.CREATE, UUID.randomUUID(), this.lockButton.getType() == LockButton.Type.LOCK, false, new BlockPos(0, 0, 0), ListUtil.append(getCaller(), this.callData.getCallMembers())));
+                NetworkManager.sendToServer(new HoloCallPacket(PacketCallType.CREATE, UUID.randomUUID(), this.lockButton.getType() == LockButton.Type.LOCK, false, new BlockPos(0, 0, 0), 
+                        ListUtil.append(getCaller(), this.callData.getCallMembers())));
                 Minecraft.getInstance().setScreen(null);
             }
         }
@@ -188,18 +191,18 @@ public class HologramScreen extends Screen {
     public void joinCall(UUID callId) {
         var caller = this.getCaller();
         if (caller != null) {
-            Network.CHANNEL.sendToServer(new HoloCallPacket(HoloCallPacket.Type.CONNECT, callId, false, false, new BlockPos(0, 0, 0), List.of(getCaller())));
+            NetworkManager.sendToServer(new HoloCallPacket(PacketCallType.CONNECT, callId, false, false, new BlockPos(0, 0, 0), List.of(getCaller())));
             Minecraft.getInstance().setScreen(null);
         }
     }
 
     public void leaveCall(UUID callId) {
         var caller = this.getCaller();
-        if (caller != null) Network.CHANNEL.sendToServer(new HoloCallPacket(HoloCallPacket.Type.LEAVE, callId, false, false, new BlockPos(0, 0, 0), List.of(caller)));
+        if (caller != null) NetworkManager.sendToServer(new HoloCallPacket(PacketCallType.LEAVE, callId, false, false, new BlockPos(0, 0, 0), List.of(caller)));
     }
 
     public @Nullable CallData.Callee getCaller() {
-        var uuid = this.stack == null ? null : HologramTag.getOrCreate(this.stack).getReceiverID();
+        var uuid = this.stack == null ? null : HologramComponent.getOrCreate(this.stack).receiverID();
         if (this.minecraft == null || this.minecraft.player == null || this.minecraft.level == null) return new CallData.Callee(UUID.randomUUID());
         if (uuid != null) return new CallData.Callee(this.minecraft.player.getUUID(), true, CallData.ReceiverType.ITEM, uuid);
         return new CallData.Callee(this.minecraft.player.getUUID(), true, CallData.ReceiverType.BLOCK, this.minecraft.level.getBlockEntity(holoPos, ModBlockEntities.HOLO_PROJECTOR.get()).get().getReceiverUUID());

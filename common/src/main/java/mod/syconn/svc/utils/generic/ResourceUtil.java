@@ -65,7 +65,7 @@ public class ResourceUtil {
     }
 
     public static void registerSkin(String id, NativeImage skin) {
-        SKINS.computeIfAbsent(new ResourceLocation("skins/" + id), p -> skin);
+        SKINS.computeIfAbsent(ResourceLocation.parse("skins/" + id), p -> skin);
     }
 
     public static PlayerInfo getPlayerInfoFromName(String name) {

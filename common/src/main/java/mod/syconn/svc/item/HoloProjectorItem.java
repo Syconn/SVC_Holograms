@@ -7,7 +7,7 @@ import mod.syconn.svc.blocks.HoloProjectorBlock;
 import mod.syconn.svc.client.ClientHooks;
 import mod.syconn.svc.core.ModItems;
 import mod.syconn.svc.utils.interfaces.IItemExtensions;
-import mod.syconn.svc.utils.item.HologramTag;
+import mod.syconn.svc.utils.item.HologramComponent;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
@@ -43,6 +43,6 @@ public class HoloProjectorItem extends BlockItem implements IItemExtensions {
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
         var held = entity instanceof LivingEntity le && (le.getItemInHand(InteractionHand.OFF_HAND).equals(stack) || le.getItemInHand(InteractionHand.MAIN_HAND).equals(stack));
-        if (!level.isClientSide && entity instanceof Player p) HologramTag.update(stack, tag -> tag.serverHandling(p, held));
+        if (!level.isClientSide && entity instanceof Player p) HologramComponent.serverHandling(p, held, stack);
     }
 }

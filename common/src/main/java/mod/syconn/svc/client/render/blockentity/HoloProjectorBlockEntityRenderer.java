@@ -5,7 +5,6 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import dev.architectury.utils.GameInstance;
 import mod.syconn.svc.blockentity.HoloProjectorBlockEntity;
-import mod.syconn.svc.client.ClientRenderSystem;
 import mod.syconn.svc.utils.Constants;
 import mod.syconn.svc.utils.client.HologramData;
 import mod.syconn.svc.utils.client.ParticleEvent;
@@ -168,7 +167,7 @@ public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<Hol
     }
 
     private void vertex(VertexConsumer vc, Matrix4f mat, float x, float y, float u, float v, int r, int g, int b, float alpha) {
-        vc.vertex(mat, x, y, (float) 0).color(r, g, b, (int) (alpha * 255)).uv(u, v).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(0xF000F0).normal(0, 1, 0).endVertex();
+        vc.addVertex(mat, x, y, (float) 0).setColor(r, g, b, (int) (alpha * 255)).setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(0xF000F0).setNormal(0, 1, 0);
     }
 
     private float noise(float time, float seed) {

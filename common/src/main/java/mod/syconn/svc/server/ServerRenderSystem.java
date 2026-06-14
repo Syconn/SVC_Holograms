@@ -1,8 +1,10 @@
 package mod.syconn.svc.server;
 
+import dev.architectury.networking.NetworkManager;
 import mod.syconn.svc.network.Network;
 import mod.syconn.svc.network.packets.client.RenderTargetPacket;
 import mod.syconn.svc.server.savedData.HologramNetwork;
+import mod.syconn.svc.utils.entity.RenderTargetInfo;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -13,7 +15,7 @@ public class ServerRenderSystem {
     private static ServerRenderSystem INSTANCE;
 
     private void sendPayload(@NotNull ServerPlayer player, @NotNull Entity target) {
-        Network.CHANNEL.sendToPlayer(player, new RenderTargetPacket(target));
+        NetworkManager.sendToPlayer(player, new RenderTargetPacket(new RenderTargetInfo(target)));
     }
 
     private void sendPayloads(MinecraftServer server) {

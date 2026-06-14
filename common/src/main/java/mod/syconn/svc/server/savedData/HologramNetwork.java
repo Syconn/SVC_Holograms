@@ -1,13 +1,17 @@
 package mod.syconn.svc.server.savedData;
 
+import dev.architectury.networking.NetworkManager;
 import dev.architectury.utils.GameInstance;
 import mod.syconn.svc.network.Network;
 import mod.syconn.svc.network.packets.client.UpdateProjectorCachePacket;
 import mod.syconn.svc.server.savedData.extra.CallData;
 import mod.syconn.svc.utils.block.WorldPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.raid.Raids;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -105,12 +109,12 @@ public class HologramNetwork extends SavedData {
         this.manager.validateCallLog();
         this.manager.validateReceivers();
         var server = GameInstance.getServer();
-        if (server != null) server.overworld().getPlayers(LivingEntity::isAlive).forEach(serverPlayer -> Network.CHANNEL.sendToPlayer(serverPlayer, new UpdateProjectorCachePacket(this.getDebugData())));
+        if (server != null) server.overworld().getPlayers(LivingEntity::isAlive).forEach(serverPlayer -> NetworkManager.sendToPlayer(serverPlayer, new UpdateProjectorCachePacket(this.getDebugData())));
         super.setDirty();
     }
 
     @Override
-    public @NotNull CompoundTag save(CompoundTag compoundTag) {
+    public @NotNull CompoundTag save(CompoundTag compoundTag, HolderLookup.Provider registries) {
         compoundTag.put("manager", manager.save());
         return compoundTag;
     }
@@ -119,17 +123,17 @@ public class HologramNetwork extends SavedData {
         manager.read(tag.getCompound("manager"));
     }
 
-    public static HologramNetwork load(CompoundTag tag) {
-        var network = create();
+    public static HologramNetwork load(CompoundTag tag, HolderLookup.Provider registries) {
+        var network = new HologramNetwork();
         network.read(tag);
         return network;
     }
 
-    private static HologramNetwork create() {
-        return new HologramNetwork();
+    public static SavedData.Factory<HologramNetwork> factory() {
+        return new SavedData.Factory<>(HologramNetwork::new, HologramNetwork::load, DataFixTypes.SAVED_DATA_FORCED_CHUNKS);
     }
 
     public static HologramNetwork get(ServerLevel server) {
-        return server.getServer().overworld().getDataStorage().computeIfAbsent(HologramNetwork::load, HologramNetwork::create, tagID);
+        return server.getServer().overworld().getDataStorage().computeIfAbsent(factory(), tagID);
     }
 }

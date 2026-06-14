@@ -3,44 +3,35 @@ package mod.syconn.svc.network.packets.server;
 import dev.architectury.networking.NetworkManager;
 import mod.syconn.svc.core.ModBlockEntities;
 import mod.syconn.svc.item.HoloProjectorItem;
-import mod.syconn.svc.utils.item.HologramTag;
+import mod.syconn.svc.utils.Constants;
+import mod.syconn.svc.utils.item.HologramComponent;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.InteractionHand;
 
-import java.util.function.Supplier;
+public record RenderHoloPlayerPacket(BlockPos pos, boolean itemMode, String name) implements CustomPacketPayload {
 
-public class RenderHoloPlayerPacket {
+    public static final CustomPacketPayload.Type<RenderHoloPlayerPacket> TYPE = new CustomPacketPayload.Type<>(Constants.withId("render_holo_player_packet"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, RenderHoloPlayerPacket> STREAM_CODEC = StreamCodec.composite(BlockPos.STREAM_CODEC, RenderHoloPlayerPacket::pos, ByteBufCodecs.BOOL,
+            RenderHoloPlayerPacket::itemMode, ByteBufCodecs.STRING_UTF8, RenderHoloPlayerPacket::name, RenderHoloPlayerPacket::new);
 
-    private final BlockPos pos;
-    private final boolean itemMode;
-    private final String name;
 
-    public RenderHoloPlayerPacket(BlockPos pos, boolean itemMode, String name) {
-        this.pos = pos;
-        this.itemMode = itemMode;
-        this.name = name;
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 
-    public RenderHoloPlayerPacket(FriendlyByteBuf buf) {
-        this.pos = buf.readBlockPos();
-        this.itemMode = buf.readBoolean();
-        this.name = buf.readUtf();
-    }
-
-    public void encode(FriendlyByteBuf buf) {
-        buf.writeBlockPos(this.pos);
-        buf.writeBoolean(this.itemMode);
-        buf.writeUtf(this.name);
-    }
-
-    public void apply(Supplier<NetworkManager.PacketContext> context) {
-        context.get().queue(() -> {
-            if (!this.itemMode) context.get().getPlayer().level().getBlockEntity(this.pos, ModBlockEntities.HOLO_PROJECTOR.get()).ifPresent(be -> be.setSoloRender(this.name, context.get().getPlayer().position()));
+    public static void handle(RenderHoloPlayerPacket packet, NetworkManager.PacketContext context) {
+        context.queue(() -> {
+            var player = context.getPlayer();
+            if (!packet.itemMode) player.level().getBlockEntity(packet.pos(), ModBlockEntities.HOLO_PROJECTOR.get()).ifPresent(be -> be.setSoloRender(packet.name(), player.position()));
             else {
-                var stack = context.get().getPlayer().getItemInHand(InteractionHand.OFF_HAND);
-                if (context.get().getPlayer().getItemInHand(InteractionHand.MAIN_HAND).getItem() instanceof HoloProjectorItem) stack = context.get().getPlayer().getItemInHand(InteractionHand.MAIN_HAND);
-                HologramTag.update(stack, tag -> tag.setSoloRender(this.name));
+                var stack = player.getItemInHand(InteractionHand.OFF_HAND);
+                if (player.getItemInHand(InteractionHand.MAIN_HAND).getItem() instanceof HoloProjectorItem) stack = player.getItemInHand(InteractionHand.MAIN_HAND);
+                HologramComponent.update(stack, component -> new HologramComponent(component.receiverID(), component.renderTarget(), packet.name()));
             }
         });
     }

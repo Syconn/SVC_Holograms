@@ -3,6 +3,8 @@ package mod.syconn.svc.utils.entity;
 import mod.syconn.svc.client.ClientRenderSystem;
 import mod.syconn.svc.utils.interfaces.IExtraRenderInfo;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.Vec3;
@@ -13,6 +15,8 @@ import java.util.UUID;
 
 /** Inspired by RenderDistantPlayers Mod **/
 public class RenderTargetInfo {
+
+//    public static final StreamCodec<RegistryFriendlyByteBuf, RenderTargetInfo> STREAM_CODEC = StreamCodec.of((buf, value) -> value.encode(buf), RenderTargetInfo::new);
 
     private final UUID uuid;
     private final String entityTypeId;

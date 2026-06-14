@@ -10,6 +10,6 @@ public class Constants {
     public static final RandomSource RANDOM = RandomSource.createNewThreadLocalInstance();
 
     public static ResourceLocation withId(String s) {
-        return new ResourceLocation(MOD, s);
+        return ResourceLocation.fromNamespaceAndPath(MOD, s);
     }
 }

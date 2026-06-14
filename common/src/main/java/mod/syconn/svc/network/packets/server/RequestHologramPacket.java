@@ -1,28 +1,27 @@
 package mod.syconn.svc.network.packets.server;
 
 import dev.architectury.networking.NetworkManager;
-import mod.syconn.svc.network.Network;
 import mod.syconn.svc.network.packets.client.RequestedHologramPacket;
 import mod.syconn.svc.server.savedData.HologramNetwork;
 import mod.syconn.svc.server.savedData.extra.CallData;
+import mod.syconn.svc.utils.Constants;
 import mod.syconn.svc.utils.generic.NBTUtil;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
 
-import java.util.function.Supplier;
+public record RequestHologramPacket() implements CustomPacketPayload {
 
-public class RequestHologramPacket {
+    public static final CustomPacketPayload.Type<RequestHologramPacket> TYPE = new CustomPacketPayload.Type<>(Constants.withId("request_hologram_packet"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, RequestHologramPacket> STREAM_CODEC = StreamCodec.unit(new RequestHologramPacket());
 
-    public RequestHologramPacket() { }
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
+    }
 
-    public RequestHologramPacket(FriendlyByteBuf buf) { }
-
-    public void encode(FriendlyByteBuf buf) { }
-
-    public void apply(Supplier<NetworkManager.PacketContext> context) {
-        context.get().queue(() -> {
-            if (context.get().getPlayer() instanceof ServerPlayer sp)
-                Network.CHANNEL.sendToPlayer(sp, new RequestedHologramPacket(NBTUtil.putList(HologramNetwork.get(sp.server.overworld()).getCallsForPlayer(sp.getUUID()), CallData.Call::save)));
-        });
+    public static void handle(RequestHologramPacket packet, NetworkManager.PacketContext context) {
+        context.queue(() -> { if (context.getPlayer() instanceof ServerPlayer sp) NetworkManager.sendToPlayer(sp, new RequestedHologramPacket(NBTUtil.putList(HologramNetwork.get(sp.server.overworld()).getCallsForPlayer(sp.getUUID()), CallData.Call::save))); });
     }
 }

@@ -1,6 +1,7 @@
 package mod.syconn.svc.blockentity;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -15,14 +16,13 @@ public abstract class SyncedBlockEntity extends BlockEntity {
     }
 
     @Override
-    @NotNull
-    public CompoundTag getUpdateTag() {
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         CompoundTag compoundTag = new CompoundTag();
-        this.saveSyncData(compoundTag);
+        this.saveSyncData(compoundTag, registries);
         return compoundTag;
     }
 
-    protected abstract void saveSyncData(CompoundTag tag);
+    protected abstract void saveSyncData(CompoundTag tag, HolderLookup.Provider registries);
 
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {

@@ -1,5 +1,6 @@
 package mod.syconn.svc.blocks;
 
+import com.mojang.serialization.MapCodec;
 import dev.architectury.utils.Env;
 import dev.architectury.utils.EnvExecutor;
 import dev.architectury.utils.GameInstance;
@@ -42,12 +43,18 @@ import org.joml.Vector3f;
 
 import java.util.UUID;
 
-@SuppressWarnings("deprecation")
 public class HoloProjectorBlock extends FaceAttachedHorizontalDirectionalBlock implements IEntityBlock {
+
+    public static final MapCodec<HoloProjectorBlock> CODEC = simpleCodec(prop -> new HoloProjectorBlock());
 
     public HoloProjectorBlock() {
         super(Properties.of().noCollission().strength(0.5F));
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(FACE, AttachFace.WALL));
+    }
+
+    @Override
+    protected MapCodec<? extends FaceAttachedHorizontalDirectionalBlock> codec() {
+        return CODEC;
     }
 
     @Override
@@ -98,9 +105,9 @@ public class HoloProjectorBlock extends FaceAttachedHorizontalDirectionalBlock i
     }
 
     @Override
-    public @NotNull InteractionResult use(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit) {
-        if (pLevel.isClientSide) {
-            EnvExecutor.runInEnv(Env.CLIENT, () -> () -> GameInstance.getClient().setScreen(ClientHooks.createHologramScreen(pPos, null)));
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        if (level.isClientSide) {
+            EnvExecutor.runInEnv(Env.CLIENT, () -> () -> GameInstance.getClient().setScreen(ClientHooks.createHologramScreen(pos, null)));
             return InteractionResult.SUCCESS;
         }
         return InteractionResult.PASS;
