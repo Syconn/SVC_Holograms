@@ -12,7 +12,6 @@
     "client.ItemRendererAccessor",
     "client.ItemRendererInvoker",
     "client.ItemRendererMixin",
-    "client.LevelRendererMixin"
   ],
   "mixins": [
     "EntityAccess",
