@@ -9,7 +9,6 @@ import mod.syconn.svc.client.sounds.ItemHoloProjectorSoundInstance;
 import mod.syconn.svc.core.ModBlockEntities;
 import mod.syconn.svc.core.ModSounds;
 import mod.syconn.svc.item.HoloProjectorItem;
-import mod.syconn.svc.mixin.client.MinecraftAccessor;
 import mod.syconn.svc.utils.interfaces.IModifiedItemRenderer;
 import mod.syconn.svc.utils.interfaces.IModifiedPoseRenderer;
 import mod.syconn.svc.utils.item.HologramComponent;
@@ -83,7 +82,6 @@ public class SVCClient {
 
     public static float getTickDelta() {
         var mc = Minecraft.getInstance();
-        if (mc.isPaused()) return ((MinecraftAccessor)mc).getPausedTickDelta();
         return mc.getFrameTimeNs();
     }
 }

@@ -5,6 +5,7 @@ import mod.syconn.svc.mixin.LivingEntityAccess;
 import mod.syconn.svc.utils.entity.HologramPlayer;
 import mod.syconn.svc.utils.interfaces.IExtraRenderInfo;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -77,9 +78,9 @@ public class LivingEntityExtraRenderInfo implements IExtraRenderInfo {
     }
 
     @Override
-    public void getInfoClientSide(FriendlyByteBuf buffer) {
-        this.mainHand = buffer.readItem();
-        this.offHand = buffer.readItem();
+    public void getInfoClientSide(RegistryFriendlyByteBuf buffer) {
+        this.mainHand = ItemStack.STREAM_CODEC.decode(buffer);
+        this.offHand = ItemStack.STREAM_CODEC.decode(buffer);
         this.fallFlying = buffer.readBoolean();
         this.pose = buffer.readEnum(Pose.class);
         this.yBodyRot = buffer.readFloat();
@@ -93,9 +94,9 @@ public class LivingEntityExtraRenderInfo implements IExtraRenderInfo {
     }
 
     @Override
-    public void encodeInfoServerSide(FriendlyByteBuf buffer) {
-        buffer.writeItem(this.mainHand);
-        buffer.writeItem(this.offHand);
+    public void encodeInfoServerSide(RegistryFriendlyByteBuf buffer) {
+        ItemStack.STREAM_CODEC.encode(buffer, this.mainHand);
+        ItemStack.STREAM_CODEC.encode(buffer, this.offHand);
         buffer.writeBoolean(this.fallFlying);
         buffer.writeEnum(this.pose);
         buffer.writeFloat(this.yBodyRot);

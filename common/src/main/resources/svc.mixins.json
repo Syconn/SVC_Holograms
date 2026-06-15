@@ -12,8 +12,7 @@
     "client.ItemRendererAccessor",
     "client.ItemRendererInvoker",
     "client.ItemRendererMixin",
-    "client.LevelRendererMixin",
-    "client.MinecraftAccessor"
+    "client.LevelRendererMixin"
   ],
   "mixins": [
     "EntityAccess",

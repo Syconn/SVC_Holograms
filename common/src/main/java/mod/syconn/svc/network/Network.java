@@ -8,6 +8,7 @@ import mod.syconn.svc.network.packets.client.RenderTargetPacket;
 import mod.syconn.svc.network.packets.client.RequestedHologramPacket;
 import mod.syconn.svc.network.packets.client.UpdateProjectorCachePacket;
 import mod.syconn.svc.network.packets.server.HoloCallPacket;
+import mod.syconn.svc.network.packets.server.RenderHoloPlayerPacket;
 import mod.syconn.svc.network.packets.server.RequestHologramPacket;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -24,7 +25,7 @@ public class Network { // TODO LET HELL BREAK LOSE
 
         // S2C Packets
         registerS2CPacket(RequestHologramPacket.TYPE, RequestHologramPacket.STREAM_CODEC, RequestHologramPacket::handle);
-        registerS2CPacket(HoloCallPacket.TYPE, HoloCallPacket.STREAM_CODEC, HoloCallPacket::handle);
+        registerS2CPacket(RenderHoloPlayerPacket.TYPE, RenderHoloPlayerPacket.STREAM_CODEC, RenderHoloPlayerPacket::handle);
         registerS2CPacket(HoloCallPacket.TYPE, HoloCallPacket.STREAM_CODEC, HoloCallPacket::handle);
     }
 

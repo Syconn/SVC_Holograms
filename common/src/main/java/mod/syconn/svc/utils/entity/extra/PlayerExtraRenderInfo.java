@@ -2,6 +2,7 @@ package mod.syconn.svc.utils.entity.extra;
 
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -29,19 +30,19 @@ public class PlayerExtraRenderInfo extends LivingEntityExtraRenderInfo {
     }
 
     @Override
-    public void getInfoClientSide(FriendlyByteBuf buffer) {
+    public void getInfoClientSide(RegistryFriendlyByteBuf buffer) {
         super.getInfoClientSide(buffer);
         int armorCount = buffer.readInt();
         for (int i = 0; i < armorCount; i++) {
-            ItemStack stack = buffer.readItem();
+            ItemStack stack = ItemStack.STREAM_CODEC.decode(buffer);
             armor.set(i, stack);
         }
     }
 
     @Override
-    public void encodeInfoServerSide(FriendlyByteBuf buffer) {
+    public void encodeInfoServerSide(RegistryFriendlyByteBuf buffer) {
         super.encodeInfoServerSide(buffer);
         buffer.writeInt(armor.size());
-        for (ItemStack stack : armor) buffer.writeItem(stack);
+        for (ItemStack stack : armor) ItemStack.STREAM_CODEC.encode(buffer, stack);
     }
 }

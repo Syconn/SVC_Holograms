@@ -2,7 +2,6 @@ package mod.syconn.svc.utils.entity;
 
 import mod.syconn.svc.client.ClientRenderSystem;
 import mod.syconn.svc.utils.interfaces.IExtraRenderInfo;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.entity.Entity;
@@ -13,10 +12,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
-/** Inspired by RenderDistantPlayers Mod **/
+/**
+ * Inspired by RenderDistantPlayers Mod
+ **/
 public class RenderTargetInfo {
 
-//    public static final StreamCodec<RegistryFriendlyByteBuf, RenderTargetInfo> STREAM_CODEC = StreamCodec.of((buf, value) -> value.encode(buf), RenderTargetInfo::new);
+    public static final StreamCodec<RegistryFriendlyByteBuf, RenderTargetInfo> STREAM_CODEC = StreamCodec.of((buf, value) -> value.encode(buf), RenderTargetInfo::new);
 
     private final UUID uuid;
     private final String entityTypeId;
@@ -24,8 +25,10 @@ public class RenderTargetInfo {
     private Vec3 pos;
     private float xRot, yRot;
     private long lastUpdateTime = System.currentTimeMillis();
-    @Nullable private Entity entity;
-    @Nullable private IExtraRenderInfo extraInfo;
+    @Nullable
+    private Entity entity;
+    @Nullable
+    private IExtraRenderInfo extraInfo;
     private String prevExtraInfoId = "";
     private int age = 0;
 
@@ -40,7 +43,7 @@ public class RenderTargetInfo {
         if (extraInfo != null) extraInfo.getInfoServerSide(target);
     }
 
-    public RenderTargetInfo(FriendlyByteBuf buffer) {
+    public RenderTargetInfo(RegistryFriendlyByteBuf buffer) {
         uuid = buffer.readUUID();
         name = buffer.readUtf();
         var px = buffer.readFloat();
@@ -52,6 +55,18 @@ public class RenderTargetInfo {
         entityTypeId = buffer.readUtf();
         updateExtraInfo();
         if (extraInfo != null) extraInfo.getInfoClientSide(buffer);
+    }
+
+    public void encode(RegistryFriendlyByteBuf buffer) {
+        buffer.writeUUID(uuid);
+        buffer.writeUtf(name);
+        buffer.writeFloat((float) pos.x);
+        buffer.writeFloat((float) pos.y);
+        buffer.writeFloat((float) pos.z);
+        buffer.writeFloat(xRot);
+        buffer.writeFloat(yRot);
+        buffer.writeUtf(entityTypeId);
+        if (extraInfo != null) extraInfo.encodeInfoServerSide(buffer);
     }
 
     public void tickFakeEntity(@NotNull Entity entity) {
@@ -104,19 +119,7 @@ public class RenderTargetInfo {
         }
     }
 
-    public void encode(FriendlyByteBuf buffer) {
-        buffer.writeUUID(uuid);
-        buffer.writeUtf(name);
-        buffer.writeFloat((float)pos.x);
-        buffer.writeFloat((float)pos.y);
-        buffer.writeFloat((float)pos.z);
-        buffer.writeFloat(xRot);
-        buffer.writeFloat(yRot);
-        buffer.writeUtf(entityTypeId);
-        if (extraInfo != null) extraInfo.encodeInfoServerSide(buffer);
-    }
-
-    public long getLastUpdateTime(){
+    public long getLastUpdateTime() {
         return lastUpdateTime;
     }
 
@@ -151,6 +154,6 @@ public class RenderTargetInfo {
 
     @Override
     public String toString() {
-        return "RenderTargetInfo:"+name+":"+entityTypeId;
+        return "RenderTargetInfo:" + name + ":" + entityTypeId;
     }
 }
