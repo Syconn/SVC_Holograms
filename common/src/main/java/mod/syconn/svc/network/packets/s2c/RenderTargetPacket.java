@@ -1,4 +1,4 @@
-package mod.syconn.svc.network.packets.client;
+package mod.syconn.svc.network.packets.s2c;
 
 import dev.architectury.networking.NetworkManager;
 import mod.syconn.svc.client.ClientRenderSystem;

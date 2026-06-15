@@ -1,4 +1,4 @@
-package mod.syconn.svc.network.packets.server;
+package mod.syconn.svc.network.packets.c2s;
 
 import dev.architectury.networking.NetworkManager;
 import mod.syconn.svc.core.ModBlockEntities;

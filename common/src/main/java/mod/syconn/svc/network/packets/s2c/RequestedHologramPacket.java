@@ -1,4 +1,4 @@
-package mod.syconn.svc.network.packets.client;
+package mod.syconn.svc.network.packets.s2c;
 
 import dev.architectury.networking.NetworkManager;
 import dev.architectury.utils.GameInstance;
@@ -12,9 +12,6 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
-
-import java.util.function.Supplier;
 
 public record RequestedHologramPacket(CompoundTag tag) implements CustomPacketPayload {
 
@@ -24,10 +21,6 @@ public record RequestedHologramPacket(CompoundTag tag) implements CustomPacketPa
     @Override
     public Type<? extends CustomPacketPayload> type() {
         return null;
-    }
-
-    public void encode(FriendlyByteBuf buf) {
-        buf.writeNbt(this.tag);
     }
 
     public static void handle(RequestedHologramPacket packet, NetworkManager.PacketContext context) {

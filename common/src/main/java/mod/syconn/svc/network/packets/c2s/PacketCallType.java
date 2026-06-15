@@ -1,4 +1,4 @@
-package mod.syconn.svc.network.packets.server;
+package mod.syconn.svc.network.packets.c2s;
 
 public enum PacketCallType {
     CREATE,

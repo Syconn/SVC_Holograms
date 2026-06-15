@@ -1,7 +1,7 @@
-package mod.syconn.svc.network.packets.server;
+package mod.syconn.svc.network.packets.c2s;
 
 import dev.architectury.networking.NetworkManager;
-import mod.syconn.svc.network.packets.client.RequestedHologramPacket;
+import mod.syconn.svc.network.packets.s2c.RequestedHologramPacket;
 import mod.syconn.svc.server.savedData.HologramNetwork;
 import mod.syconn.svc.server.savedData.extra.CallData;
 import mod.syconn.svc.utils.Constants;

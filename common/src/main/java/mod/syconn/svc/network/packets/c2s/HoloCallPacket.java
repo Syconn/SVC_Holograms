@@ -1,4 +1,4 @@
-package mod.syconn.svc.network.packets.server;
+package mod.syconn.svc.network.packets.c2s;
 
 import dev.architectury.networking.NetworkManager;
 import mod.syconn.svc.blockentity.HoloProjectorBlockEntity;
@@ -13,6 +13,7 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,7 @@ public record HoloCallPacket(PacketCallType callType, UUID id, boolean secure, b
             HoloCallPacket::callees, HoloCallPacket::new);
 
     @Override
-    public Type<? extends CustomPacketPayload> type() {
+    public @NotNull Type<? extends CustomPacketPayload> type() {
         return TYPE;
     }
 

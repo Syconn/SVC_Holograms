@@ -1,8 +1,7 @@
 package mod.syconn.svc.server;
 
 import dev.architectury.networking.NetworkManager;
-import mod.syconn.svc.network.Network;
-import mod.syconn.svc.network.packets.client.RenderTargetPacket;
+import mod.syconn.svc.network.packets.s2c.RenderTargetPacket;
 import mod.syconn.svc.server.savedData.HologramNetwork;
 import mod.syconn.svc.utils.entity.RenderTargetInfo;
 import net.minecraft.server.MinecraftServer;
