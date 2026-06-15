@@ -29,7 +29,7 @@ import java.util.UUID;
 import static mod.syconn.svc.utils.generic.ResourceUtil.getPlayerInfoFromName;
 
 @Environment(EnvType.CLIENT)
-public class HologramData {
+public class HologramData { // TODO CURRENTLY PLAYER SEARCH DOES NOT WORK
 
     public static final byte TRANSITION_TICKS = 16;
     private final int textureHeight = 64;
@@ -114,10 +114,12 @@ public class HologramData {
 
         final var level = Minecraft.getInstance().level;
         final var playerInfo = getPlayerInfoFromName(name);
+        System.out.println(playerInfo.getSkin().model());
+
         this.playerID = null;
         this.renderName = name;
         this.staticRender = true;
-        this.renderer = new HologramRenderer(this, ResourceUtil.getModel(name));
+        this.renderer = new HologramRenderer(this, playerInfo.getSkin().model().equals(PlayerSkin.Model.SLIM));
         this.player = level == null ? null : new AbstractClientPlayer(level, playerInfo.getProfile()) {};
         this.skin = DefaultPlayerSkin.getDefaultTexture();
         this.skinPath = this.skin;
