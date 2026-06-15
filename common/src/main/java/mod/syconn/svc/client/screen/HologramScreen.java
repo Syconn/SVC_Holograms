@@ -9,6 +9,7 @@ import mod.syconn.svc.network.packets.server.HoloCallPacket;
 import mod.syconn.svc.network.packets.server.PacketCallType;
 import mod.syconn.svc.server.savedData.extra.CallData;
 import mod.syconn.svc.utils.Constants;
+import mod.syconn.svc.utils.generic.GraphicsUtil;
 import mod.syconn.svc.utils.generic.ListUtil;
 import mod.syconn.svc.utils.item.HologramComponent;
 import net.fabricmc.api.EnvType;
@@ -31,7 +32,6 @@ import java.util.UUID;
 
 public class HologramScreen extends Screen {
 
-    private static final ResourceLocation HOLOGRAM_SPRITE = Constants.withId("hologram_screen.png");
     private static final ResourceLocation HOLOGRAM_SCREEN = Constants.withId("textures/gui/hologram_screen.png");
     private final @Nullable BlockPos holoPos;
     private final @Nullable ItemStack stack;
@@ -125,11 +125,12 @@ public class HologramScreen extends Screen {
     }
 
     @Override
-    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) { // TODO SocialInteractionsScreen
-        super.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        this.renderMenuBackground(guiGraphics);
+        this.renderBlurredBackground(partialTick);
 
         var m = this.marginX() + 3;
-        guiGraphics.blitSprite(HOLOGRAM_SPRITE, m, 64, 236, 143);
+        GraphicsUtil.blitNineSliced(guiGraphics, HOLOGRAM_SCREEN, m, 64, 236, 143, 8, 236, 34, 1, 1);
         guiGraphics.blit(HOLOGRAM_SCREEN, m, 35, 0, 78, 236, 33);
         guiGraphics.blit(HOLOGRAM_SCREEN, m + 11, 76, 244, 2, 12, 12);
     }
@@ -137,12 +138,11 @@ public class HologramScreen extends Screen {
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         if (this.minecraft == null) return;
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
 
         var leftPos = (this.width - 236) / 2;
-        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         guiGraphics.drawCenteredString(this.minecraft.font, this.pageTitle, leftPos + 119, 40, DyeColor.WHITE.getTextColor());
         this.searchBox.render(guiGraphics, mouseX, mouseY, partialTick);
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
 
     @Override
