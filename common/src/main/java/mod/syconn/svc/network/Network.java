@@ -6,7 +6,6 @@ import dev.architectury.utils.Env;
 import mod.syconn.svc.network.packets.client.MessagePlayerPacket;
 import mod.syconn.svc.network.packets.client.RenderTargetPacket;
 import mod.syconn.svc.network.packets.client.RequestedHologramPacket;
-import mod.syconn.svc.network.packets.client.UpdateProjectorCachePacket;
 import mod.syconn.svc.network.packets.server.HoloCallPacket;
 import mod.syconn.svc.network.packets.server.RenderHoloPlayerPacket;
 import mod.syconn.svc.network.packets.server.RequestHologramPacket;
@@ -21,7 +20,6 @@ public class Network { // TODO LET HELL BREAK LOSE
         NetworkManager.registerReceiver(NetworkManager.c2s(), RequestedHologramPacket.TYPE, RequestedHologramPacket.STREAM_CODEC, RequestedHologramPacket::handle);
         NetworkManager.registerReceiver(NetworkManager.c2s(), MessagePlayerPacket.TYPE, MessagePlayerPacket.STREAM_CODEC, MessagePlayerPacket::handle);
         NetworkManager.registerReceiver(NetworkManager.c2s(), RenderTargetPacket.TYPE, RenderTargetPacket.STREAM_CODEC, RenderTargetPacket::handle);
-        NetworkManager.registerReceiver(NetworkManager.c2s(), UpdateProjectorCachePacket.TYPE, UpdateProjectorCachePacket.STREAM_CODEC, UpdateProjectorCachePacket::handle);
 
         // S2C Packets
         registerS2CPacket(RequestHologramPacket.TYPE, RequestHologramPacket.STREAM_CODEC, RequestHologramPacket::handle);
