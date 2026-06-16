@@ -9,6 +9,7 @@ import mod.syconn.svc.client.sounds.ItemHoloProjectorSoundInstance;
 import mod.syconn.svc.core.ModBlockEntities;
 import mod.syconn.svc.core.ModSounds;
 import mod.syconn.svc.item.HoloProjectorItem;
+import mod.syconn.svc.utils.generic.ResourceUtil;
 import mod.syconn.svc.utils.interfaces.IModifiedItemRenderer;
 import mod.syconn.svc.utils.interfaces.IModifiedPoseRenderer;
 import mod.syconn.svc.utils.item.HologramComponent;

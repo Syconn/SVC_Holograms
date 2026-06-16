@@ -1,5 +1,6 @@
 package mod.syconn.svc.client.screen.components;
 
+import com.mojang.authlib.GameProfile;
 import dev.architectury.networking.NetworkManager;
 import mod.syconn.svc.blockentity.HoloProjectorBlockEntity;
 import mod.syconn.svc.client.screen.HologramScreen;
@@ -23,6 +24,8 @@ import net.minecraft.client.gui.components.PlayerFaceRenderer;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.client.resources.DefaultPlayerSkin;
+import net.minecraft.client.resources.PlayerSkin;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -88,20 +91,19 @@ public class CallMenuWidget implements IWidgetComponent {
 
     private void toggled(ToggleButton button, int i) {
         var player = this.shownCreateCallPlayers.get(this.scroll + i);
-        this.shownCreateCallPlayers.set(this.scroll + i, new MenuData(player.info, player.callID, List.of(), !button.active(), player.locked));
+        this.shownCreateCallPlayers.set(this.scroll + i, new MenuData(player.profile, player.callID, List.of(), !button.active(), player.locked));
     }
 
     private void callHandheldPressed(int i) {
         var caller = this.screen.getCaller();
         if (caller != null) {
-            NetworkManager.sendToServer(new HoloCallPacket(PacketCallType.CREATE, UUID.randomUUID(), true, false, new BlockPos(0, 0, 0), List.of(caller, new CallData.Callee(this.shownCreateCallPlayers.get(this.scroll + i).info.getProfile().getId()))));
+            NetworkManager.sendToServer(new HoloCallPacket(PacketCallType.CREATE, UUID.randomUUID(), true, false, new BlockPos(0, 0, 0), List.of(caller, new CallData.Callee(this.shownCreateCallPlayers.get(this.scroll + i).profile.getId()))));
             Minecraft.getInstance().setScreen(null);
         }
     }
 
     public void searchForPlayer() {
-        if (!Objects.equals(this.screen.searchBox.getValue(), "")) ResourceUtil.getPlayerInfoFromName(this.screen.searchBox.getValue());
-        this.refresh();
+        if (!Objects.equals(this.screen.searchBox.getValue(), "")) ResourceUtil.loadGameProfile(this.screen.searchBox.getValue(), this::refresh);
     }
 
     private void callPressed(CallButton button, int i) {
@@ -113,7 +115,7 @@ public class CallMenuWidget implements IWidgetComponent {
     }
 
     private void checkButton(CheckButton button, int i) {
-        var name = this.shownSearchedPlayer.get(this.scroll + i).info.getProfile().getName();
+        var name = this.shownSearchedPlayer.get(this.scroll + i).profile.getName();
         var caller = this.screen.getCaller();
         var pos = this.screen.getHoloPos() == null ? new BlockPos(0, 0, 0) : this.screen.getHoloPos();
         if (caller != null) NetworkManager.sendToServer(new HoloCallPacket(PacketCallType.LEAVE, UUID.randomUUID(), false, true, pos, List.of(caller)));
@@ -128,16 +130,19 @@ public class CallMenuWidget implements IWidgetComponent {
 
             if (this.page == HologramScreen.Page.CREATE_CALL) {
                 var connection = this.minecraft.player.connection;
-                connection.getOnlinePlayerIds().forEach(uuid -> this.listedCreateCallPlayers.add(MenuData.ofCreate(connection.getPlayerInfo(uuid), isPlayerMe(connection.getPlayerInfo(uuid)))));
+                connection.getOnlinePlayerIds().forEach(uuid -> {
+                    var info = connection.getPlayerInfo(uuid);
+                    if (info != null) this.listedCreateCallPlayers.add(MenuData.ofCreate(info.getProfile(), isPlayerMe(info.getProfile())));
+                });
             } else if (this.page == HologramScreen.Page.JOIN_CALL) NetworkManager.sendToServer(new RequestHologramPacket());
             else {
                 final var listedNames = new HashSet<>();
-                ResourceUtil.getAllInfo().values().forEach(info -> {
-                    if (listedNames.add(info.getProfile().getName())) this.listedSearchedPlayer.add(MenuData.ofCreate(info, isPlayerMe(info)));
+                ResourceUtil.getPlayerProfiles().forEach(profile -> {
+                    if (listedNames.add(profile.getName())) this.listedSearchedPlayer.add(MenuData.ofCreate(profile, isPlayerMe(profile)));
                 });
                 var connection = this.minecraft.player.connection;
                 connection.getOnlinePlayerIds().stream().map(connection::getPlayerInfo).filter(Objects::nonNull).forEach(info -> {
-                    if (listedNames.add(info.getProfile().getName())) this.listedSearchedPlayer.add(MenuData.ofCreate(info, isPlayerMe(info)));
+                    if (listedNames.add(info.getProfile().getName())) this.listedSearchedPlayer.add(MenuData.ofCreate(info.getProfile(), isPlayerMe(info.getProfile())));
                 });
             }
         }
@@ -159,7 +164,7 @@ public class CallMenuWidget implements IWidgetComponent {
         if (this.page == HologramScreen.Page.CREATE_CALL) {
             for (int i = scroll; i < Math.min(scroll + 3, this.shownCreateCallPlayers.size()); i++) {
                 var player = this.shownCreateCallPlayers.get(i);
-                if (this.stack != null && !isPlayerMe(player.info)) {
+                if (this.stack != null && !isPlayerMe(player.profile)) {
                     var call = this.callButtonsHandheld[i - scroll];
                     call.visible = true;
                 } else {
@@ -180,7 +185,7 @@ public class CallMenuWidget implements IWidgetComponent {
             }
         } else {
             for (int i = scroll; i < Math.min(scroll + 3, this.shownSearchedPlayer.size()); i++) {
-                this.checkButtons[i - scroll].visible = Minecraft.getInstance().level != null && getSoloRenderName().equals(this.shownSearchedPlayer.get(i - scroll).info.getProfile().getName());
+                this.checkButtons[i - scroll].visible = Minecraft.getInstance().level != null && getSoloRenderName().equals(this.shownSearchedPlayer.get(i - scroll).profile.getName());
                 this.checkButtons[i + 3 - scroll].visible = true;
             }
         }
@@ -190,7 +195,10 @@ public class CallMenuWidget implements IWidgetComponent {
         if (this.minecraft.player != null) {
             this.listedJoinCallPlayers.clear();
             var connection = this.minecraft.player.connection;
-            playerCalls.forEach(call -> this.listedJoinCallPlayers.add(MenuData.ofJoin(connection.getPlayerInfo(call.owner), call.callID, playerNames(call.callers, connection::getPlayerInfo))));
+            playerCalls.forEach(call -> {
+                var info = connection.getPlayerInfo(call.owner);
+                if (info != null) this.listedJoinCallPlayers.add(MenuData.ofJoin(info.getProfile(), call.callID, playerNames(call.callers, connection::getPlayerInfo)));
+            });
         }
 
         this.search(this.lastSearch);
@@ -217,21 +225,22 @@ public class CallMenuWidget implements IWidgetComponent {
         var y = this.y + 11;
         if (menu.isEmpty()) graphics.drawCenteredString(this.minecraft.font, Component.literal(emptyList).withStyle(ChatFormatting.BOLD, ChatFormatting.RED), x + width / 2, y + 16, -1);
         for (int i = this.scroll; i < Math.min(this.scroll + 3, menu.size()); i++) {
-            var info = menu.get(i).info;
-            if (info != null) {
-                var me = this.isPlayerMe(info);
+            var profile = menu.get(i).profile;
+            if (profile != null) {
+                var me = this.isPlayerMe(profile);
                 var minY = y + this.height * (i - this.scroll);
-                var name = me ? mePrefix : (info.getProfile().getName() + suffix);
+                var name = me ? mePrefix : (profile.getName() + suffix);
 
+                var skin = minecraft.getSkinManager().getInsecureSkin(profile);
                 GraphicsUtil.fillRect(graphics, this.x, minY, width, this.height, ColorUtil.packArgb(74, 74, 74, 255));
-                PlayerFaceRenderer.draw(graphics, info.getSkin(), this.x + 4, minY + 4, 24);
+                PlayerFaceRenderer.draw(graphics, skin, this.x + 4, minY + 4, 24);
                 graphics.drawString(this.minecraft.font, Component.literal(name).withStyle(ChatFormatting.BOLD).withStyle(me ? ChatFormatting.GOLD : ChatFormatting.WHITE), this.x + 34, minY + 12 + offset, -1);
             }
         }
     }
 
-    private boolean isPlayerMe(@Nullable PlayerInfo info) {
-        return this.minecraft.player != null && info != null && info.getProfile().getId().equals(this.minecraft.player.getUUID());
+    private boolean isPlayerMe(@Nullable GameProfile profile) {
+        return this.minecraft.player != null && profile != null && profile.getId().equals(this.minecraft.player.getUUID());
     }
 
     public void setPage(HologramScreen.Page page) {
@@ -252,7 +261,7 @@ public class CallMenuWidget implements IWidgetComponent {
     private void searchList(String search, List<MenuData> searchList, List<MenuData> players) {
         searchList.clear();
         if (search == null || search.isEmpty()) searchList.addAll(players);
-        else searchList.addAll(players.stream().filter(s -> s.info.getProfile().getName().toLowerCase().contains(search.toLowerCase())).toList());
+        else searchList.addAll(players.stream().filter(s -> s.profile.getName().toLowerCase().contains(search.toLowerCase())).toList());
     }
 
     public void refresh() {
@@ -291,16 +300,16 @@ public class CallMenuWidget implements IWidgetComponent {
     public void updateNarration(NarrationElementOutput narrationElementOutput) { }
 
     public List<CallData.Callee> getCallMembers() {
-        return this.shownCreateCallPlayers.stream().filter(p -> !isPlayerMe(p.info) && p.added).map(p -> new CallData.Callee(p.info.getProfile().getId())).toList();
+        return this.shownCreateCallPlayers.stream().filter(p -> !isPlayerMe(p.profile) && p.added).map(p -> new CallData.Callee(p.profile.getId())).toList();
     }
 
-    record MenuData(PlayerInfo info, UUID callID, List<Component> players, boolean added, boolean locked) {
-        public static MenuData ofCreate(PlayerInfo info, boolean isMe) {
-            return new MenuData(info, null, List.of(), isMe, isMe);
+    record MenuData(GameProfile profile, UUID callID, List<Component> players, boolean added, boolean locked) {
+        public static MenuData ofCreate(GameProfile profile, boolean isMe) {
+            return new MenuData(profile, null, List.of(), isMe, isMe);
         }
 
-        public static MenuData ofJoin(PlayerInfo info, UUID callID, List<Component> players) {
-            return new MenuData(info, callID, players, false, false);
+        public static MenuData ofJoin(GameProfile profile, UUID callID, List<Component> players) {
+            return new MenuData(profile, callID, players, false, false);
         }
     }
 }

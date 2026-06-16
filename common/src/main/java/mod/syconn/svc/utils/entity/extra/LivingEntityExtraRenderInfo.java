@@ -79,8 +79,8 @@ public class LivingEntityExtraRenderInfo implements IExtraRenderInfo {
 
     @Override
     public void getInfoClientSide(RegistryFriendlyByteBuf buffer) {
-        this.mainHand = ItemStack.STREAM_CODEC.decode(buffer);
-        this.offHand = ItemStack.STREAM_CODEC.decode(buffer);
+        this.mainHand = ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer);
+        this.offHand = ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer);
         this.fallFlying = buffer.readBoolean();
         this.pose = buffer.readEnum(Pose.class);
         this.yBodyRot = buffer.readFloat();
@@ -95,8 +95,8 @@ public class LivingEntityExtraRenderInfo implements IExtraRenderInfo {
 
     @Override
     public void encodeInfoServerSide(RegistryFriendlyByteBuf buffer) {
-        ItemStack.STREAM_CODEC.encode(buffer, this.mainHand);
-        ItemStack.STREAM_CODEC.encode(buffer, this.offHand);
+        ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, this.mainHand);
+        ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, this.offHand);
         buffer.writeBoolean(this.fallFlying);
         buffer.writeEnum(this.pose);
         buffer.writeFloat(this.yBodyRot);

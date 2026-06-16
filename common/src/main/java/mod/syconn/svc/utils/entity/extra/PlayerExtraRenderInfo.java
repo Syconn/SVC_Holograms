@@ -34,7 +34,7 @@ public class PlayerExtraRenderInfo extends LivingEntityExtraRenderInfo {
         super.getInfoClientSide(buffer);
         int armorCount = buffer.readInt();
         for (int i = 0; i < armorCount; i++) {
-            ItemStack stack = ItemStack.STREAM_CODEC.decode(buffer);
+            ItemStack stack = ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer);
             armor.set(i, stack);
         }
     }
@@ -43,6 +43,6 @@ public class PlayerExtraRenderInfo extends LivingEntityExtraRenderInfo {
     public void encodeInfoServerSide(RegistryFriendlyByteBuf buffer) {
         super.encodeInfoServerSide(buffer);
         buffer.writeInt(armor.size());
-        for (ItemStack stack : armor) ItemStack.STREAM_CODEC.encode(buffer, stack);
+        for (ItemStack stack : armor) ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, stack);
     }
 }

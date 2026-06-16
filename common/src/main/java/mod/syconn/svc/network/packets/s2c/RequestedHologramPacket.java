@@ -20,7 +20,7 @@ public record RequestedHologramPacket(CompoundTag tag) implements CustomPacketPa
 
     @Override
     public Type<? extends CustomPacketPayload> type() {
-        return null;
+        return TYPE;
     }
 
     public static void handle(RequestedHologramPacket packet, NetworkManager.PacketContext context) {

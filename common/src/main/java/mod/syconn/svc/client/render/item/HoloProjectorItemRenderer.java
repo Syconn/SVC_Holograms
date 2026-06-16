@@ -60,9 +60,9 @@ public class HoloProjectorItemRenderer implements IModifiedItemRenderer, IModifi
 
     private HologramData getHologramData(HologramComponent component) {
         return RENDERER.compute(component.receiverID(), (_u, d) -> {
-            if (d != null && ((Objects.equals(d.getRenderName(), component.soloRender()) && !component.soloRender().isEmpty()) || (d.getPlayerID() != null && d.getPlayerID().equals(component.renderTarget())))) return d;
+            if (d != null && ((Objects.equals(d.getProfile().getName(), component.soloRender()) && !component.soloRender().isEmpty()) || (d.getProfile().getName() != null && d.getProfile().getId().equals(component.renderTarget())))) return d;
             if (component.renderTarget() != null) return new HologramData(component.renderTarget());
-            return d == null ? new HologramData(component.soloRender()) : d.generateInformationByName(component.soloRender());
+            return d == null ? new HologramData(component.soloRender(), UUID.randomUUID()) : d.generateInformationByName(component.soloRender(), UUID.randomUUID());
         });
     }
 
