@@ -57,12 +57,6 @@ public class HologramScreen extends Screen {
     }
 
     @Override
-    public void tick() {
-        super.tick();
-//        this.searchBox.tick(); TODO MAYBE REMOVED?
-    }
-
-    @Override
     protected void init() {
         this.singleplayer = Minecraft.getInstance().isSingleplayer();
         var leftPos = (this.width - 236) / 2;

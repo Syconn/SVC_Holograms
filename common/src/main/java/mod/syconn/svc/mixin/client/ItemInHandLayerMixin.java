@@ -15,6 +15,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
 import net.minecraft.client.renderer.entity.layers.PlayerItemInHandLayer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
@@ -38,10 +39,10 @@ public abstract class ItemInHandLayerMixin<T extends Player, M extends EntityMod
         if (!itemStack.isEmpty()) {
             final BakedModel bakedModel = Minecraft.getInstance().getItemRenderer().getModel(itemStack, livingEntity.level(), livingEntity, livingEntity.getId() + displayContext.ordinal());
             final IModifiedItemRenderer itemRenderer = IModifiedItemRenderer.INSTANCES.get(itemStack.getItem().getClass());
-            if (itemRenderer != null || getParentModel() instanceof HologramModel) {
+            if (getParentModel() instanceof HologramModel) {
                 RenderUtil.renderStaticHolographicItem(poseStack, livingEntity, (HumanoidModel<? extends LivingEntity>) getParentModel(), arm, itemStack, displayContext, bakedModel, buffer, packedLight, livingEntity.tickCount + SVCClient.getTickDelta());
                 ci.cancel();
-            }
+            } else if (itemRenderer != null) itemRenderer.render(livingEntity, (HumanoidModel<? extends LivingEntity>) getParentModel(), itemStack, displayContext, arm == HumanoidArm.LEFT, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, bakedModel);
         }
     }
 }

@@ -2,6 +2,7 @@ Update to 1.21.1
 Test Neoforge
 PlayerInfo may be to much data for 1.20.1 | BACKPORT THIS NEW RESOURCE UTIL TO 1.21.1
 Add Unique ID to Player Renders
+FIX bug with Rendering Holographic Items wrong in ItemInHandLayer in 1.20.1
 WIKI
 Change Texture Getting to PlayerSkin First then lookup system, Test Avoiding Mixin!
 Provide Chair?
