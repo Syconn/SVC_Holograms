@@ -19,6 +19,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,22 +48,24 @@ public class HoloProjectorItemRenderer implements IModifiedItemRenderer, IModifi
         if (!component.soloRender().isEmpty()) this.spin += 0.25f;
 
         if (hologramData.activeRender()) {
-            poseStack.pushPose();
-            poseStack.mulPose(Axis.YN.rotationDegrees(-hologramData.getPlayer().getYRot()));
-            poseStack.mulPose(Axis.YN.rotationDegrees(ModelUtil.isLeftHanded(renderMode) ? -45f : 45f));
-            if (component.renderTarget() == null) poseStack.mulPose(Axis.YN.rotationDegrees(spin));
-            poseStack.translate(0f, -0.4f, 0f);
-            poseStack.scale(0.6f, 0.6f, 0.6f);
-            hologramData.getRenderer().render(poseStack, bufferSource, SVCClient.getTickDelta(), LightTexture.FULL_BLOCK);
-            poseStack.popPose();
+            if (hologramData.isTextureLoaded()) {
+                poseStack.pushPose();
+                poseStack.mulPose(Axis.YN.rotationDegrees(-hologramData.getPlayer().getYRot()));
+                poseStack.mulPose(Axis.YN.rotationDegrees(ModelUtil.isLeftHanded(renderMode) ? -45f : 45f));
+                if (component.renderTarget() == null) poseStack.mulPose(Axis.YN.rotationDegrees(spin));
+                poseStack.translate(0f, -0.4f, 0f);
+                poseStack.scale(0.6f, 0.6f, 0.6f);
+                hologramData.getRenderer().render(poseStack, bufferSource, SVCClient.getTickDelta(), LightTexture.FULL_BLOCK);
+                poseStack.popPose();
+            }
         } else RENDERER.remove(component.receiverID());
     }
 
     private HologramData getHologramData(HologramComponent component) {
         return RENDERER.compute(component.receiverID(), (_u, d) -> {
             if (d != null && ((Objects.equals(d.getProfile().getName(), component.soloRender()) && !component.soloRender().isEmpty()) || (d.getProfile().getName() != null && d.getProfile().getId().equals(component.renderTarget())))) return d;
-            if (component.renderTarget() != null) return new HologramData(component.renderTarget());
-            return d == null ? new HologramData(component.soloRender(), UUID.randomUUID()) : d.generateInformationByName(component.soloRender(), UUID.randomUUID());
+            if (component.renderTarget() != null) return new HologramData(component.renderTarget(), component.receiverID(), Vec3.ZERO);
+            return d == null ? new HologramData(component.soloRender(), component.receiverID()) : d.generateInformationByName(component.soloRender(), component.receiverID());
         });
     }
 

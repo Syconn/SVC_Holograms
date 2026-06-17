@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
-public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<HoloProjectorBlockEntity> {
+public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<HoloProjectorBlockEntity> { // TODO SOMETHING WITH PLAYER RENDERING
 
     private static final ResourceLocation HOLOGRAM_TEXTURE = Constants.withId("textures/block/holo/hologram_ring.png");
     private final HashMap<UUID, HologramData> SOLO_RENDERER = new HashMap<>();
@@ -90,7 +90,7 @@ public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<Hol
     }
 
     private void createMultiplayerRenderer(UUID receiverID, UUID playerID, Vec3 pos) {
-        MULI_RENDERER.computeIfAbsent(receiverID, u -> new HashMap<>()).compute(playerID, (uuid, hologramData) -> hologramData == null ? new HologramData(uuid, pos) : hologramData.setActiveRender(true, pos));
+        MULI_RENDERER.computeIfAbsent(receiverID, u -> new HashMap<>()).compute(playerID, (uuid, hologramData) -> hologramData == null ? new HologramData(uuid, receiverID, pos) : hologramData.setActiveRender(true, pos));
     }
 
     private Map<UUID, HologramData> getMulitplayerMap(UUID receiverID) {

@@ -82,7 +82,6 @@ public class SVCClient {
     }
 
     public static float getTickDelta() {
-        var mc = Minecraft.getInstance();
-        return mc.getFrameTimeNs();
+        return Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true);
     }
 }

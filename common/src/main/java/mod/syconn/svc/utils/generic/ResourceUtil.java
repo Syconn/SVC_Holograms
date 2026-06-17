@@ -15,6 +15,7 @@ import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import org.apache.commons.lang3.function.TriConsumer;
 import org.apache.commons.lang3.function.TriFunction;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
@@ -56,23 +57,32 @@ public class ResourceUtil {
 
     public static Optional<NativeImage> loadSkin(ResourceLocation skinLocation) {
         if (SKIN_CACHE.containsKey(skinLocation)) return Optional.of(SKIN_CACHE.get(skinLocation).mappedCopy(p -> p));
+        if (GameInstance.getClient().getResourceManager().getResource(skinLocation).isPresent()) return loadResource(skinLocation);
         return Optional.empty();
+    }
+
+    private static Optional<NativeImage> loadResource(ResourceLocation location) {
+        try {
+            var inputStream = GameInstance.getClient().getResourceManager().open(location);
+            var nativeImage = NativeImage.read(inputStream);
+            inputStream.close();
+            return Optional.of(nativeImage);
+        } catch (IOException e) {
+            return Optional.empty();
+        }
     }
 
     public static void getOrLoadFromUsername(String name, TriConsumer<GameProfile, Boolean, ResourceLocation> getter) {
         name = name.toLowerCase();
-
         var profile = PROFILE_CACHE.get(name);
-        if (profile != null) {
-            var skin = Minecraft.getInstance().getSkinManager().getInsecureSkin(profile);
-            if (isResolved(profile)) getter.accept(profile, skin.model().equals(PlayerSkin.Model.SLIM), skin.texture());
-            return;
-        }
+        if (profile != null) loadFromProfile(profile, getter);
+        loadGameProfile(name, resolvedProfile -> loadFromProfile(resolvedProfile, getter));
+    }
 
-        loadGameProfile(name, resolvedProfile -> {
-            var skin = Minecraft.getInstance().getSkinManager().getInsecureSkin(resolvedProfile);
-            if (isResolved(resolvedProfile)) getter.accept(resolvedProfile, skin.model().equals(PlayerSkin.Model.SLIM), skin.texture());
-        });
+    public static void loadFromProfile(GameProfile profile, TriConsumer<GameProfile, Boolean, ResourceLocation> getter) {
+        var insecureSkin = Minecraft.getInstance().getSkinManager().getInsecureSkin(profile);
+        if (isResolved(profile)) getter.accept(profile, insecureSkin.model().equals(PlayerSkin.Model.SLIM), insecureSkin.texture());
+        else Minecraft.getInstance().getSkinManager().getOrLoad(profile).thenAccept(skin -> getter.accept(profile, skin.model().equals(PlayerSkin.Model.SLIM), skin.texture()));
     }
 
     private static boolean isResolved(GameProfile profile) {
@@ -99,6 +109,8 @@ public class ResourceUtil {
     }
 
     public static void registerSkin(String id, NativeImage skin) {
+        System.out.println("RUNNING REGISTER " + id);
+
         SKIN_CACHE.computeIfAbsent(ResourceLocation.parse("skins/" + id), p -> skin);
     }
 

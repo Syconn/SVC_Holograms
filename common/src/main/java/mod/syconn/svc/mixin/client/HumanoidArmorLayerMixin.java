@@ -33,7 +33,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(HumanoidArmorLayer.class)
-public abstract class HumanoidArmorLayerMixin<T extends LivingEntity, M extends HumanoidModel<T>, A extends HumanoidModel<T>> extends RenderLayer<T, M> { // TODO TEST COLOR CONSISTENTLY, AND GLINT
+public abstract class HumanoidArmorLayerMixin<T extends LivingEntity, M extends HumanoidModel<T>, A extends HumanoidModel<T>> extends RenderLayer<T, M> {
 
     @Final @Shadow
     private TextureAtlas armorTrimAtlas;
@@ -49,7 +49,7 @@ public abstract class HumanoidArmorLayerMixin<T extends LivingEntity, M extends 
     }
 
     @Inject(at = @At("HEAD"), method = "renderArmorPiece", cancellable = true)
-    public void renderArmorPiece(PoseStack poseStack, MultiBufferSource buffer, T livingEntity, EquipmentSlot slot, int packedLight, A model, CallbackInfo ci) {
+    public void renderArmorPiece(PoseStack poseStack, MultiBufferSource bufferSource, T livingEntity, EquipmentSlot slot, int packedLight, A model, CallbackInfo ci) {
         var itemStack = livingEntity.getItemBySlot(slot);
         if (!(getParentModel() instanceof HologramModel)) return;
         if (!(itemStack.getItem() instanceof ArmorItem armorItem)) return;
@@ -70,13 +70,13 @@ public abstract class HumanoidArmorLayerMixin<T extends LivingEntity, M extends 
             int j = layer.dyeable() ? i : -1;
             float tintR = ((i >> 16) & 0xFF) / 255.0F, tintG = ((i >> 8) & 0xFF) / 255.0F, tintB = (i & 0xFF) / 255.0F;
             float r = tintR * holoR, g = tintG * holoG, b = tintB * holoB;
-            if (j != -1) this.svc$renderModel(poseStack, buffer, packedLight, model, FastColor.ARGB32.colorFromFloat(alpha, r, g, b), layer.texture(leggings));
-            else this.svc$renderModel(poseStack, buffer, packedLight, model, FastColor.ARGB32.colorFromFloat(alpha, holoR, holoG, holoB), layer.texture(leggings));
+            if (j != -1) this.svc$renderModel(poseStack, bufferSource, packedLight, model, FastColor.ARGB32.colorFromFloat(alpha, r, g, b), layer.texture(leggings));
+            else this.svc$renderModel(poseStack, bufferSource, packedLight, model, FastColor.ARGB32.colorFromFloat(alpha, holoR, holoG, holoB), layer.texture(leggings));
         }
 
         var armorTrim = itemStack.get(DataComponents.TRIM);
-        if (armorTrim != null) this.svc$renderTrim(armorItem.getMaterial(), poseStack, buffer, packedLight, armorTrim, model, leggings, time);
-        if (itemStack.hasFoil()) this.renderGlint(poseStack, buffer, packedLight, model);
+        if (armorTrim != null) this.svc$renderTrim(armorItem.getMaterial(), poseStack, bufferSource, packedLight, armorTrim, model, leggings, time);
+        if (itemStack.hasFoil()) this.renderGlint(poseStack, bufferSource, packedLight, model);
         ci.cancel();
     }
 
