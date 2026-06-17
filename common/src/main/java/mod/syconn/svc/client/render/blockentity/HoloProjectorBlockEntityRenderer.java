@@ -61,26 +61,28 @@ public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<Hol
                 renderSolo = false;
             }
 
-            if (!blockEntity.getRenderables().containsKey(multiRender.getPlayerID())) multiRender.endCall();
+            if (!blockEntity.getRenderables().containsKey(multiRender.getProfile().getId())) multiRender.endCall();
         }
 
         if (renderSolo) {
             var soloRenderer = this.getSoloRenderer(blockEntity.getReceiverUUID(), blockEntity.getSoloRender());
-            if (soloRenderer.activeRender()) {
-                poseStack.pushPose();
-                poseStack.translate(0.5f, 0.2f, 0.5f);
-                poseStack.mulPose(Axis.YN.rotationDegrees((float) blockEntity.getRotation()));
-                soloRenderer.getRenderer().render(poseStack, buffer, partialTick, LightTexture.FULL_BLOCK);
-                this.updateVFX(blockEntity, new Vec3(0, -0.5, 0), soloRenderer.getAnimationScale(partialTick));
-                poseStack.popPose();
-            } else this.SOLO_RENDERER.remove(blockEntity.getReceiverUUID());
+            if (soloRenderer.activeRender() || !soloRenderer.isTextureLoaded()) {
+                if (soloRenderer.isTextureLoaded()) {
+                    poseStack.pushPose();
+                    poseStack.translate(0.5f, 0.2f, 0.5f);
+                    poseStack.mulPose(Axis.YN.rotationDegrees((float) blockEntity.getRotation()));
+                    soloRenderer.getRenderer().render(poseStack, buffer, partialTick, LightTexture.FULL_BLOCK);
+                    this.updateVFX(blockEntity, new Vec3(0, -0.5, 0), soloRenderer.getAnimationScale(partialTick));
+                    poseStack.popPose();
+                }
+            } else SOLO_RENDERER.remove(blockEntity.getReceiverUUID());
         }
     }
 
     private HologramData getSoloRenderer(UUID receiverID, String playerName) {
         return SOLO_RENDERER.compute(receiverID, (_u, d) -> {
-            if (d != null && ((Objects.equals(d.getRenderName(), playerName) && !playerName.isEmpty()))) return d;
-            return d == null ? new HologramData(playerName) : d.generateInformationByName(playerName);
+            if (d != null && ((Objects.equals(d.getProfile().getName(), playerName) && !playerName.isEmpty()))) return d;
+            return d == null ? new HologramData(playerName, receiverID) : d.generateInformationByName(playerName, receiverID);
         });
     }
 
@@ -89,7 +91,7 @@ public class HoloProjectorBlockEntityRenderer implements BlockEntityRenderer<Hol
     }
 
     private void createMultiplayerRenderer(UUID receiverID, UUID playerID, Vec3 pos) {
-        MULI_RENDERER.computeIfAbsent(receiverID, u -> new HashMap<>()).compute(playerID, (uuid, hologramData) -> hologramData == null ? new HologramData(uuid, pos) : hologramData.setActiveRender(true, pos));
+        MULI_RENDERER.computeIfAbsent(receiverID, u -> new HashMap<>()).compute(playerID, (uuid, hologramData) -> hologramData == null ? new HologramData(uuid, receiverID, pos) : hologramData.setActiveRender(true, pos));
     }
 
     private Map<UUID, HologramData> getMulitplayerMap(UUID receiverID) {

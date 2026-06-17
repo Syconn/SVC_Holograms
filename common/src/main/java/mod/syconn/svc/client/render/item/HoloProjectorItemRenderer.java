@@ -19,6 +19,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -46,23 +47,25 @@ public class HoloProjectorItemRenderer implements IModifiedItemRenderer, IModifi
         var hologramData = getHologramData(tag);
         if (!tag.getSoloRender().isEmpty()) this.spin += 0.25f;
 
-        if (hologramData.activeRender()) {
-            poseStack.pushPose();
-            poseStack.mulPose(Axis.YN.rotationDegrees(-hologramData.getPlayer().getYRot()));
-            poseStack.mulPose(Axis.YN.rotationDegrees(ModelUtil.isLeftHanded(renderMode) ? -45f : 45f));
-            if (tag.getRenderTarget() == null) poseStack.mulPose(Axis.YN.rotationDegrees(spin));
-            poseStack.translate(0f, -0.4f, 0f);
-            poseStack.scale(0.6f, 0.6f, 0.6f);
-            hologramData.getRenderer().render(poseStack, bufferSource, SVCClient.getTickDelta(), LightTexture.FULL_BLOCK);
-            poseStack.popPose();
+        if (hologramData.activeRender() || !hologramData.isTextureLoaded()) {
+            if (hologramData.isTextureLoaded()) {
+                poseStack.pushPose();
+                poseStack.mulPose(Axis.YN.rotationDegrees(-hologramData.getPlayer().getYRot()));
+                poseStack.mulPose(Axis.YN.rotationDegrees(ModelUtil.isLeftHanded(renderMode) ? -45f : 45f));
+                if (tag.getRenderTarget() == null) poseStack.mulPose(Axis.YN.rotationDegrees(spin));
+                poseStack.translate(0f, -0.4f, 0f);
+                poseStack.scale(0.6f, 0.6f, 0.6f);
+                hologramData.getRenderer().render(poseStack, bufferSource, SVCClient.getTickDelta(), LightTexture.FULL_BLOCK);
+                poseStack.popPose();
+            }
         } else RENDERER.remove(tag.getReceiverID());
     }
 
     private HologramData getHologramData(HologramTag tag) {
         return RENDERER.compute(tag.getReceiverID(), (_u, d) -> {
-            if (d != null && ((Objects.equals(d.getRenderName(), tag.getSoloRender()) && !tag.getSoloRender().isEmpty()) || (d.getPlayerID() != null && d.getPlayerID().equals(tag.getRenderTarget())))) return d;
-            if (tag.getRenderTarget() != null) return new HologramData(tag.getRenderTarget());
-            return d == null ? new HologramData(tag.getSoloRender()) : d.generateInformationByName(tag.getSoloRender());
+            if (d != null && ((Objects.equals(d.getProfile().getName(), tag.getSoloRender()) && !tag.getSoloRender().isEmpty()) || (d.getProfile().getName() != null && d.getProfile().getId().equals(tag.getRenderTarget())))) return d;
+            if (tag.getRenderTarget() != null) return new HologramData(tag.getRenderTarget(), tag.getReceiverID(), Vec3.ZERO);
+            return d == null ? new HologramData(tag.getSoloRender(), tag.getReceiverID()) : d.generateInformationByName(tag.getSoloRender(), tag.getReceiverID());
         });
     }
 

@@ -1,50 +1,103 @@
 package mod.syconn.svc.utils.generic;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import com.mojang.blaze3d.platform.NativeImage;
 import dev.architectury.utils.GameInstance;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.Util;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.resources.ResourceLocation;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang3.StringUtils;
+import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import org.apache.commons.lang3.function.TriFunction;
-import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
+import org.apache.logging.log4j.util.TriConsumer;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 @Environment(EnvType.CLIENT)
 public class ResourceUtil {
 
-    private static final Map<String, ResourceLocation> DYNAMIC_TEXTURES = new ConcurrentHashMap<>();
-    private static final Map<ResourceLocation, NativeImage> SKINS = new ConcurrentHashMap<>();
-    private static final Map<String, PlayerInfo> PLAYER_INFO = new ConcurrentHashMap<>();
-    private static final Map<String, String> UUID_CACHE = new ConcurrentHashMap<>();
-    private static final Map<String, Boolean> MODELS = new ConcurrentHashMap<>();
+    private static final Map<String, ResourceLocation> TEXTURE_CACHE = new ConcurrentHashMap<>();
+    private static final Map<ResourceLocation, NativeImage> SKIN_CACHE = new ConcurrentHashMap<>();
+    private static final Map<String, GameProfile> PROFILE_CACHE = new ConcurrentHashMap<>();
+
+    public static void loadGameProfile(String name, Consumer<GameProfile> profileHandler) {
+        name = name.toLowerCase();
+        if (FontUtil.isValidPlayerName(name)) {
+            if (!PROFILE_CACHE.containsKey(name)) {
+                SkullBlockEntity.updateGameprofile(new GameProfile(Util.NIL_UUID, name), profile -> handleProfileCache(profile, profileHandler));
+            } else profileHandler.accept(PROFILE_CACHE.get(name));
+        } else profileHandler.accept(new GameProfile(Util.NIL_UUID, name));
+    }
+
+    public static void loadGameProfile(String name, Runnable callback) {
+        name = name.toLowerCase();
+        if (FontUtil.isValidPlayerName(name) && !PROFILE_CACHE.containsKey(name)) SkullBlockEntity.updateGameprofile(new GameProfile(Util.NIL_UUID, name), profile -> handleProfileCache(profile, p -> callback.run()));
+    }
+
+    private static void handleProfileCache(GameProfile profile, Consumer<GameProfile> profileHandler) {
+        PROFILE_CACHE.put(profile.getName().toLowerCase(), profile);
+        final var location = Minecraft.getInstance().getSkinManager().getInsecureSkinLocation(profile);
+        loadSkin(location).ifPresent(nativeImage -> {
+            SKIN_CACHE.put(location, nativeImage);
+            profileHandler.accept(profile);
+        });
+    }
+
+    public static Collection<GameProfile> getPlayerProfiles() {
+        return PROFILE_CACHE.values();
+    }
 
     public static Optional<NativeImage> loadSkin(ResourceLocation skinLocation) {
+        if (SKIN_CACHE.containsKey(skinLocation)) return Optional.of(SKIN_CACHE.get(skinLocation).mappedCopy(p -> p));
         if (GameInstance.getClient().getResourceManager().getResource(skinLocation).isPresent()) return loadResource(skinLocation);
-        if (SKINS.containsKey(skinLocation)) return Optional.of(SKINS.get(skinLocation).mappedCopy(p -> p));
         return Optional.empty();
     }
 
+    private static Optional<NativeImage> loadResource(ResourceLocation location) {
+        try {
+            var inputStream = GameInstance.getClient().getResourceManager().open(location);
+            var nativeImage = NativeImage.read(inputStream);
+            inputStream.close();
+            return Optional.of(nativeImage);
+        } catch (IOException e) {
+            return Optional.empty();
+        }
+    }
+
+    public static void getOrLoadFromUsername(String name, TriConsumer<GameProfile, Boolean, ResourceLocation> getter) {
+        name = name.toLowerCase();
+        var profile = PROFILE_CACHE.get(name);
+        if (profile != null) loadFromProfile(profile, getter);
+        loadGameProfile(name, resolvedProfile -> loadFromProfile(resolvedProfile, getter));
+    }
+
+    public static void loadFromProfile(GameProfile profile, TriConsumer<GameProfile, Boolean, ResourceLocation> getter) {
+        if (!isResolved(profile)) {
+            getter.accept(profile, DefaultPlayerSkin.getSkinModelName(profile.getId()).equals("slim"), DefaultPlayerSkin.getDefaultSkin(profile.getId()));
+            return;
+        }
+        Minecraft.getInstance().getSkinManager().registerSkins(profile, (type, resourceLocation, minecraftProfileTexture) -> {
+            if (type == MinecraftProfileTexture.Type.SKIN) getter.accept(profile, minecraftProfileTexture.getMetadata("model") != null, resourceLocation);
+        }, false);
+    }
+
+    private static boolean isResolved(GameProfile profile) {
+        return profile != null && profile.getId() != null && !profile.getProperties().get("textures").isEmpty();
+    }
+
     public static ResourceLocation registerOrGet(String id, DynamicTexture texture) {
-        if (DYNAMIC_TEXTURES.containsKey(id.toLowerCase())) return updateTexture(DYNAMIC_TEXTURES.get(id.toLowerCase()), texture);
+        if (TEXTURE_CACHE.containsKey(id.toLowerCase())) return updateTexture(TEXTURE_CACHE.get(id.toLowerCase()), texture);
         var resourceLocation = GameInstance.getClient().getTextureManager().register(id.toLowerCase(), texture);
-        DYNAMIC_TEXTURES.put(id.toLowerCase(), resourceLocation);
+        TEXTURE_CACHE.put(id.toLowerCase(), resourceLocation);
         return resourceLocation;
     }
 
@@ -60,22 +113,8 @@ public class ResourceUtil {
         }
     }
 
-    public static Map<String, PlayerInfo> getAllInfo() {
-        return PLAYER_INFO;
-    }
-
     public static void registerSkin(String id, NativeImage skin) {
-        SKINS.computeIfAbsent(new ResourceLocation("skins/" + id), p -> skin);
-    }
-
-    public static PlayerInfo getPlayerInfoFromName(String name) {
-        var uuid = getUUID(name);
-        if (uuid.isEmpty()) return PLAYER_INFO.computeIfAbsent(name, (n) -> new PlayerInfo(new GameProfile(UUID.randomUUID(), StringUtils.capitalize(n)), false));
-        return PLAYER_INFO.computeIfAbsent(name, (n) -> new PlayerInfo(new GameProfile(untrimUUID(uuid), StringUtils.capitalize(n)), false));
-    }
-
-    public static boolean getModel(String name) {
-        return MODELS.computeIfAbsent(name, ResourceUtil::getModelType);
+        SKIN_CACHE.computeIfAbsent(new ResourceLocation("skins/" + id), p -> skin);
     }
 
     private static ResourceLocation updateTexture(ResourceLocation loaded, DynamicTexture target) {
@@ -86,66 +125,8 @@ public class ResourceUtil {
                     texture.getPixels().setPixelRGBA(x, y, target.getPixels().getPixelRGBA(x, y));
                 }
             }
-
             texture.upload();
         }
         return loaded;
-    }
-
-    private static String getUUID(String username) {
-        return UUID_CACHE.computeIfAbsent(username, ResourceUtil::convertUsernameToUUID);
-    }
-
-    private static UUID untrimUUID(String trimmed) {
-        return UUID.fromString(trimmed.substring(0, 8) + "-" + trimmed.substring(8, 12) + "-" + trimmed.substring(12, 16) + "-" + trimmed.substring(16, 20) + "-" + trimmed.substring(20));
-    }
-
-    private static Optional<NativeImage> loadResource(ResourceLocation location) {
-        try {
-            var inputStream = GameInstance.getClient().getResourceManager().open(location);
-            var nativeImage = NativeImage.read(inputStream);
-            inputStream.close();
-            return Optional.of(nativeImage);
-        } catch (IOException e) {
-            return Optional.empty();
-        }
-    }
-
-    private static String convertUsernameToUUID(String name){
-        try {
-            HttpGet request = new HttpGet("https://api.mojang.com/users/profiles/minecraft/" + name);
-            CloseableHttpClient client = HttpClients.createDefault();
-            CloseableHttpResponse response = client.execute(request);
-            HttpEntity entity = response.getEntity();
-            JsonObject jsonObject = (JsonObject) JsonParser.parseString(EntityUtils.toString(entity));
-            if (jsonObject.has("id")) return jsonObject.get("id").getAsString();
-            return "";
-        } catch (IOException e) {
-            return "";
-        }
-    }
-
-    private static boolean getModelType(String name) {
-        String id = getUUID(name);
-        if (!id.isEmpty()) {
-            try {
-                HttpGet request = new HttpGet("https://sessionserver.mojang.com/session/minecraft/profile/" + id);
-                CloseableHttpClient client = HttpClients.createDefault();
-                CloseableHttpResponse response = client.execute(request);
-                HttpEntity entity = response.getEntity();
-                JsonObject jsonObject = (JsonObject) JsonParser.parseString(EntityUtils.toString(entity));
-
-                if (jsonObject != null){
-                    String bitcode = jsonObject.getAsJsonArray("properties").get(0).getAsJsonObject().get("value").getAsString();
-                    byte[] decodedBytes = Base64.decodeBase64(bitcode.getBytes());
-                    JsonObject SkinData = (JsonObject) JsonParser.parseString(new String(decodedBytes));
-                    return SkinData.getAsJsonObject("textures").getAsJsonObject("SKIN").has("metadata");
-                }
-            }
-            catch (IOException e) {
-                return false;
-            }
-        }
-        return false;
     }
 }

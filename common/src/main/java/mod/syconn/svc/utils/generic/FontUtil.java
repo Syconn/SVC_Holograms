@@ -15,4 +15,8 @@ public class FontUtil {
         }
         return text;
     }
+
+    public static boolean isValidPlayerName(String playerName) {
+        return playerName.length() <= 16 && playerName.chars().filter(i -> i <= 32 || i >= 127).findAny().isEmpty();
+    }
 }

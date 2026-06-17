@@ -1,5 +1,10 @@
-Issue if SVC isnt installed
-Update to 1.21.1
-API and Multi Entity
+Port 1.21.11 | 26.1.2
+
+Add Updater
+WIKI
+
+Provide Chair?
+Data System (Prevent Holographic effect, armor, items, entities, specific, all)
+API and Multi Entity (Added Custom Item, Armor, Render Settings)
 Support Other Mods that break it: Essentials, Figura
 - Idea Essential Work around pull texture from SkullBlock Anyway?

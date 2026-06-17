@@ -71,5 +71,15 @@
       <option name="name" value="Modrinth" />
       <option name="url" value="https://api.modrinth.com/maven" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="LoomLocalRemappedMods" />
+      <option name="name" value="LoomLocalRemappedMods" />
+      <option name="url" value="file:/$PROJECT_DIR$/../../SVC%20Holograms/1.20.1/.gradle/loom-cache/remapped_mods/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="LoomLocalMinecraft" />
+      <option name="name" value="LoomLocalMinecraft" />
+      <option name="url" value="file:/$PROJECT_DIR$/../../SVC%20Holograms/1.20.1/.gradle/loom-cache/minecraftMaven/" />
+    </remote-repository>
   </component>
 </project>
