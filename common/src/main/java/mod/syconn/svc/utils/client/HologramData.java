@@ -62,15 +62,7 @@ public class HologramData {
     }
 
     public HologramData(UUID uuid, UUID uniqueID) {
-        final var info = getInfo(uuid);
-        this.profile = info.getProfile();
-        this.uniqueID = uniqueID;
-        this.transition = TRANSITION_TICKS;
-        this.staticRender = true;
-        this.activeRender = true;
-        this.currentPosition = new Vec3(0, 0, 0);
-        this.previousPosition = new Vec3(0, 0, 0);
-        ResourceUtil.loadSkin(info.getSkin().texture()).ifPresent(skin -> loadSkinAsync(profile, info.getSkin().model().equals(PlayerSkin.Model.SLIM), info.getSkin().texture(), skin));
+        this(uuid, uniqueID, new Vec3(0, 0, 0));
     }
 
     public HologramData(String name, UUID uniqueID) {
@@ -211,7 +203,7 @@ public class HologramData {
     }
 
     public GameProfile getProfile() {
-        return profile == null ? this.profile = new GameProfile(Util.NIL_UUID, "") : profile; // WHYYYY
+        return profile == null ? this.profile = new GameProfile(Util.NIL_UUID, "") : profile;
     }
 
     public HologramRenderer getRenderer() {
