@@ -1,14 +1,19 @@
 # Project exclude paths
 /.gradle/
 /build/
+
 /common/.gradle/
 /common/build/
 /common/build/classes/java/main/
+
 /fabric/.gradle/
 /fabric/build/
 /fabric/build/classes/java/main/
-/forge/.gradle/
-/forge/build/
+
+/neoforge/.gradle/
+/neoforge/build/
+
 /fabric/run/
-/forge/run/
+/neoforge/run/
+
 /.idea/inspectionProfiles/Project_Default.xml
