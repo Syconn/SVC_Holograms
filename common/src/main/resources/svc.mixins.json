@@ -11,7 +11,7 @@
     "client.ItemInHandRendererMixin",
     "client.ItemRendererAccessor",
     "client.ItemRendererInvoker",
-    "client.ItemRendererMixin",
+    "client.ItemRendererMixin"
   ],
   "mixins": [
     "EntityAccess",

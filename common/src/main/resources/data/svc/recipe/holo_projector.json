@@ -21,7 +21,8 @@
     "rnr"
   ],
   "result": {
-    "item": "svc:holo_projector"
+    "id": "svc:holo_projector",
+    "count": 1
   },
   "show_notification": true
 }

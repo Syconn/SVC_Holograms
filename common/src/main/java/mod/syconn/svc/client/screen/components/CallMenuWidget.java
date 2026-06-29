@@ -231,9 +231,8 @@ public class CallMenuWidget implements IWidgetComponent {
                 var minY = y + this.height * (i - this.scroll);
                 var name = me ? mePrefix : (profile.getName() + suffix);
 
-                var skin = minecraft.getSkinManager().getInsecureSkin(profile);
                 GraphicsUtil.fillRect(graphics, this.x, minY, width, this.height, ColorUtil.packArgb(74, 74, 74, 255));
-                PlayerFaceRenderer.draw(graphics, skin, this.x + 4, minY + 4, 24);
+                PlayerFaceRenderer.draw(graphics, minecraft.getSkinManager().getInsecureSkin(profile), this.x + 4, minY + 4, 24);
                 graphics.drawString(this.minecraft.font, Component.literal(name).withStyle(ChatFormatting.BOLD).withStyle(me ? ChatFormatting.GOLD : ChatFormatting.WHITE), this.x + 34, minY + 12 + offset, -1);
             }
         }
